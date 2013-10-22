@@ -1,0 +1,16 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="E_PTR_Status" Id="{bd121ee2-57ce-4674-9873-2a63e8cefad4}">
+    <Declaration><![CDATA[TYPE E_PTR_Status :
+(
+	EnterBusy,
+	OnBelt,
+	ExitBusy,
+	Gone,
+	ERROR,
+	MAX_E_PTR_Status
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

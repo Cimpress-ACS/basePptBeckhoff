@@ -1,0 +1,14 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_PTS_In" Id="{7d26fa0e-8a34-437e-9aec-13ae4777b6c3}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_PTS_In :
+STRUCT
+	/// This sensor shows if the paper is at the middle table possition
+	bolPaperAvailable   					: BASE_PLC.T_Ctrl_IoBool;
+	/// This sensor shows if the paper is available at the exit of the input belt
+	bolPaperAtBeltExit						: BASE_PLC.T_Ctrl_IoBool;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

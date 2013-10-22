@@ -1,0 +1,281 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <!-- <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>-->
+    <FileVersion>1.0.0.0</FileVersion>
+    <SchemaVersion>2.0</SchemaVersion>
+    <ProjectGuid>6CAFC0C6-A428-4d30-A9F9-700E829FEA51</ProjectGuid>
+    <Name>BasePpt</Name>
+    <ProgramVersion>3.1.0.5</ProgramVersion>
+    <Application>{de59b8a9-6bdb-4305-a846-8503feec1f93}</Application>
+    <TypeSystem>{eb7f43e0-c3d7-4860-9f9f-5fc0cdfd49ba}</TypeSystem>
+    <Implicit_Task_Info>{8036034f-4b73-4d16-aca5-e4ad3e32e132}</Implicit_Task_Info>
+    <Implicit_KindOfTask>{341f9474-06fb-4761-835d-b6fdfd28e57e}</Implicit_KindOfTask>
+    <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
+    <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
+    <Title>BasePpt</Title>
+    <ProjectVersion>0.0.0.1</ProjectVersion>
+    <Author>pcipriano</Author>
+    <Released>True</Released>
+    <Company>Vistaprint</Company>
+    <!--    <OutputType>Exe</OutputType>
+    <RootNamespace>MyApplication</RootNamespace>
+    <AssemblyName>MyApplication</AssemblyName>-->
+  </PropertyGroup>
+  <ItemGroup>
+    <LibraryReference Include="Base_Elements,newest,Vistaprint">
+      <Namespace>Base_Elements</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Base_PLC,newest,Vistaprint">
+      <Namespace>Base_PLC</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc2_Standard,3.3.0.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_Standard</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc2_System,3.3.2.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_System</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc2_Utilities,3.3.5.0,Beckhoff Automation GmbH">
+      <Namespace>Tc2_Utilities</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc3_Interfaces,3.3.0.0,Beckhoff Automation GmbH">
+      <Namespace>Tc3_Interfaces</Namespace>
+    </LibraryReference>
+    <LibraryReference Include="Tc3_Module,3.3.3.0,Beckhoff Automation GmbH">
+      <Namespace>Tc3_Module</Namespace>
+    </LibraryReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="POUs" />
+    <Folder Include="POUs\Controller\" />
+    <Folder Include="POUs\Controller\Driver\" />
+    <Folder Include="POUs\Controller\Driver\PTR [Paper Tracker]\" />
+    <Folder Include="POUs\Controller\Lvl0\" />
+    <Folder Include="POUs\Controller\Lvl1\" />
+    <Folder Include="POUs\Controller\Lvl1\MDC [Malteser Drive Controller]\" />
+    <Folder Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\" />
+    <Folder Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\BeltParameterFunction\" />
+    <Folder Include="POUs\Controller\Lvl2\" />
+    <Folder Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\" />
+    <Folder Include="POUs\Controller\Lvl2\PCE [Paper Belt Corner Element]\" />
+    <Folder Include="POUs\Controller\Lvl3\" />
+    <Folder Include="POUs\Controller\Lvl3\PTS [Paper Turning Station]\" />
+    <Folder Include="POUs\Controller\Lvl4\" />
+    <Folder Include="POUs\Controller\Top\" />
+    <Folder Include="Version\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="POUs\Controller\Driver\PTR [Paper Tracker]\E_PTR_Status.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\PTR [Paper Tracker]\FB_PTR.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Driver\PTR [Paper Tracker]\T_PTR_STRUCT.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\MDC [Malteser Drive Controller]\E_ALM_MDC.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\MDC [Malteser Drive Controller]\FB_MDC.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\MDC [Malteser Drive Controller]\MDC_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\MDC [Malteser Drive Controller]\T_Ctrl_SIf_MDC.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\MDC [Malteser Drive Controller]\T_Ctrl_SIf_MDC_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\MDC [Malteser Drive Controller]\T_Ctrl_SIf_MDC_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\MDC [Malteser Drive Controller]\T_Ctrl_SIf_MDC_Ilk.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\MDC [Malteser Drive Controller]\T_Ctrl_SIf_MDC_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\MDC [Malteser Drive Controller]\T_Ctrl_SIf_MDC_Out.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\MDC [Malteser Drive Controller]\T_Ctrl_SIf_MDC_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\BeltParameterFunction\T_Belt_Cfg_Base.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\BeltParameterFunction\T_Belt_Cur_Base.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\BeltParameterFunction\T_Belt_Par_Base.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\E_ALM_PTB.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\E_BELT_DIRECTION.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\E_PTB_MODE.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\E_PTB_PaperDirection.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\FB_PTB.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\PTB_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\T_Ctrl_SIf_PTB.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\T_Ctrl_SIf_PTB_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\T_Ctrl_SIf_PTB_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\T_Ctrl_SIf_PTB_Ilk.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\T_Ctrl_SIf_PTB_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\T_Ctrl_SIf_PTB_Out.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\T_Ctrl_SIf_PTB_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\E_ALM_PBC.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\FB_PBC.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\PBC_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\T_Ctrl_SIf_PBC.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\T_Ctrl_SIf_PBC_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\T_Ctrl_SIf_PBC_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\T_Ctrl_SIf_PBC_Ilk.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\T_Ctrl_SIf_PBC_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\T_Ctrl_SIf_PBC_Out.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\T_Ctrl_SIf_PBC_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PCE [Paper Belt Corner Element]\E_ALM_PCE.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PCE [Paper Belt Corner Element]\FB_PCE.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PCE [Paper Belt Corner Element]\PCE_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PCE [Paper Belt Corner Element]\T_Ctrl_SIf_PCE.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PCE [Paper Belt Corner Element]\T_Ctrl_SIf_PCE_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PCE [Paper Belt Corner Element]\T_Ctrl_SIf_PCE_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PCE [Paper Belt Corner Element]\T_Ctrl_SIf_PCE_Ilk.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PCE [Paper Belt Corner Element]\T_Ctrl_SIf_PCE_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PCE [Paper Belt Corner Element]\T_Ctrl_SIf_PCE_Out.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PCE [Paper Belt Corner Element]\T_Ctrl_SIf_PCE_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\PTS [Paper Turning Station]\E_ALM_PTS.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\PTS [Paper Turning Station]\E_PTS_MODE.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\PTS [Paper Turning Station]\FB_PTS.TcPOU">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\PTS [Paper Turning Station]\PTS_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\PTS [Paper Turning Station]\T_Ctrl_SIf_PTS.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\PTS [Paper Turning Station]\T_Ctrl_SIf_PTS_Cfg.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\PTS [Paper Turning Station]\T_Ctrl_SIf_PTS_Cur.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\PTS [Paper Turning Station]\T_Ctrl_SIf_PTS_Ilk.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\PTS [Paper Turning Station]\T_Ctrl_SIf_PTS_In.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\PTS [Paper Turning Station]\T_Ctrl_SIf_PTS_Out.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\PTS [Paper Turning Station]\T_Ctrl_SIf_PTS_Par.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl3\PTS [Paper Turning Station]\T_PTS_InOutPositions.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Version\Global_Version.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="BasePpt.tmc">
+      <SubType>Content</SubType>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <SubObject Include="FB_PBC.PaperHight" />
+    <SubObject Include="FB_PBC.PaperHight.Get" />
+    <SubObject Include="FB_PBC.PaperHight.Set" />
+    <SubObject Include="FB_PBC.PaperWidth" />
+    <SubObject Include="FB_PBC.PaperWidth.Get" />
+    <SubObject Include="FB_PBC.PaperWidth.Set" />
+  </ItemGroup>
+  <ProjectExtensions />
+  <!-- 
+   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Debug\</OutputPath>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+    <DebugSymbols>true</DebugSymbols>
+    <OutputPath>bin\Release\</OutputPath>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
+  </PropertyGroup>
+-->
+</Project>

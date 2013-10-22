@@ -1,0 +1,20 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_PTR_STRUCT" Id="{55c53e18-1b57-48a7-bc4a-2f4811c78acc}">
+    <Declaration><![CDATA[TYPE T_PTR_STRUCT :
+STRUCT
+	// [us] Time of the paper on the belt
+	udiTimeOnBelt_us				: UDINT;
+	// [mm] Position of the paper on the belt
+	lrePositionOnBelt_mm			: LREAL;
+	// [mm] Position of the paper on the belt Adjusted to the possible maximum
+	lrePositionOnBeltAdjusted_mm	: LREAL;
+	// Paper Item Id
+	udiItemId						: UDINT;
+	// Error	
+	eStatus							: E_PTR_Status;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

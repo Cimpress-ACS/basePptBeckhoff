@@ -1,0 +1,32 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <GVL Name="PTB_CmdState" Id="{e7b636e1-aebb-42f0-8717-00e458c92dab}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	///ctrl commands definitions
+	cCMD_EJECTPAPER			: INT := 202;
+	cCMD_STACKPAPER			: INT := 204;
+	///specific commands >200 - every command has to be a even number
+	///ctrl specific states definitions
+	cSTA_EJECTPAPERbusy		: INT := 201;
+	cSTA_EJECTPAPER			: INT := 202;
+	cSTA_STACKPAPERbusy		: INT := 203;
+	cSTA_STACKPAPER			: INT := 204;
+
+	///ctrl specific sub states definitions
+	cSUB_EMPTYstart					: INT := 300;
+	cSUB_EMPTYWAITPAPERbusy			: INT := 301;
+	cSUB_EMPTYWAITPAPERdebounce		: INT := 302;
+	cSUB_EMPTYWAITPAPERGONEbusy		: INT := 303;
+	cSUB_EMPTYWAITPAPERGONEdebounce	: INT := 304;
+	cSUB_EMPTYWAITDRIVESTOPED		: INT := 305;
+	cSUB_WAITPAPER  				: INT := 306;
+	cSUB_WAITPAPERGONE  			: INT := 307;
+	cSUB_STARTSTACKDELAY			: INT := 308;
+	cSUB_PAPERDISTANCEstart			: INT := 309;
+	cSUB_PAPERDISTANCEbusy			: INT := 310;
+	cSUB_PAPERDISTANCESTOPbusy		: INT := 311;
+	cSUB_STARTENTRYDRIVEbusy		: INT := 312;
+	cSUB_STARTENTRYDRIVE			: INT := 313;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

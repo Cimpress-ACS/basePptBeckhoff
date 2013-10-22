@@ -1,0 +1,16 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="E_PTB_MODE" Id="{1284c56f-f9a2-43f5-b638-407dabecb4aa}">
+    <Declaration><![CDATA[TYPE E_PTB_MODE :
+(
+	Endless	,		// 0
+	ToSensor,		// 1
+	ToDistance,		// 2
+	ToTime,			// 3
+	Stack,			// 4
+	MAX_E_PTB_MODE
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

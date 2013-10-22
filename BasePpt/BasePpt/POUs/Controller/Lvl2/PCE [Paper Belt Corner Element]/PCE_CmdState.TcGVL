@@ -1,0 +1,13 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <GVL Name="PCE_CmdState" Id="{41387394-a5e6-4af0-973a-89c4d60f7320}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	///ctrl commands definitions
+	///specific commands >200 - every command has to be a even number
+	///ctrl specific states definitions
+	cSUB_PAPERENTRY				: INT := 300;
+	cSUB_PAPERENTRYDelay		: INT := 301;
+	cSUB_PAPEREXIT				: INT := 302;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

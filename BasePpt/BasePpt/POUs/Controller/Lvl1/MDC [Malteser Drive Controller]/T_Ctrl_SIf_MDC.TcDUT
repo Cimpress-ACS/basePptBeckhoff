@@ -1,0 +1,24 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_MDC" Id="{24ef33f5-653d-436e-81fa-f62f00134044}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_MDC :
+STRUCT
+	///configuration
+	Cfg: T_Ctrl_SIf_MDC_Cfg;
+	///parameter
+	Par: T_Ctrl_SIf_MDC_Par;
+	///current values
+	Cur: T_Ctrl_SIf_MDC_Cur;
+	///io input
+	In: T_Ctrl_SIf_MDC_In;
+	///io output
+	Out: T_Ctrl_SIf_MDC_Out;
+	///alarm number used in this controller
+	Alm: ARRAY[1..MAX_E_ALM_MDC] OF T_Ctrl_Alm;
+	///interlock of output/movements
+	Ilk: T_Ctrl_SIf_MDC_Ilk;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

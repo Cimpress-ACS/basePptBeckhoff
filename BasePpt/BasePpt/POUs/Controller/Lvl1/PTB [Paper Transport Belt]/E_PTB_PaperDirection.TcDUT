@@ -1,0 +1,13 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="E_PTB_PaperDirection" Id="{8ef89328-ac0a-4a49-9941-36bd4879573d}">
+    <Declaration><![CDATA[TYPE E_PTB_PaperDirection :
+(
+	Portrait,
+	Landscape,
+	MAX_E_PTB_PaperDirection
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

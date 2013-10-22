@@ -1,0 +1,14 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_MDC_In" Id="{4b44b648-8342-492d-b0b2-0216489fcc46}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_MDC_In :
+STRUCT
+	/// Is the cross in sensor positinon. One rotation step done.
+	bolCrossPositionSensor				: BASE_PLC.T_Ctrl_IoBool;
+	/// Is the table at 0° degrees
+	bolTablePositionSensor				: BASE_PLC.T_Ctrl_IoBool;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

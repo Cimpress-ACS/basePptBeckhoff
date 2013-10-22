@@ -1,0 +1,14 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="E_ALM_PBC" Id="{513b5a48-d91e-4e4c-a3df-e1cea34b0c93}">
+    <Declaration><![CDATA[TYPE E_ALM_PBC :
+(
+	PaperTransport			:= 1,
+	BufferFull				:= 2,
+	BufferEmpty				:= 3,
+	MAX_E_ALM_PBC
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

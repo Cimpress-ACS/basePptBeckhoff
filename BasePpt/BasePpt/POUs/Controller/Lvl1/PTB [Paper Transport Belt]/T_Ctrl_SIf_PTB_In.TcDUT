@@ -1,0 +1,16 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_PTB_In" Id="{40ce6afc-0c1c-4af6-9b47-b37c063e97ce}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_PTB_In :
+STRUCT
+	bolBeltEntrySensor			: BASE_PLC.T_Ctrl_IoBool;
+	bolBeltExitSensor			: BASE_PLC.T_Ctrl_IoBool;
+	bolBeltEntrySensorPEdge		: BASE_PLC.T_Ctrl_IoBool;
+	bolBeltEntrySensorNEdge		: BASE_PLC.T_Ctrl_IoBool;
+	bolBeltExitSensorPEdge		: BASE_PLC.T_Ctrl_IoBool;
+	bolBeltExitSensorNEdge		: BASE_PLC.T_Ctrl_IoBool;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,12 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_MDC_Cfg" Id="{3c735f76-f9d2-46b9-a76b-5ea61faad805}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_MDC_Cfg :
+STRUCT
+	/// Number of positions in 360° of the Malteser drive
+	uintPositionPerTurn		: UINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

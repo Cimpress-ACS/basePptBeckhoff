@@ -1,0 +1,25 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <GVL Name="MDC_CmdState" Id="{ce9b6325-0b31-44cd-ab82-396a62a84748}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	///ctrl commands definitions
+	///specific commands >200 - every command has to be a even number
+	cCMD_INITIALIZE			: INT := 202;
+	cCMD_TURN    			: INT := 204;
+	cCMD_PREPOSITION		: INT := 210;
+	
+	///ctrl specific states definitions
+	cSTA_InitializeBusy		: INT := 201;
+	cSTA_InPositionBusy		: INT := 203;
+	cSTA_InPosition			: INT := 205;
+	cSTA_StartTurnBusy		: INT := 207;
+	cSTA_TurnBusy			: INT := 209;
+	cSTA_PREPOSITIONbusy	: INT := 220;
+	cSTA_PREPOSITION		: INT := 221;
+	cSTA_TURNDONE			: INT := 222;
+	
+	cSUB_TURNbusy			: INT := 300;
+	cSUB_STOPbusy			: INT := 301;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

@@ -1,0 +1,10 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_PBC_Out" Id="{d3915ab8-9d1e-4f5a-a622-e102fd2265cc}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_PBC_Out :
+STRUCT
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

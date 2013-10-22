@@ -1,0 +1,24 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_PBC" Id="{8ebfb642-538f-480f-b9cf-9522197d7c83}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_PBC :
+STRUCT
+	///configuration
+	Cfg: T_Ctrl_SIf_PBC_Cfg;
+	///parameter
+	Par: T_Ctrl_SIf_PBC_Par;
+	///current values
+	Cur: T_Ctrl_SIf_PBC_Cur;
+	///io input
+	In: T_Ctrl_SIf_PBC_In;
+	///io output
+	Out: T_Ctrl_SIf_PBC_Out;
+	///alarm number used in this controller
+	Alm: ARRAY[1..E_ALM_PBC.MAX_E_ALM_PBC] OF T_Ctrl_Alm;
+	///interlock of output/movements
+	Ilk: T_Ctrl_SIf_PBC_Ilk;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

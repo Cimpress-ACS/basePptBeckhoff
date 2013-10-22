@@ -1,0 +1,16 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_PCE_Par" Id="{f92ca0bd-8edf-4296-a2ba-9a3ffd3de0f3}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_PCE_Par :
+STRUCT
+	/// [ms] Paper entry delay time. Time delay between detection and switching the vacuum
+	uinPaperEntryDelayTime_ms		:UDINT;
+	/// [ms] Paper exit time
+	uinPaperExitTime_ms				:UDINT;
+	/// [ms] Simulation Paper exit time
+	uinSimPaperExitTime_ms			:UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

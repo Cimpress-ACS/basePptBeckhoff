@@ -1,0 +1,28 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_MDC_Par" Id="{3f17a291-9641-4669-89b7-f74a33ea6b8f}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_MDC_Par :
+STRUCT
+	/// <0 = Turn left; =0 automatic; >0 turn right
+	intTurnDirection					: INT;
+	/// Position to go to if comand turn is given. 0 = initialization position
+	uinPositionToGo						: UINT;
+	/// [ms] time to rotate one step 
+	udiStepRotationTime_ms				: UDINT;
+	/// [ms] initialization timeout time
+	udiInitializationTime_ms			: UDINT;
+	/// [ms] simulation time to rotate one step
+	udiSimStepRotationTime_ms			: UDINT;
+	/// [ms] simulation initialization timeout time
+	udiSimInitializationTime_ms			: UDINT;
+	/// [ms] simulation time to start rotate and Cross sensor needs to go away
+	udiSimStartRotationTime_ms			: UDINT;
+	/// [rpm] PrePosition Speed
+	uinPrePositionSpeed_rpm				: UINT;
+	/// [rpm] Position Speed
+	uinPositionSpeed_rpm				: UINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

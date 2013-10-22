@@ -1,0 +1,14 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Belt_Par_Base" Id="{0590959c-6c2c-4435-bdeb-4dc84d44bdbc}">
+    <Declaration><![CDATA[TYPE T_Belt_Par_Base :
+STRUCT
+	/// eSpeedControlSelection.EFFECTIVE_SPEED : [mm/sec] Target speed. Uses reaRpmDistance_mm and uinLC11 to calculate the rpm
+	uinBeltSpeed						: UINT;
+	/// eSpeedControlSelection.EFFECTIVE_SPEED : [mm/sec] Target speed. Uses reaRpmDistance_mm and uinLC11 to calculate the rpm
+	uinStackSpeed						: UINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

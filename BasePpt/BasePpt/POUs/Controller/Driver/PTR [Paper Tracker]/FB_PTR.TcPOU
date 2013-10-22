@@ -1,0 +1,277 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <POU Name="FB_PTR" Id="{aadcac38-f5fd-40b3-9942-862d48d96ecb}">
+    <Declaration><![CDATA[FUNCTION_BLOCK PUBLIC FB_PTR
+VAR_INPUT
+	In_uinBeltSpeed		: UINT;
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	m_udiTimeBase_us			: UDINT;		// Time base in [usec]
+	m_intPaperOnBelt			: INT;			// # of Paper on the belt 
+	m_intFirstPaperIdx			: INT;			// Index of the leading paper on the belt
+	m_intLastPaperIdx			: INT;			// Index of the last paper on the belt
+	m_arBuffer					: ARRAY[0..THIS^.cMAXBUFFERSIZE-1] OF T_PTR_STRUCT;
+	m_arPositionList			: ARRAY[0..THIS^.cMAXBUFFERSIZE-1] OF T_PTR_STRUCT;
+	m_intPaperEntryOffset_mm	: INT;
+	m_dinBeltLength				: DINT;
+	
+	iIdx					: INT;
+	iNdx					: INT;
+	iDifference				: DINT;
+END_VAR
+VAR CONSTANT
+	cMAXBUFFERSIZE					: INT  := 20;
+	cPAPERPOSITION_TOLERANCE_mm		: UINT := 200;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF m_intPaperOnBelt > 0 THEN
+	iNdx := m_intFirstPaperIdx;
+	
+	FOR iIdx := 0 TO m_intPaperOnBelt-1 DO
+		m_arBuffer[iNdx].udiTimeOnBelt_us := m_arBuffer[iNdx].udiTimeOnBelt_us + THIS^.m_udiTimeBase_us;
+		m_arBuffer[iNdx].lrePositionOnBelt_mm := m_arBuffer[iNdx].lrePositionOnBelt_mm + UDINT_TO_LREAL(THIS^.m_udiTimeBase_us) * UDINT_TO_LREAL(THIS^.In_uinBeltSpeed) / 1000000.0;
+				
+		CASE m_arBuffer[iNdx].eStatus OF
+			E_PTR_Status.EnterBusy:
+				m_arBuffer[iNdx].lrePositionOnBeltAdjusted_mm := MIN(m_intPaperEntryOffset_mm, LREAL_TO_INT(m_arBuffer[iNdx].lrePositionOnBelt_mm));
+				iDifference := m_intPaperEntryOffset_mm - LREAL_TO_DINT(m_arBuffer[iNdx].lrePositionOnBelt_mm);
+					
+				IF 	(iDifference < 0) AND (ABS(iDifference) > cPAPERPOSITION_TOLERANCE_mm) THEN
+					m_arBuffer[iNdx].eStatus := E_PTR_Status.ERROR;
+				END_IF
+			E_PTR_Status.OnBelt:
+				m_arBuffer[iNdx].lrePositionOnBeltAdjusted_mm := MIN(m_dinBeltLength, LREAL_TO_DINT(m_arBuffer[iNdx].lrePositionOnBelt_mm));
+				iDifference := m_dinBeltLength - LREAL_TO_DINT(m_arBuffer[iNdx].lrePositionOnBelt_mm);
+
+				IF 	(iDifference < 0) AND (ABS(iDifference) > cPAPERPOSITION_TOLERANCE_mm) THEN
+					m_arBuffer[iNdx].eStatus :=  E_PTR_Status.ERROR;
+				END_IF
+			E_PTR_Status.ExitBusy:
+		END_CASE
+		
+		m_arPositionList[iIdx] :=  m_arBuffer[iNdx];	
+		iNdx := (iNdx + 1) MOD THIS^.cMAXBUFFERSIZE;
+	END_FOR
+ELSE
+	m_arPositionList[0].eStatus := E_PTR_Status.Gone;
+END_IF]]></ST>
+    </Implementation>
+    <Method Name="Push" Id="{3bd42fac-05be-4d58-a731-e7926fc5bb2c}">
+      <Declaration><![CDATA[METHOD PUBLIC Push : BOOL
+// Add (Push) a paper into the buffer
+// Return an ID for the paper
+VAR_INPUT
+	In_udiItemId			: UDINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Push := FALSE;
+
+IF m_intPaperOnBelt < THIS^.cMAXBUFFERSIZE THEN
+	m_intLastPaperIdx := (m_intLastPaperIdx + 1) MOD THIS^.cMAXBUFFERSIZE;
+	m_arBuffer[m_intLastPaperIdx].udiItemId := In_udiItemId;
+	m_arBuffer[m_intLastPaperIdx].lrePositionOnBelt_mm := 0.0;
+	m_arBuffer[m_intLastPaperIdx].lrePositionOnBeltAdjusted_mm := 0.0;
+	m_arBuffer[m_intLastPaperIdx].udiTimeOnBelt_us := 0;
+	m_arBuffer[m_intLastPaperIdx].eStatus := E_PTR_Status.EnterBusy;
+	m_intPaperOnBelt := m_intPaperOnBelt + 1;
+	Push := TRUE;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Pop" Id="{782b3b04-974f-448f-98e0-75f16bcea2d3}">
+      <Declaration><![CDATA[METHOD PUBLIC Pop : T_PTR_STRUCT
+// Remove a paper from the buffer
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Pop.eStatus := E_PTR_Status.Gone;
+Pop.lrePositionOnBelt_mm := 0.0;
+Pop.lrePositionOnBeltAdjusted_mm := 0.0;
+Pop.udiItemId := 0;
+Pop.udiTimeOnBelt_us := 0;
+
+
+IF m_intPaperOnBelt > 0 THEN
+	Pop := m_arBuffer[m_intFirstPaperIdx];
+	m_arBuffer[m_intFirstPaperIdx].udiItemId := 0;
+	m_arBuffer[m_intFirstPaperIdx].lrePositionOnBelt_mm := 0.0;
+	m_arBuffer[m_intFirstPaperIdx].lrePositionOnBeltAdjusted_mm := 0.0;
+	m_arBuffer[m_intFirstPaperIdx].udiTimeOnBelt_us := 0;
+	m_arBuffer[m_intFirstPaperIdx].eStatus := E_PTR_Status.Gone;
+	m_intPaperOnBelt := m_intPaperOnBelt - 1;
+
+	IF m_intPaperOnBelt = 0 THEN
+		m_arPositionList[0] := m_arBuffer[m_intFirstPaperIdx];
+	END_IF
+
+	m_intFirstPaperIdx := (m_intFirstPaperIdx + 1) MOD THIS^.cMAXBUFFERSIZE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{2998101c-1561-4b49-bac3-d73080087d98}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
+	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[m_udiTimeBase_us := 2000;
+m_intPaperEntryOffset_mm := 0;
+Reset();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Reset" Id="{bb01b83a-0aee-4ce7-b33c-c20369017ed9}">
+      <Declaration><![CDATA[METHOD PUBLIC Reset : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[m_intFirstPaperIdx := 0;
+m_intLastPaperIdx := -1;
+m_intPaperOnBelt := 0;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Insert" Id="{de40f836-15e6-40ed-bacf-c50f2020fa3b}">
+      <Declaration><![CDATA[METHOD PUBLIC Insert : BOOL
+VAR_INPUT
+	uinPosition_mm			: UINT;
+	udiItemId				: UDINT;
+END_VAR
+VAR
+	iIdx					: INT;
+	iNdx					: INT;
+	iInsertIdx				: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[iInsertIdx := m_intFirstPaperIdx;
+iNdx := m_intFirstPaperIdx;
+iIdx := 0;
+	
+WHILE (iIdx < m_intPaperOnBelt) AND (uinPosition_mm < m_arBuffer[iNdx].lrePositionOnBelt_mm) DO
+	iIdx := iIdx + 1;
+	iNdx := (iNdx + 1) MOD THIS^.cMAXBUFFERSIZE;
+END_WHILE
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="EnterComplete" Id="{6a2fc8dd-a7b1-441b-837b-5cbf52831705}">
+      <Declaration><![CDATA[METHOD PUBLIC EnterComplete : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[m_arBuffer[m_intLastPaperIdx].eStatus := E_PTR_Status.OnBelt;
+m_arBuffer[m_intLastPaperIdx].lrePositionOnBelt_mm := INT_TO_LREAL(m_intPaperEntryOffset_mm);
+m_arBuffer[m_intLastPaperIdx].lrePositionOnBeltAdjusted_mm := INT_TO_LREAL(m_intPaperEntryOffset_mm);
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="TimeBase" Id="{d556835c-92d4-4d41-a10e-841f369ce8a1}">
+      <Declaration><![CDATA[PROPERTY PUBLIC TimeBase : UDINT]]></Declaration>
+      <Get Name="Get" Id="{c8a3a9f6-d365-4cbe-a1bf-cdded026d3c1}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[TimeBase := m_udiTimeBase_us;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{4c23d445-ae34-4c7a-8b01-f8a861d02cdd}">
+        <Declaration><![CDATA[VAR
+END_VAR]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_udiTimeBase_us := TimeBase;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="PositionList" Id="{65035646-2310-45c0-acb9-1e4eedf109aa}">
+      <Declaration><![CDATA[PROPERTY PUBLIC PositionList : POINTER TO T_PTR_STRUCT]]></Declaration>
+      <Get Name="Get" Id="{da2f9eae-df75-4f6e-8ccf-fe2b27078bdc}">
+        <Declaration><![CDATA[VAR
+	iIdx			: INT;
+	iNdx			: INT;
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[PositionList := ADR(m_arPositionList);]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{c2bcaa1c-173e-4bb8-b27f-096294105789}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="PaperOnBelt" Id="{ab4c9734-46a4-4a76-8c9c-28c14fb51474}">
+      <Declaration><![CDATA[PROPERTY PUBLIC PaperOnBelt : UINT]]></Declaration>
+      <Get Name="Get" Id="{e659b779-4de0-4169-bf81-03d657442328}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[PaperOnBelt := INT_TO_UINT(m_intPaperOnBelt);]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{f51c1c9b-a1af-44cc-8e29-bc3ca4403875}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="PaperEntryOffset" Id="{fa805dbb-2846-429a-a1d3-329aeb64010e}">
+      <Declaration><![CDATA[PROPERTY PUBLIC PaperEntryOffset : INT]]></Declaration>
+      <Get Name="Get" Id="{eab87371-2d51-4361-95dd-c23fae1ed411}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[PaperEntryOffset := m_intPaperEntryOffset_mm;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{6cd3c259-e487-497b-a29a-29f53bd875df}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_intPaperEntryOffset_mm := PaperEntryOffset;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="BeltLength" Id="{7ab86a98-e878-4580-9b2a-a7a6371ad55d}">
+      <Declaration><![CDATA[PROPERTY PUBLIC BeltLength : DINT]]></Declaration>
+      <Get Name="Get" Id="{92a833ac-5411-4c10-90a1-5bd9f44e5b9c}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[BeltLength := m_dinBeltLength;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{0dc1006d-3f44-4174-9aba-cf0c42ec076c}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_dinBeltLength := BeltLength;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

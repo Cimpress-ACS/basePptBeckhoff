@@ -1,0 +1,24 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_PTB" Id="{46332720-5139-4d93-9171-0144ee593238}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_PTB :
+STRUCT
+	///configuration
+	Cfg: T_Ctrl_SIf_PTB_Cfg;
+	///parameter
+	Par: T_Ctrl_SIf_PTB_Par;
+	///current values
+	Cur: T_Ctrl_SIf_PTB_Cur;
+	///io input
+	In: T_Ctrl_SIf_PTB_In;
+	///io output
+	Out: T_Ctrl_SIf_PTB_Out;
+	///alarm number used in this controller
+	Alm: ARRAY[1..E_ALM_PTB.MAX_E_ALM_PTB] OF T_Ctrl_Alm;
+	///interlock of output/movements
+	Ilk: T_Ctrl_SIf_PTB_Ilk;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

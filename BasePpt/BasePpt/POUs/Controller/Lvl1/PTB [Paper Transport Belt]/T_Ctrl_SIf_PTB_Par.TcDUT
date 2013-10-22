@@ -1,0 +1,36 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_PTB_Par" Id="{830ba7d5-f8ef-488f-9c51-926ee240ce52}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_PTB_Par :
+STRUCT
+	/// <0 = Backward; =0 None; >0 forward
+	intDirection						: INT;
+	/// [mm] Distance to move if Move Mode is distance
+	udiDistanceToMove_mm				: UDINT;
+	/// [ms] Time to move
+	udiTimeToMove_ms					: UDINT;
+	/// Stack hight in # of sheets
+	uinPaperStackHight					: UINT;
+	/// Automatic ejecting the paper if stackhight is reached
+	bolAutoEjectAfterStack				: BOOL;
+	/// Automatic stacking the paper after ejecting all paper
+	bolAutoStackAfterEject				: BOOL;
+	/// Belt Parameter
+	rBeltParam							: T_Belt_Par_Base;
+	// [ms] Stack delay time - Delay before out motor can move after paper entered system
+	udiStackDelayTime_ms				: UDINT;
+	// [mm] Belt Length
+	udiBeltLength_mm					: UDINT;
+	// Page running format
+	ePaperOrientation					: E_PTB_PaperDirection;
+	/// [mm] Paper Hight
+	uinPaperHight_mm					: UINT;
+	/// [mm] Paper Width
+	uinPaperWidth_mm					: UINT;
+	// [ms] Input Parameter Debounce time
+	uinInputSignalDebounceTime_ms		: UINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,18 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_PTS_Cur" Id="{ff662493-dbd5-4f18-af1b-b10056141885}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_PTS_Cur :
+STRUCT	
+	/// Actual Sheet In- Out- Positions
+	rInOutPosition					: T_PTS_InOutPositions;
+	/// Saves the last executed distribution index
+	iActualDistributionIndex		: INT;
+	/// [ms] Time to wait after paper was detected before to turn.
+	udiPaperInTurnDelayTime				: UDINT;
+	/// [ms] Time to wait after paper is not detected anymore before to turn back.
+	udiPaperOutTurnDelayTime			: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

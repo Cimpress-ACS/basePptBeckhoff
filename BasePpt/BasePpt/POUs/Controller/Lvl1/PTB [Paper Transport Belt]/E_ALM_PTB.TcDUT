@@ -1,0 +1,12 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="E_ALM_PTB" Id="{185a2a6c-bbe5-44eb-8928-25bb7caef71f}">
+    <Declaration><![CDATA[TYPE E_ALM_PTB :
+(
+	TestAlarm := 1,
+	MAX_E_ALM_PTB 
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

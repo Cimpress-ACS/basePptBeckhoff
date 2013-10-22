@@ -1,0 +1,13 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="E_BELT_DIRECTION" Id="{b603305a-71be-4f2e-8ca7-abf199e3bb49}">
+    <Declaration><![CDATA[TYPE E_BELT_DIRECTION :
+(
+	FORWARD			:= 0,
+	BACKWARD		:= 1,
+	MAX_E_BELT_DIRECTION
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

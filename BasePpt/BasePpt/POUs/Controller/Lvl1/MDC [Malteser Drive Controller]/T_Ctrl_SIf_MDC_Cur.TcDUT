@@ -1,0 +1,16 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Ctrl_SIf_MDC_Cur" Id="{73e32c06-5b45-4a3d-9598-fa275da77885}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_MDC_Cur :
+STRUCT	
+	/// Actual Position as position 
+	uintActualPosition			: UINT;
+	/// actual turning direction
+	eActualTurningDirection		: E_TURN_DIRECTION;
+	/// Reference still ok
+	bolReferenceOk				: BOOL;		
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

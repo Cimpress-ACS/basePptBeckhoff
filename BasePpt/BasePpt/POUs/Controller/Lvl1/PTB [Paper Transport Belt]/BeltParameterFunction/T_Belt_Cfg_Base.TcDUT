@@ -1,0 +1,16 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Belt_Cfg_Base" Id="{5adf9fcb-2704-4517-830f-b2f55cd045a3}">
+    <Declaration><![CDATA[TYPE T_Belt_Cfg_Base :
+STRUCT
+	/// Assign the motor rotation to a belt direction.
+	intForwardDirection				: INT;
+	/// Assign the motor rotation to a belt direction.
+	intBackwardDirection			: INT;
+	/// [mm] the belt travels per motor rotation
+	reaRpmDistance_mm					: REAL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

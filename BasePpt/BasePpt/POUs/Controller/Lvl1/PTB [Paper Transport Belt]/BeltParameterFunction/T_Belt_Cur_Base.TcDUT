@@ -1,0 +1,14 @@
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+  <DUT Name="T_Belt_Cur_Base" Id="{916d4012-4226-46b5-953f-331c4b61242c}">
+    <Declaration><![CDATA[TYPE T_Belt_Cur_Base :
+STRUCT
+	/// [mm/s] Belt speed
+	uinBeltSpeed_mms						: UINT;
+	/// [rpm] Belt speed
+	uinBeltSpeed_rpm						: UINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>
