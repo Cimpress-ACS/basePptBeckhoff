@@ -48,6 +48,7 @@ History:
 Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		09.07.2013		PC			Start history
+0.00.2		14.02.2014		AVME/MRU	Cyclic call of fbPositionService added
 ___________________________________________________________________________________________________*)
 
 
@@ -1064,6 +1065,8 @@ IF SIf.In.bolBeltExitSensorPEdge.intern THEN
 	fbPositionService.Pop();
 END_IF
 
+// Cyclic call
+fbPositionService();
 SIf.Cur.uinPaperOnBelt := fbPositionService.PaperOnBelt;
 ]]></ST>
       </Implementation>
