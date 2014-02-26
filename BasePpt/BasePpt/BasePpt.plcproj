@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.5</ProjectVersion>
+    <ProjectVersion>0.0.0.6</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.5 - Added new Base_PLC 0.3.4.1
+    <Description>0.0.0.6 - Changes for Simualtion in MDC, sta_OFFBusy in PTB/MDC reworked; Always in PTB reworked;
+0.0.0.5 - Added new Base_PLC 0.3.4.1
 0.0.0.4 - Bug fixed in FB_PTB
 0.0.0.3 - Update to take the newest libraries 
 0.0.0.2 - Update to Base_PLC 0.3.3.2; Update to Base_Elements 0.0.0.9</Description>
@@ -27,7 +28,7 @@
     <AssemblyName>MyApplication</AssemblyName>-->
   </PropertyGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.1.1,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.1.2,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
     <LibraryReference Include="Base_PLC,0.3.4.2,Vistaprint">

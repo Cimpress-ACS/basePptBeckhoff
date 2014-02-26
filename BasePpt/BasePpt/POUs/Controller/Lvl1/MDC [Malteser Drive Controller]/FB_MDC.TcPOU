@@ -34,6 +34,9 @@ History:
 Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		09.07.2013		PC			Start history
+0.00.2		19.02.2014		AVME/MRU	Changes in sta_TurnBusy for simulation
+0.00.3		24.02.2014		AVME/MRU	sta_OFFBusy reworked
+
 ___________________________________________________________________________________________________*)
 
 
@@ -375,13 +378,17 @@ END_VAR
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		pMotor_CIF^.Job.intACmd := BASE_PLC.cCMD_OFF;		
+		// Set commandos not only in entry action because of possible errors or manual/auto changes
+		// pMotor_CIF^.Job.intACmd := BASE_PLC.cCMD_OFF;		
 	END_IF
 
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		pMotor_CIF^.Job.intACmd := BASE_PLC.cCMD_OFF;		
+
 		IF pMotor_CIF^.Job.intState = BASE_PLC.cSTA_OFF THEN
 			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFF;
 		END_IF
@@ -648,7 +655,7 @@ END_VAR
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 
 		fbSimulationTimer.IN := FALSE;
-		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiStepRotationTime_ms);
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiSimStepRotationTime_ms);
 		fbSimulationTimer(); // set time/reset timer
 		fbSimulationTimer.IN := TRUE; // start timer
 

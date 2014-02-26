@@ -49,6 +49,7 @@ Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		09.07.2013		PC			Start history
 0.00.2		14.02.2014		AVME/MRU	Cyclic call of fbPositionService added
+0.00.3		24.02.2014		AVME/MRU	sta_OFFBusy reworked
 ___________________________________________________________________________________________________*)
 
 
@@ -191,6 +192,16 @@ IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_Alm
 	me.StateMachine.intStateNext := cSTA_OFFBusy;
 END_IF
 
+// ----------------------------------------------------------------------------------
+// Conditions Always
+// overrule error always from base -> no EOFF State!! in EOFF go to OFF
+IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
+	IF (me.StateMachine.intState=cSTA_OFF) THEN
+		me.StateMachine.intStateNext := cSTA_OFF;
+	ELSE // stay in OFF
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	END_IF
+END_IF
 
 // -----------------------------------------------------------------------------------
 PaperPositionHandling();
@@ -456,13 +467,18 @@ END_VAR
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		cmd_OFF();
+
+		// Set commandos not only in entry action because of possible errors or manual/auto changes
+		// cmd_OFF();
 	END_IF
 
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		cmd_OFF();
+	
 		IF p_fbMotor^.CtrlCIf^.Job.intState = BASE_PLC.cSTA_OFF 
 		  AND CheckPumpState(BASE_PLC.cSTA_OFF) THEN
 			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFF;
