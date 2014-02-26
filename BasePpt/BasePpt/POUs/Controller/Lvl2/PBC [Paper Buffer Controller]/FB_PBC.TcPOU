@@ -19,8 +19,8 @@ VAR
 	pBeltCIf						: POINTER TO BASE_PLC.T_Ctrl_CIf;
 
 
-	m_uinPaperHight_mm			: UINT;
-	m_uinPaperWidth_mm			: UINT;
+	m_uinPaperHight_mm			: UINT := 460;
+	m_uinPaperWidth_mm			: UINT := 320;
 END_VAR
 VAR CONSTANT
 	cPAPERPOSITION_TOLERANCE_mm		: UINT := 200;
@@ -1120,15 +1120,6 @@ END_VAR
     </Property>
     <Property Name="PaperHight" Id="{527c0037-a43f-46c9-a6ae-e6ceddd0ccaf}">
       <Declaration><![CDATA[PROPERTY PUBLIC PaperHight : UINT]]></Declaration>
-      <Set Name="Set" Id="{8ff9c6f1-ad65-4413-9c10-6e3c5fd77222}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[m_uinPaperHight_mm := PaperHight;]]></ST>
-        </Implementation>
-        <ObjectProperties />
-      </Set>
       <Get Name="Get" Id="{e5b9a80b-8505-4d0e-8c0c-f9d0c54e2c70}">
         <Declaration><![CDATA[VAR
 END_VAR
@@ -1136,21 +1127,18 @@ END_VAR
         <Implementation>
           <ST><![CDATA[PaperHight := m_uinPaperHight_mm;]]></ST>
         </Implementation>
-        <ObjectProperties />
       </Get>
-      <ObjectProperties />
-    </Property>
-    <Property Name="PaperWidth" Id="{44d21eca-9323-46d0-845a-a7e1e74db448}">
-      <Declaration><![CDATA[PROPERTY PUBLIC PaperWidth : UINT]]></Declaration>
-      <Set Name="Set" Id="{1569bb1c-d900-456d-b20d-84c3b85dd393}">
+      <Set Name="Set" Id="{8ff9c6f1-ad65-4413-9c10-6e3c5fd77222}">
         <Declaration><![CDATA[VAR
 END_VAR
 ]]></Declaration>
         <Implementation>
-          <ST><![CDATA[m_uinPaperWidth_mm := PaperWidth;]]></ST>
+          <ST><![CDATA[m_uinPaperHight_mm := PaperHight;]]></ST>
         </Implementation>
-        <ObjectProperties />
       </Set>
+    </Property>
+    <Property Name="PaperWidth" Id="{44d21eca-9323-46d0-845a-a7e1e74db448}">
+      <Declaration><![CDATA[PROPERTY PUBLIC PaperWidth : UINT]]></Declaration>
       <Get Name="Get" Id="{6380a29d-3892-469a-a6f5-c65dc88c20a5}">
         <Declaration><![CDATA[VAR
 END_VAR
@@ -1158,9 +1146,15 @@ END_VAR
         <Implementation>
           <ST><![CDATA[PaperWidth := m_uinPaperWidth_mm;]]></ST>
         </Implementation>
-        <ObjectProperties />
       </Get>
-      <ObjectProperties />
+      <Set Name="Set" Id="{1569bb1c-d900-456d-b20d-84c3b85dd393}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[m_uinPaperWidth_mm := PaperWidth;]]></ST>
+        </Implementation>
+      </Set>
     </Property>
     <ObjectProperties>﻿<XmlArchive>
   <Data>
