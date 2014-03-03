@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.6</ProjectVersion>
+    <ProjectVersion>0.0.0.7</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.6 - Changes for Simualtion in MDC, sta_OFFBusy in PTB/MDC reworked; Always in PTB reworked;
+    <Description>0.0.0.7 - Added newer Versions of libraries.
+0.0.0.6 - Changes for Simualtion in MDC, sta_OFFBusy in PTB/MDC reworked; Always in PTB reworked;
 0.0.0.5 - Added new Base_PLC 0.3.4.1
 0.0.0.4 - Bug fixed in FB_PTB
 0.0.0.3 - Update to take the newest libraries 
@@ -37,7 +38,7 @@
     <LibraryReference Include="Tc2_Standard,3.3.0.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_Standard</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_System,3.3.2.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_System,newest,Beckhoff Automation GmbH">
       <Namespace>Tc2_System</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_Utilities,newest,Beckhoff Automation GmbH">
@@ -46,7 +47,7 @@
     <LibraryReference Include="Tc3_Interfaces,3.3.0.0,Beckhoff Automation GmbH">
       <Namespace>Tc3_Interfaces</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc3_Module,3.3.3.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc3_Module,newest,Beckhoff Automation GmbH">
       <Namespace>Tc3_Module</Namespace>
     </LibraryReference>
   </ItemGroup>
