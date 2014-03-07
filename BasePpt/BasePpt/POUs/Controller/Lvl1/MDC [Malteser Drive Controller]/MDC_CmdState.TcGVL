@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
   <GVL Name="MDC_CmdState" Id="{ce9b6325-0b31-44cd-ab82-396a62a84748}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	///ctrl commands definitions
@@ -19,7 +19,7 @@
 	
 	cSUB_TURNbusy			: INT := 300;
 	cSUB_STOPbusy			: INT := 301;
+	cSUB_FINDHOLEbusy		: INT := 302;
 END_VAR]]></Declaration>
-    <ObjectProperties />
   </GVL>
 </TcPlcObject>

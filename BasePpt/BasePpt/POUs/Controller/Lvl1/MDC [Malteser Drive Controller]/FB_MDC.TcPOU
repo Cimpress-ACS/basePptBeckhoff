@@ -1,4 +1,4 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
   <POU Name="FB_MDC" Id="{caba4f97-8b2b-426d-95b4-6b3a12d61c7c}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_MDC EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -125,7 +125,7 @@ SIf.Cfg.uintPositionPerTurn			:= 4;
 SIf.Par.intTurnDirection			:= 0;
 SIf.Par.uinPositionToGo				:= 0;
 SIf.Par.uinPositionSpeed_rpm		:= 1400;
-SIf.Par.uinPrePositionSpeed_rpm		:= 500;
+SIf.Par.uinPrePositionSpeed_rpm		:= 450;
 SIf.Par.udiInitializationTime_ms 	:= 16000;
 SIf.Par.udiStepRotationTime_ms 		:= 2000;
 SIf.Par.udiSimInitializationTime_ms := SIf.Par.udiInitializationTime_ms / 2;
@@ -157,95 +157,196 @@ IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_Alm
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="getCmdState" Id="{e9ee37c9-5352-4572-9d91-c485c4add9d5}">
-      <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
-
+    <Method Name="sta_PREPOSITIONbusy" Id="{0a756157-e369-43b7-980d-ce5376ee5939}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PREPOSITIONbusy : BOOL
 VAR_INPUT
-	intCmdState: INT;
-	bolState: BOOL;
-END_VAR]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
-
-IF (getCmdState='') THEN // global not defined get local
-	// get string cmd/state string information in runtime
-	IF (bolState=FALSE) THEN
-		CASE intCmdState OF
-			MDC_CmdState.cCMD_INITIALIZE: 
-				getCmdState := 'Initialize';
-			MDC_CmdState.cCMD_TURN: 
-				getCmdState := 'Turn';
-			MDC_CmdState.cCMD_PREPOSITION: 
-				getCmdState := 'PrePosition';
-		END_CASE;
-	ELSE
-		// States's
-		CASE intCmdState OF
-			MDC_CmdState.cSTA_InitializeBusy: 
-				getCmdState := 'InitializeBusy';
-			MDC_CmdState.cSTA_InPositionBusy: 
-				getCmdState := 'InPositionBusy';
-			MDC_CmdState.cSTA_InPosition: 
-				getCmdState := 'InPosition';
-			MDC_CmdState.cSTA_StartTurnBusy: 
-				getCmdState := 'StartTurnBusy';
-			MDC_CmdState.cSTA_TurnBusy: 
-				getCmdState := 'TurnBusy';
-			MDC_CmdState.cSTA_TURNDONE: 
-				getCmdState := 'TURNDONE';
-			MDC_CmdState.cSTA_PREPOSITIONbusy: 
-				getCmdState := 'PREPOSITIONbusy';
-			MDC_CmdState.cSTA_PREPOSITION: 
-				getCmdState := 'PREPOSITION';
-
-			MDC_CmdState.cSUB_STOPbusy: 
-				getCmdState := 'STOPbusy';
-			MDC_CmdState.cSUB_TURNbusy: 
-				getCmdState := 'TURNbusy';
-		END_CASE;
-	END_IF
-END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="getCtrlSIf" Id="{bcf7a119-b9c3-451f-a4f1-583f2b4865a3}">
-      <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_MDC
-
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="IoInBridge" Id="{87e20e42-50e8-41c7-a97a-0c01bc682c83}">
-      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
-SIf.In.bolCrossPositionSensor.map := NOT THIS^.In_bolCrossPositionSensor;
-SIf.In.bolTablePositionSensor.map := THIS^.In_bolTablePositionSensor;
-
-IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolCrossPositionSensor));
-	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolTablePositionSensor));
-ELSE
-	//simulation of global IO
-END_IF
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="IoOutBridge" Id="{8f0d5e14-4c61-4a7f-a73d-5a11076e3bac}">
-      <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
-VAR
-	bolSwitchValvesOff: BOOL;
 END_VAR
-
+VAR
+	eOldDirection		: BASE_ELEMENTS.E_TURN_DIRECTION;
+END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
-IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-	setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.intActualPosition));
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	
+	IF SIf.Par.uinPositionToGo <> SIf.Cur.uintActualPosition THEN
+		eOldDirection := SIf.Cur.eActualTurningDirection;
+		SIf.Cur.eActualTurningDirection := GetTurningDirection();
 
-	THIS^.Out_intActualPosition := SIf.Out.intActualPosition.map;
+		// Set Speed
+		p_fbMotor^.CtrlSIf^.Par.uinSpeed_rpm := SIf.Par.uinPrePositionSpeed_rpm;
+		
+		// Send the comand
+		CASE SIf.Cur.eActualTurningDirection OF
+			E_TURN_DIRECTION.LEFT:
+				pMotor_CIF^.Job.intACmd := cCMD_LEFT;		
+			E_TURN_DIRECTION.RIGHT:
+				pMotor_CIF^.Job.intACmd := cCMD_RIGHT;		
+		END_CASE
+
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiSimStartRotationTime_ms);
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+		
+		IF eOldDirection = SIf.Cur.eActualTurningDirection THEN
+			me.SubStateMachine.intState	    := MDC_CmdState.cSUB_TURNbusy;
+			me.SubStateMachine.intStateNext := MDC_CmdState.cSUB_TURNbusy;
+		ELSE
+			me.SubStateMachine.intState	    := MDC_CmdState.cSUB_FINDHOLEbusy;
+			me.SubStateMachine.intStateNext := MDC_CmdState.cSUB_FINDHOLEbusy;
+		END_IF
+	ELSE
+		me.StateMachine.intStateNext := MDC_CmdState.cSTA_PREPOSITION;
+	END_IF
+END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+	IF (CIf.SwCfg.bolSimulation) THEN
+		fbSimulationTimer(); // simulation time
+
+		IF (fbSimulationTimer.Q) THEN
+			SIf.In.bolCrossPositionSensor.intern := FALSE;
+			SIf.In.bolTablePositionSensor.intern := FALSE;
+		END_IF
+	END_IF
+	
+	CASE me.SubStateMachine.intState OF
+		MDC_CmdState.cSUB_FINDHOLEbusy:
+			IF SIf.In.bolCrossPositionSensor.intern THEN
+				me.SubStateMachine.intStateNext := MDC_CmdState.cSUB_TURNbusy;
+			END_IF
+		MDC_CmdState.cSUB_TURNbusy:
+			IF NOT SIf.In.bolCrossPositionSensor.intern THEN
+				pMotor_CIF^.Job.intACmd := BASE_PLC.cCMD_STOP;		
+				me.SubStateMachine.intStateNext := MDC_CmdState.cSUB_STOPbusy;
+			END_IF
+		MDC_CmdState.cSUB_STOPbusy:
+			IF pMotor_CIF^.Job.intState = BASE_PLC.cSTA_STOP THEN
+				me.StateMachine.intStateNext := MDC_CmdState.cSTA_PREPOSITION;
+			END_IF
+	END_CASE
+	
+	IF me.intCmd = MDC_CmdState.cCMD_TURN THEN
+//		Log Message ---------------------
+		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'sta_PREPOSITIONbusy, %s','MDC_CmdState.cCMD_TURN');
+//		---------------------------------
+		
+		IF SIf.Par.uinPositionToGo <> SIf.Cur.uintActualPosition THEN
+			me.StateMachine.intStateNext := MDC_CmdState.cSTA_StartTurnBusy;
+		ELSE
+			CIf.Job.intACmd := cCMD_DONE;
+			CIf.Job.intMCmd := cCMD_DONE;
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_MDC.PositionSame),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		END_IF
+	END_IF
+
+	IF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiStepRotationTime_ms) THEN
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_MDC.CrossSensorTimeout),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;	
+	END_IF
+	
+	
+END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+	;
 END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_StartTurnBusy" Id="{0b7a5a6f-a052-4d75-bece-e8cd4f8f2b1e}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_StartTurnBusy : Bool
+VAR
+	iDifference			: INT;
+	eOldDirection		: BASE_ELEMENTS.E_TURN_DIRECTION;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		IF SIf.Par.uinPositionToGo <> SIf.Cur.uintActualPosition THEN
+			eOldDirection := SIf.Cur.eActualTurningDirection;
+			SIf.Cur.eActualTurningDirection := GetTurningDirection();
+
+			// Set Speed
+			p_fbMotor^.CtrlSIf^.Par.uinSpeed_rpm := SIf.Par.uinPositionSpeed_rpm;
+			
+			// Send the comand
+			CASE SIf.Cur.eActualTurningDirection OF
+				E_TURN_DIRECTION.LEFT:
+					pMotor_CIF^.Job.intACmd := cCMD_LEFT;		
+				E_TURN_DIRECTION.RIGHT:
+					pMotor_CIF^.Job.intACmd := cCMD_RIGHT;		
+			END_CASE
+
+			IF eOldDirection = SIf.Cur.eActualTurningDirection THEN
+				me.SubStateMachine.intState	    := MDC_CmdState.cSUB_TURNbusy;
+				me.SubStateMachine.intStateNext := MDC_CmdState.cSUB_TURNbusy;
+			ELSE
+				me.SubStateMachine.intState	    := MDC_CmdState.cSUB_FINDHOLEbusy;
+				me.SubStateMachine.intStateNext := MDC_CmdState.cSUB_FINDHOLEbusy;
+			END_IF
+			
+			fbSimulationTimer.IN := FALSE;
+			fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiSimStartRotationTime_ms);
+			fbSimulationTimer(); // set time/reset timer
+			fbSimulationTimer.IN := TRUE; // start timer
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF (CIf.SwCfg.bolSimulation) THEN
+			fbSimulationTimer(); // simulation time
+
+			IF (fbSimulationTimer.Q) THEN
+				SIf.In.bolCrossPositionSensor.intern := FALSE;
+				SIf.In.bolTablePositionSensor.intern := FALSE;
+			END_IF
+		END_IF
+		
+		CASE me.SubStateMachine.intState OF
+			MDC_CmdState.cSUB_FINDHOLEbusy:
+				IF SIf.In.bolCrossPositionSensor.intern THEN
+					me.SubStateMachine.intStateNext := MDC_CmdState.cSUB_TURNbusy;
+				END_IF
+			MDC_CmdState.cSUB_TURNbusy:
+				IF NOT SIf.In.bolCrossPositionSensor.intern THEN
+					me.StateMachine.intStateNext := MDC_CmdState.cSTA_TurnBusy;
+				END_IF
+		END_CASE
+
+		IF SIf.Par.uinPositionToGo = SIf.Cur.uintActualPosition THEN
+			me.StateMachine.intStateNext := MDC_CmdState.cSTA_TURNDONE;
+		END_IF 
+		
+		IF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiStepRotationTime_ms) THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_MDC.CrossSensorTimeout),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;	
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_ERROR" Id="{14f18958-7ce3-452a-be2a-23fbae64e135}">
@@ -277,6 +378,327 @@ END_IF]]></ST>
 	END_IF
 
 
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="SetPositionToGo" Id="{288c345b-c408-445a-b778-aa4878202e04}">
+      <Declaration><![CDATA[METHOD SetPositionToGo : BOOL
+VAR_INPUT
+	uinPositionToGo: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SIf.Par.uinPositionToGo := uinPositionToGo;
+
+SetPositionToGo := uinPositionToGo = SIf.Cur.uintActualPosition;]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Property Name="ActualPosition" Id="{37b25c62-eaaf-4d3d-a3af-b1549595b49d}">
+      <Declaration><![CDATA[PROPERTY ActualPosition : UINT
+]]></Declaration>
+      <Get Name="Get" Id="{8ed16685-6a2a-42fe-92b0-af8428cdecec}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[ActualPosition := SIf.Cur.uintActualPosition;]]></ST>
+        </Implementation>
+        <ObjectProperties />
+      </Get>
+      <ObjectProperties />
+    </Property>
+    <Method Name="IncrementPosition" Id="{3d60a3ff-3196-4c1d-a783-63224888d106}">
+      <Declaration><![CDATA[METHOD PROTECTED IncrementPosition : UINT
+VAR_INPUT
+	uinPosition		: UINT;
+	eDirection		: E_TURN_DIRECTION;
+END_VAR
+VAR
+	iNewPosition	: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF eDirection = E_TURN_DIRECTION.RIGHT THEN
+	iNewPosition := UINT_TO_INT((uinPosition + 1) MOD SIf.Cfg.uintPositionPerTurn);
+ELSE
+	iNewPosition := UINT_TO_INT(uinPosition) - 1;
+	
+	IF (iNewPosition < 0) THEN
+		iNewPosition := UINT_TO_INT(SIf.Cfg.uintPositionPerTurn) - 1;
+	END_IF
+END_IF
+
+IncrementPosition := INT_TO_UINT(iNewPosition);
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="GetTurningDirection" Id="{448116ec-067f-4a4a-aa15-1cf64676dce3}">
+      <Declaration><![CDATA[METHOD PROTECTED GetTurningDirection : E_TURN_DIRECTION
+VAR
+	iDifference 		: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[GetTurningDirection := E_TURN_DIRECTION.RIGHT;
+
+// Determine the turning direction depending on set value or on shortest distance
+CASE SIf.Par.intTurnDirection OF
+	E_TURN_DIRECTION.LEFT	:
+		GetTurningDirection := E_TURN_DIRECTION.LEFT;
+	E_TURN_DIRECTION.AUTOMATIC 	:
+		GetTurningDirection := E_TURN_DIRECTION.RIGHT;
+		
+		IF (SIf.Cur.uintActualPosition = 1) AND (SIf.Par.uinPositionToGo = 0) THEN
+			iDifference := 0;
+		END_IF
+
+		iDifference := UINT_TO_INT(SIf.Par.uinPositionToGo - SIf.Cur.uintActualPosition);
+		iDifference := ABS(iDifference);
+		
+		IF (    (SIf.Par.uinPositionToGo < SIf.Cur.uintActualPosition) AND (iDifference < UINT_TO_INT(SIf.Cfg.uintPositionPerTurn / 2)) 
+			 OR (SIf.Par.uinPositionToGo > SIf.Cur.uintActualPosition) AND (iDifference > UINT_TO_INT(SIf.Cfg.uintPositionPerTurn / 2))) THEN
+			GetTurningDirection := E_TURN_DIRECTION.LEFT;
+		END_IF;
+	E_TURN_DIRECTION.RIGHT	:
+		GetTurningDirection := E_TURN_DIRECTION.RIGHT;
+END_CASE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_TurnBusy" Id="{7cbd8d5e-f43d-46b2-b435-8d2e205dbbdf}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_TurnBusy : Bool
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiSimStepRotationTime_ms);
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+
+		me.SubStateMachine.intState 	:= MDC_CmdState.cSUB_TURNbusy;
+		me.SubStateMachine.intStateNext := MDC_CmdState.cSUB_TURNbusy;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF (CIf.SwCfg.bolSimulation) THEN
+			fbSimulationTimer(); // simulation time
+
+			IF (fbSimulationTimer.Q) THEN
+				SIf.In.bolCrossPositionSensor.intern := TRUE;
+			END_IF
+		END_IF
+		
+		CASE me.SubStateMachine.intState OF
+			MDC_CmdState.cSUB_TURNbusy:
+				IF SIf.In.bolCrossPositionSensor.intern THEN
+					SIf.Cur.uintActualPosition := IncrementPosition(SIf.Cur.uintActualPosition,SIf.Cur.eActualTurningDirection);
+					
+					IF (CIf.SwCfg.bolSimulation) THEN
+						IF SIf.Cur.uintActualPosition = 0 THEN
+							SIf.In.bolTablePositionSensor.intern := TRUE;
+						END_IF
+					END_IF
+					
+					IF SIf.Par.uinPositionToGo = SIf.Cur.uintActualPosition THEN
+						pMotor_CIF^.Job.intACmd := BASE_PLC.cCMD_STOP;		
+						me.SubStateMachine.intStateNext := MDC_CmdState.cSUB_STOPbusy;
+					ELSE
+						me.StateMachine.intStateNext := MDC_CmdState.cSTA_StartTurnBusy;
+					END_IF 
+				END_IF
+				
+			MDC_CmdState.cSUB_STOPbusy:
+				IF pMotor_CIF^.Job.intState = BASE_PLC.cSTA_STOP THEN
+					me.StateMachine.intStateNext := MDC_CmdState.cSTA_TURNDONE;
+				END_IF
+		END_CASE
+
+
+		IF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiStepRotationTime_ms) THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_MDC.CrossSensorTimeout),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;	
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PON" Id="{870bd253-b05d-4e39-9dca-47dd6109ef1f}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		;
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IoInBridge" Id="{87e20e42-50e8-41c7-a97a-0c01bc682c83}">
+      <Declaration><![CDATA[METHOD PROTECTED IoInBridge : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+SIf.In.bolCrossPositionSensor.map := NOT THIS^.In_bolCrossPositionSensor;
+SIf.In.bolTablePositionSensor.map := THIS^.In_bolTablePositionSensor;
+
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolCrossPositionSensor));
+	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolTablePositionSensor));
+ELSE
+	//simulation of global IO
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFFBusy" Id="{8d8b328d-dc07-43e2-ac84-ce6c09cbbac8}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		pMotor_CIF^.Job.intACmd := BASE_PLC.cCMD_OFF;		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF pMotor_CIF^.Job.intState = BASE_PLC.cSTA_OFF THEN
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFF;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IoOutBridge" Id="{8f0d5e14-4c61-4a7f-a73d-5a11076e3bac}">
+      <Declaration><![CDATA[METHOD PROTECTED IoOutBridge : BOOL
+VAR
+	bolSwitchValvesOff: BOOL;
+END_VAR
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.intActualPosition));
+
+	THIS^.Out_intActualPosition := SIf.Out.intActualPosition.map;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_InPositionBusy" Id="{988cd228-4892-4b69-9f98-49da6800f2b9}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_InPositionBusy : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		pMotor_CIF^.Job.intACmd := BASE_PLC.cCMD_STOP;		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF pMotor_CIF^.Job.intState = BASE_PLC.cSTA_STOP THEN
+			me.StateMachine.intStateNext := MDC_CmdState.cSTA_InPosition;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCtrlSIf" Id="{bcf7a119-b9c3-451f-a4f1-583f2b4865a3}">
+      <Declaration><![CDATA[METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_MDC
+
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFF" Id="{be44a038-54cd-43f4-bf1e-a4b9428ea3f2}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF me.intCmd = MDC_CmdState.cCMD_INITIALIZE THEN
+			me.StateMachine.intStateNext := MDC_CmdState.cSTA_InitializeBusy;
+		END_IF
+	END_IF
 
 
 //--------------------------------------------------------------------------------------
@@ -336,10 +758,8 @@ END_IF]]></ST>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_PON" Id="{870bd253-b05d-4e39-9dca-47dd6109ef1f}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_PON : BOOL
-VAR_INPUT
-END_VAR
+    <Method Name="sta_InPosition" Id="{c773541f-2782-4a90-8a4a-29754a6ec314}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_InPosition : Bool
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
@@ -348,120 +768,154 @@ END_VAR
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 		
-	END_IF
+		IF CIf.Job.intACmd = BASE_PLC.cCMD_RUN THEN
+			CIf.Job.intACmd := cCMD_DONE;
+		END_IF
 
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		;
-	END_IF
-
-
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_OFFBusy" Id="{8d8b328d-dc07-43e2-ac84-ce6c09cbbac8}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_OFFBusy : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		// Set commandos not only in entry action because of possible errors or manual/auto changes
-		// pMotor_CIF^.Job.intACmd := BASE_PLC.cCMD_OFF;		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-
-		pMotor_CIF^.Job.intACmd := BASE_PLC.cCMD_OFF;		
-
-		IF pMotor_CIF^.Job.intState = BASE_PLC.cSTA_OFF THEN
-			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFF;
+		IF CIf.Job.intMCmd = BASE_PLC.cCMD_RUN THEN
+			CIf.Job.intMCmd := cCMD_DONE;
 		END_IF
 	END_IF
 
 
 //--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState = me.StateMachine.intStateLastCycle) THEN
+		CASE me.intCmd OF
+			MDC_CmdState.cCMD_TURN,
+			MDC_CmdState.cCMD_PREPOSITION:
+//				IF SIf.Par.uinPositionToGo <> SIf.Cur.uintActualPosition THEN
+//					SIf.Cur.eActualTurningDirection := GetTurningDirection();
+
+					CASE me.intCmd OF
+						MDC_CmdState.cCMD_TURN:
+							me.StateMachine.intStateNext := MDC_CmdState.cSTA_StartTurnBusy;
+						MDC_CmdState.cCMD_PREPOSITION:
+							me.StateMachine.intStateNext := MDC_CmdState.cSTA_PREPOSITIONbusy;
+					END_CASE
+//				ELSE
+//					CIf.Job.intACmd := cCMD_DONE;
+//					CIf.Job.intMCmd := cCMD_DONE;
+//					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_MDC.PositionSame),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+//				END_IF
+				
+			MDC_CmdState.cCMD_INITIALIZE:	
+				me.StateMachine.intStateNext := MDC_CmdState.cSTA_InitializeBusy;
+		END_CASE
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
 // Exit action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		;
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_OFF" Id="{be44a038-54cd-43f4-bf1e-a4b9428ea3f2}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_OFF : BOOL
+    <Property Name="Drive" Id="{cccd7015-f02b-4b1f-99d2-dad2142f9cb3}">
+      <Declaration><![CDATA[PROPERTY PUBLIC Drive :  POINTER TO FB_UMC]]></Declaration>
+      <Set Name="Set" Id="{b79db770-0c35-4daf-ba89-117386f491d5}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[p_fbMotor := Drive;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{d493c7bf-0dc5-4662-b0bd-ef5c26f5157e}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Drive := p_fbMotor;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="CtrlInit" Id="{df496ca8-1d96-4d90-b1f0-27a20bf34e06}">
+      <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+        <ST><![CDATA[SUPER^.CtrlInit();
 
-	END_IF
+// get child if
+pMotor_CIF := AddChild(p_fbMotor^);
 
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		IF me.intCmd = MDC_CmdState.cCMD_INITIALIZE THEN
-			me.StateMachine.intStateNext := MDC_CmdState.cSTA_InitializeBusy;
-		END_IF
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="StateMachine" Id="{fea0b50b-bdf4-4661-9907-715c3e63b8aa}">
-      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
-
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SUPER^.StateMachine();
-
-// main statemachine of base controller
-CASE me.StateMachine.intState OF
-    MDC_CmdState.cSTA_InitializeBusy: 
-        THIS^.sta_InitializeBusy();
-    MDC_CmdState.cSTA_InPositionBusy: 
-        THIS^.sta_InPositionBusy();
-    MDC_CmdState.cSTA_InPosition: 
-        THIS^.sta_InPosition();
-    MDC_CmdState.cSTA_StartTurnBusy: 
-        THIS^.sta_StartTurnBusy();
-    MDC_CmdState.cSTA_TurnBusy: 
-        THIS^.sta_TurnBusy();
-    MDC_CmdState.cSTA_PREPOSITION: 
-        THIS^.sta_PREPOSITION();
-    MDC_CmdState.cSTA_PREPOSITIONbusy: 
-        THIS^.sta_PREPOSITIONbusy();
-    MDC_CmdState.cSTA_TURNDONE: 
-        THIS^.sta_TURNDONE();
-END_CASE;
 ]]></ST>
       </Implementation>
     </Method>
+    <Method Name="getCmdState" Id="{e9ee37c9-5352-4572-9d91-c485c4add9d5}">
+      <Declaration><![CDATA[METHOD PROTECTED getCmdState : STRING
+
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime
+	IF (bolState=FALSE) THEN
+		CASE intCmdState OF
+			MDC_CmdState.cCMD_INITIALIZE: 
+				getCmdState := 'Initialize';
+			MDC_CmdState.cCMD_TURN: 
+				getCmdState := 'Turn';
+			MDC_CmdState.cCMD_PREPOSITION: 
+				getCmdState := 'PrePosition';
+		END_CASE;
+	ELSE
+		// States's
+		CASE intCmdState OF
+			MDC_CmdState.cSTA_InitializeBusy: 
+				getCmdState := 'InitializeBusy';
+			MDC_CmdState.cSTA_InPositionBusy: 
+				getCmdState := 'InPositionBusy';
+			MDC_CmdState.cSTA_InPosition: 
+				getCmdState := 'InPosition';
+			MDC_CmdState.cSTA_StartTurnBusy: 
+				getCmdState := 'StartTurnBusy';
+			MDC_CmdState.cSTA_TurnBusy: 
+				getCmdState := 'TurnBusy';
+			MDC_CmdState.cSTA_TURNDONE: 
+				getCmdState := 'TURNDONE';
+			MDC_CmdState.cSTA_PREPOSITIONbusy: 
+				getCmdState := 'PREPOSITIONbusy';
+			MDC_CmdState.cSTA_PREPOSITION: 
+				getCmdState := 'PREPOSITION';
+
+			MDC_CmdState.cSUB_STOPbusy: 
+				getCmdState := 'STOPbusy';
+			MDC_CmdState.cSUB_TURNbusy: 
+				getCmdState := 'TURNbusy';
+			MDC_CmdState.cSUB_FINDHOLEbusy: 
+				getCmdState := 'FINDHOLEbusy';
+		END_CASE;
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="CtrlSIf" Id="{f55c22f4-5455-4359-9676-c5b5c6df8117}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_MDC]]></Declaration>
+      <Get Name="Get" Id="{03258199-6dd8-4638-83d5-c83c41e90e79}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{0813cdc4-d202-4042-8e47-85da7be80cd1}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
     <Method Name="sta_InitializeBusy" Id="{f67ccfc1-89db-43e9-908c-4d508516b44d}">
       <Declaration><![CDATA[METHOD PROTECTED sta_InitializeBusy : BOOL
 VAR
@@ -475,7 +929,10 @@ END_VAR
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		// Set Speed
+		p_fbMotor^.CtrlSIf^.Par.uinSpeed_rpm := SIf.Par.uinPositionSpeed_rpm;
 		pMotor_CIF^.Job.intACmd := UMC_CmdState.cCMD_RIGHT;		
+		SIf.Cur.eActualTurningDirection := E_TURN_DIRECTION.RIGHT;
 
 		fbSimulationTimer.IN := FALSE;
 		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiSimInitializationTime_ms);
@@ -523,127 +980,13 @@ END_VAR
 //--------------------------------------------------------------------------------------
 // Exit action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		p_fbMotor^.CtrlSIf^.Par.uinSpeed_rpm := SIf.Par.uinPositionSpeed_rpm;
 		SIf.Cur.uintActualPosition := 0;
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_InPosition" Id="{c773541f-2782-4a90-8a4a-29754a6ec314}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_InPosition : Bool
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		CIf.Job.intACmd := cCMD_DONE;
-		CIf.Job.intMCmd := cCMD_DONE;
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState = me.StateMachine.intStateLastCycle) THEN
-		CASE me.intCmd OF
-			MDC_CmdState.cCMD_TURN,
-			MDC_CmdState.cCMD_PREPOSITION:
-				IF SIf.Par.uinPositionToGo <> SIf.Cur.uintActualPosition THEN
-					SIf.Cur.eActualTurningDirection := GetTurningDirection();
-
-					CASE me.intCmd OF
-						MDC_CmdState.cCMD_TURN:
-							me.StateMachine.intStateNext := MDC_CmdState.cSTA_StartTurnBusy;
-						MDC_CmdState.cCMD_PREPOSITION:
-							me.StateMachine.intStateNext := MDC_CmdState.cSTA_PREPOSITIONbusy;
-					END_CASE
-				ELSE
-					CIf.Job.intACmd := cCMD_DONE;
-					CIf.Job.intMCmd := cCMD_DONE;
-					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_MDC.PositionSame),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-				END_IF
-				
-			MDC_CmdState.cCMD_INITIALIZE:	
-				me.StateMachine.intStateNext := MDC_CmdState.cSTA_InitializeBusy;
-		END_CASE
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_StartTurnBusy" Id="{0b7a5a6f-a052-4d75-bece-e8cd4f8f2b1e}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_StartTurnBusy : Bool
-VAR
-	iDifference			: INT;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-		IF SIf.Par.uinPositionToGo <> SIf.Cur.uintActualPosition THEN
-			// Set Speed
-			p_fbMotor^.CtrlSIf^.Par.uinSpeed_rpm := SIf.Par.uinPositionSpeed_rpm;
-			
-			// Send the comand
-			CASE SIf.Cur.eActualTurningDirection OF
-				E_TURN_DIRECTION.LEFT:
-					pMotor_CIF^.Job.intACmd := cCMD_LEFT;		
-				E_TURN_DIRECTION.RIGHT:
-					pMotor_CIF^.Job.intACmd := cCMD_RIGHT;		
-			END_CASE
-
-			fbSimulationTimer.IN := FALSE;
-			fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiSimStartRotationTime_ms);
-			fbSimulationTimer(); // set time/reset timer
-			fbSimulationTimer.IN := TRUE; // start timer
-		END_IF
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		IF (CIf.SwCfg.bolSimulation) THEN
-			fbSimulationTimer(); // simulation time
-
-			IF (fbSimulationTimer.Q) THEN
-				SIf.In.bolCrossPositionSensor.intern := FALSE;
-				SIf.In.bolTablePositionSensor.intern := FALSE;
-			END_IF
-		END_IF
-		
-		IF SIf.Par.uinPositionToGo = SIf.Cur.uintActualPosition THEN
-			me.StateMachine.intStateNext := MDC_CmdState.cSTA_TURNDONE;
-		END_IF 
-		
-		IF NOT SIf.In.bolCrossPositionSensor.intern THEN
-			me.StateMachine.intStateNext := MDC_CmdState.cSTA_TurnBusy;
-		END_IF
-
-		IF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiStepRotationTime_ms) THEN
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_MDC.CrossSensorTimeout),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;	
-		END_IF
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_TurnBusy" Id="{7cbd8d5e-f43d-46b2-b435-8d2e205dbbdf}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_TurnBusy : Bool
+    <Method Name="sta_TURNDONE" Id="{f6bda1cf-8adf-488f-8895-e7577ff460a3}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_TURNDONE : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -651,217 +994,36 @@ END_VAR
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
 // Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-
-		fbSimulationTimer.IN := FALSE;
-		fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiSimStepRotationTime_ms);
-		fbSimulationTimer(); // set time/reset timer
-		fbSimulationTimer.IN := TRUE; // start timer
-
-		me.SubStateMachine.intState 	:= MDC_CmdState.cSUB_TURNbusy;
-		me.SubStateMachine.intStateNext := MDC_CmdState.cSUB_TURNbusy;
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		IF (CIf.SwCfg.bolSimulation) THEN
-			fbSimulationTimer(); // simulation time
-
-			IF (fbSimulationTimer.Q) THEN
-				SIf.In.bolCrossPositionSensor.intern := TRUE;
-			END_IF
-		END_IF
-		
-		CASE me.SubStateMachine.intState OF
-			MDC_CmdState.cSUB_TURNbusy:
-				IF SIf.In.bolCrossPositionSensor.intern THEN
-					SIf.Cur.uintActualPosition := IncrementPosition(SIf.Cur.uintActualPosition,SIf.Cur.eActualTurningDirection);
-					
-					IF (CIf.SwCfg.bolSimulation) THEN
-						IF SIf.Cur.uintActualPosition = 0 THEN
-							SIf.In.bolTablePositionSensor.intern := TRUE;
-						END_IF
-					END_IF
-					
-					IF SIf.Par.uinPositionToGo = SIf.Cur.uintActualPosition THEN
-						pMotor_CIF^.Job.intACmd := BASE_PLC.cCMD_STOP;		
-						me.SubStateMachine.intStateNext := MDC_CmdState.cSUB_STOPbusy;
-					ELSE
-						me.StateMachine.intStateNext := MDC_CmdState.cSTA_StartTurnBusy;
-					END_IF 
-				END_IF
-			MDC_CmdState.cSUB_STOPbusy:
-				IF pMotor_CIF^.Job.intState = BASE_PLC.cSTA_STOP THEN
-					me.StateMachine.intStateNext := MDC_CmdState.cSTA_TURNDONE;
-				END_IF
-		END_CASE
-
-
-		IF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiStepRotationTime_ms) THEN
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_MDC.CrossSensorTimeout),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;	
-		END_IF
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="CtrlInit" Id="{df496ca8-1d96-4d90-b1f0-27a20bf34e06}">
-      <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SUPER^.CtrlInit();
-
-// get child if
-pMotor_CIF := p_fbMotor^.CtrlCIf;
-
-AddChild(p_fbMotor^);
-
-// set parent id
-//pMotor_CIF^.Info.intParentCtrlId := CIf.Info.intCtrlId;
-
-//necessary???
-//THIS^.CIf.Info.p_aCIf[0] := THIS^.pMotor_CIF;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_InPositionBusy" Id="{988cd228-4892-4b69-9f98-49da6800f2b9}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_InPositionBusy : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		pMotor_CIF^.Job.intACmd := BASE_PLC.cCMD_STOP;		
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		IF pMotor_CIF^.Job.intState = BASE_PLC.cSTA_STOP THEN
-			me.StateMachine.intStateNext := MDC_CmdState.cSTA_InPosition;
-		END_IF
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="IncrementPosition" Id="{3d60a3ff-3196-4c1d-a783-63224888d106}">
-      <Declaration><![CDATA[METHOD PROTECTED IncrementPosition : UINT
-VAR_INPUT
-	uinPosition		: UINT;
-	eDirection		: E_TURN_DIRECTION;
-END_VAR
-VAR
-	iNewPosition	: INT;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[IF eDirection = E_TURN_DIRECTION.RIGHT THEN
-	iNewPosition := UINT_TO_INT((uinPosition + 1) MOD SIf.Cfg.uintPositionPerTurn);
-ELSE
-	iNewPosition := UINT_TO_INT(uinPosition) - 1;
+IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 	
-	IF (iNewPosition < 0) THEN
-		iNewPosition := UINT_TO_INT(SIf.Cfg.uintPositionPerTurn) - 1;
+	IF CIf.Job.intACmd = MDC_CmdState.cCMD_TURN THEN
+		CIf.Job.intACmd := cCMD_DONE;
+	END_IF
+	
+	IF CIf.Job.intMCmd = MDC_CmdState.cCMD_TURN THEN
+		CIf.Job.intMCmd := cCMD_DONE;
 	END_IF
 END_IF
 
-IncrementPosition := INT_TO_UINT(iNewPosition);
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_PREPOSITIONbusy" Id="{0a756157-e369-43b7-980d-ce5376ee5939}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_PREPOSITIONbusy : BOOL
-VAR_INPUT
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-		IF SIf.Par.uinPositionToGo <> SIf.Cur.uintActualPosition THEN
-			// Set Speed
-			p_fbMotor^.CtrlSIf^.Par.uinSpeed_rpm := SIf.Par.uinPrePositionSpeed_rpm;
-			
-			// Send the comand
-			CASE SIf.Cur.eActualTurningDirection OF
-				E_TURN_DIRECTION.LEFT:
-					pMotor_CIF^.Job.intACmd := cCMD_LEFT;		
-				E_TURN_DIRECTION.RIGHT:
-					pMotor_CIF^.Job.intACmd := cCMD_RIGHT;		
-			END_CASE
-
-			fbSimulationTimer.IN := FALSE;
-			fbSimulationTimer.PT := UDINT_TO_TIME(SIf.Par.udiSimStartRotationTime_ms);
-			fbSimulationTimer(); // set time/reset timer
-			fbSimulationTimer.IN := TRUE; // start timer
-		ELSE
-			me.StateMachine.intStateNext := MDC_CmdState.cSTA_PREPOSITION;
-		END_IF
-	END_IF
-
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		IF (CIf.SwCfg.bolSimulation) THEN
-			fbSimulationTimer(); // simulation time
-
-			IF (fbSimulationTimer.Q) THEN
-				SIf.In.bolCrossPositionSensor.intern := FALSE;
-				SIf.In.bolTablePositionSensor.intern := FALSE;
-			END_IF
-		END_IF
-		
-		CASE me.SubStateMachine.intState OF
-			MDC_CmdState.cSUB_TURNbusy:
-				IF NOT SIf.In.bolCrossPositionSensor.intern THEN
-					pMotor_CIF^.Job.intACmd := BASE_PLC.cCMD_STOP;		
-					me.SubStateMachine.intStateNext := MDC_CmdState.cSUB_STOPbusy;
-				END_IF
-			MDC_CmdState.cSUB_STOPbusy:
-				IF pMotor_CIF^.Job.intState = BASE_PLC.cSTA_STOP THEN
-					me.StateMachine.intStateNext := MDC_CmdState.cSTA_PREPOSITION;
-				END_IF
-		END_CASE
-
-		IF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiStepRotationTime_ms) THEN
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_MDC.CrossSensorTimeout),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;	
-		END_IF
-		
-		
-	END_IF
+IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+	CASE me.intCmd OF
+		MDC_CmdState.cCMD_INITIALIZE:
+			me.StateMachine.intStateNext := MDC_CmdState.cSTA_InitializeBusy;
+		BASE_PLC.cCMD_RUN:
+			me.StateMachine.intStateNext := MDC_CmdState.cSTA_InPositionBusy;
+	END_CASE
+END_IF
 
 
 //--------------------------------------------------------------------------------------
 // Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
+IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+	;
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_PREPOSITION" Id="{f8b867fe-f966-4136-ac0c-7a74ad6f547f}">
@@ -887,6 +1049,8 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 	CASE me.intCmd OF
 		MDC_CmdState.cCMD_INITIALIZE:
 			me.StateMachine.intStateNext := MDC_CmdState.cSTA_InitializeBusy;
+		MDC_CmdState.cCMD_TURN:
+			me.StateMachine.intStateNext := MDC_CmdState.cSTA_StartTurnBusy;
 		BASE_PLC.cCMD_RUN:
 			me.StateMachine.intStateNext := MDC_CmdState.cSTA_InPositionBusy;
 	END_CASE
@@ -900,126 +1064,35 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_TURNDONE" Id="{f6bda1cf-8adf-488f-8895-e7577ff460a3}">
-      <Declaration><![CDATA[METHOD PROTECTED sta_TURNDONE : BOOL
-VAR_INPUT
-END_VAR
+    <Method Name="StateMachine" Id="{fea0b50b-bdf4-4661-9907-715c3e63b8aa}">
+      <Declaration><![CDATA[METHOD PROTECTED StateMachine : BOOL
+
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+        <ST><![CDATA[SUPER^.StateMachine();
 
-	CIf.Job.intACmd := cCMD_DONE;
-	CIf.Job.intMCmd := cCMD_DONE;
-END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-	CASE me.intCmd OF
-		MDC_CmdState.cCMD_INITIALIZE:
-			me.StateMachine.intStateNext := MDC_CmdState.cSTA_InitializeBusy;
-		BASE_PLC.cCMD_RUN:
-			me.StateMachine.intStateNext := MDC_CmdState.cSTA_InPositionBusy;
-	END_CASE
-END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Exit action
-IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-	;
-END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="GetTurningDirection" Id="{448116ec-067f-4a4a-aa15-1cf64676dce3}">
-      <Declaration><![CDATA[METHOD PROTECTED GetTurningDirection : E_TURN_DIRECTION
-VAR
-	iDifference 		: INT;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[GetTurningDirection := E_TURN_DIRECTION.RIGHT;
-
-// Determine the turning direction depending on set value or on shortest distance
-CASE SIf.Par.intTurnDirection OF
-	E_TURN_DIRECTION.LEFT	:
-		GetTurningDirection := E_TURN_DIRECTION.LEFT;
-	E_TURN_DIRECTION.AUTOMATIC 	:
-		GetTurningDirection := E_TURN_DIRECTION.RIGHT;
-		
-		IF (SIf.Cur.uintActualPosition = 1) AND (SIf.Par.uinPositionToGo = 0) THEN
-			iDifference := 0;
-		END_IF
-
-		iDifference := UINT_TO_INT(SIf.Par.uinPositionToGo - SIf.Cur.uintActualPosition);
-		iDifference := ABS(iDifference);
-		
-		IF (    (SIf.Par.uinPositionToGo < SIf.Cur.uintActualPosition) AND (iDifference < UINT_TO_INT(SIf.Cfg.uintPositionPerTurn / 2)) 
-			 OR (SIf.Par.uinPositionToGo > SIf.Cur.uintActualPosition) AND (iDifference > UINT_TO_INT(SIf.Cfg.uintPositionPerTurn / 2))) THEN
-			GetTurningDirection := E_TURN_DIRECTION.LEFT;
-		END_IF;
-	E_TURN_DIRECTION.RIGHT	:
-		GetTurningDirection := E_TURN_DIRECTION.RIGHT;
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+    MDC_CmdState.cSTA_InitializeBusy: 
+        THIS^.sta_InitializeBusy();
+    MDC_CmdState.cSTA_InPositionBusy: 
+        THIS^.sta_InPositionBusy();
+    MDC_CmdState.cSTA_InPosition: 
+        THIS^.sta_InPosition();
+    MDC_CmdState.cSTA_StartTurnBusy: 
+        THIS^.sta_StartTurnBusy();
+    MDC_CmdState.cSTA_TurnBusy: 
+        THIS^.sta_TurnBusy();
+    MDC_CmdState.cSTA_PREPOSITION: 
+        THIS^.sta_PREPOSITION();
+    MDC_CmdState.cSTA_PREPOSITIONbusy: 
+        THIS^.sta_PREPOSITIONbusy();
+    MDC_CmdState.cSTA_TURNDONE: 
+        THIS^.sta_TURNDONE();
 END_CASE;
 ]]></ST>
       </Implementation>
     </Method>
-    <Property Name="CtrlSIf" Id="{f55c22f4-5455-4359-9676-c5b5c6df8117}">
-      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_MDC]]></Declaration>
-      <Get Name="Get" Id="{03258199-6dd8-4638-83d5-c83c41e90e79}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
-        </Implementation>
-      </Get>
-      <Set Name="Set" Id="{0813cdc4-d202-4042-8e47-85da7be80cd1}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Set>
-    </Property>
-    <Property Name="Drive" Id="{cccd7015-f02b-4b1f-99d2-dad2142f9cb3}">
-      <Declaration><![CDATA[PROPERTY PUBLIC Drive :  POINTER TO FB_UMC]]></Declaration>
-      <Get Name="Get" Id="{d493c7bf-0dc5-4662-b0bd-ef5c26f5157e}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[Drive := p_fbMotor;]]></ST>
-        </Implementation>
-      </Get>
-      <Set Name="Set" Id="{b79db770-0c35-4daf-ba89-117386f491d5}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[p_fbMotor := Drive;]]></ST>
-        </Implementation>
-      </Set>
-    </Property>
-    <ObjectProperties>﻿<XmlArchive>
-  <Data>
-    <o xml:space="preserve" t="POUImageProperty">
-      <n n="ImageData" />
-      <v n="TransparencyColor">"White"</v>
-      <v n="MakeTransparent">false</v>
-    </o>
-  </Data>
-  <TypeList>
-    <Type n="Boolean">System.Boolean</Type>
-    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
-    <Type n="String">System.String</Type>
-  </TypeList>
-</XmlArchive></ObjectProperties>
+    <ObjectProperties />
   </POU>
 </TcPlcObject>
