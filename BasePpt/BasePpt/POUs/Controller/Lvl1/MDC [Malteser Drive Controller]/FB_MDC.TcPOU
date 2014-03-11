@@ -398,7 +398,6 @@ END_VAR
 
 SetPositionToGo := uinPositionToGo = SIf.Cur.uintActualPosition;]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Property Name="ActualPosition" Id="{37b25c62-eaaf-4d3d-a3af-b1549595b49d}">
       <Declaration><![CDATA[PROPERTY ActualPosition : UINT
@@ -408,9 +407,7 @@ SetPositionToGo := uinPositionToGo = SIf.Cur.uintActualPosition;]]></ST>
         <Implementation>
           <ST><![CDATA[ActualPosition := SIf.Cur.uintActualPosition;]]></ST>
         </Implementation>
-        <ObjectProperties />
       </Get>
-      <ObjectProperties />
     </Property>
     <Method Name="IncrementPosition" Id="{3d60a3ff-3196-4c1d-a783-63224888d106}">
       <Declaration><![CDATA[METHOD PROTECTED IncrementPosition : UINT
@@ -609,6 +606,9 @@ END_VAR
 //--------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		// Set commandos not only in entry action because of possible errors or manual/auto changes
+		pMotor_CIF^.Job.intACmd := BASE_PLC.cCMD_OFF;		
+
 		IF pMotor_CIF^.Job.intState = BASE_PLC.cSTA_OFF THEN
 			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFF;
 		END_IF

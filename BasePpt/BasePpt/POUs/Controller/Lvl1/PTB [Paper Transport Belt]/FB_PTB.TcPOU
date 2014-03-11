@@ -811,6 +811,10 @@ END_VAR
 //--------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Set commandos not only in entry action because of possible errors or manual/auto changes
+		cmd_OFF();
+
 		IF p_fbMotor^.CtrlCIf^.Job.intState = BASE_PLC.cSTA_OFF 
 		  AND CheckPumpState(BASE_PLC.cSTA_OFF) THEN
 			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFF;
@@ -1158,5 +1162,6 @@ END_VAR
 	END_IF]]></ST>
       </Implementation>
     </Method>
+    <ObjectProperties />
   </POU>
 </TcPlcObject>

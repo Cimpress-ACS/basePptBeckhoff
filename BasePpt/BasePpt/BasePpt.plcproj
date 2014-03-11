@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.9</ProjectVersion>
+    <ProjectVersion>0.0.0.10</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.9 - Merged the DeStacker MDC with the BasePpt MDC
+    <Description>0.0.0.10 - PCE: no EOFF State!! in EOFF go to OFF (in Always); Redo changes of 0.0.0.6; PTS.Always no EOFF; sta_OFFBusy in PTS reworked;
+0.0.0.9 - Merged the DeStacker MDC with the BasePpt MDC
 0.0.0.8 - Added newer Versions of libraries.
 0.0.0.7 - Added newer Versions of libraries.
 0.0.0.6 - Changes for Simualtion in MDC, sta_OFFBusy in PTB/MDC reworked; Always in PTB reworked;
