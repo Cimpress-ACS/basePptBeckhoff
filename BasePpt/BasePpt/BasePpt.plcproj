@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.14</ProjectVersion>
+    <ProjectVersion>0.0.0.15</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.14 - Added new Base and Elements 
+    <Description>0.0.0.15 - Added new Base and Elements 
+0.0.0.14 - Added new Base and Elements 
 0.0.0.13 - Added new Base and Elements 
 0.0.0.11 - Added new Base and Elements library
 0.0.0.10 - PCE: no EOFF State!! in EOFF go to OFF (in Always); Redo changes of 0.0.0.6; PTS.Always no EOFF; sta_OFFBusy in PTS reworked;
@@ -35,10 +36,10 @@
     <AssemblyName>MyApplication</AssemblyName>-->
   </PropertyGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.1.13,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.1.14,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Base_PLC,0.3.4.6,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.4.7,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_Standard,3.3.0.0,Beckhoff Automation GmbH">
