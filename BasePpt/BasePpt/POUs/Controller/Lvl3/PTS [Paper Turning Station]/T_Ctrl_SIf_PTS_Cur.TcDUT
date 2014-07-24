@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_PTS_Cur" Id="{ff662493-dbd5-4f18-af1b-b10056141885}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_PTS_Cur" Id="{4612bb95-73d8-482e-b7da-56dad6a1d781}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PTS_Cur :
 STRUCT	
 	/// Actual Sheet In- Out- Positions

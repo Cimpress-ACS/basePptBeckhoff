@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_PTS_In" Id="{7d26fa0e-8a34-437e-9aec-13ae4777b6c3}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_PTS_In" Id="{96de05ef-55d4-45d3-ba29-3a47e662b0f4}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PTS_In :
 STRUCT
 	/// This sensor shows if the paper is at the middle table possition

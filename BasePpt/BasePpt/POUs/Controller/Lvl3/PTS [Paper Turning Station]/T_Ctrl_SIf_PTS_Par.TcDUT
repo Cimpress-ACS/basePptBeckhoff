@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_PTS_Par" Id="{7f6674e9-2c1b-4256-9d4f-8d941ba54f41}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_PTS_Par" Id="{5e04d879-3092-49d5-8800-ed890d8a814f}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PTS_Par :
 STRUCT
 	/// [ms] Time to wait after paper was detected before to turn.

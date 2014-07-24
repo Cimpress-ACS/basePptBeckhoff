@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_PTS_InOutPositions" Id="{727f92ff-c901-4f58-a458-eabef2277efd}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_PTS_InOutPositions" Id="{1cf2cac6-4ca1-44c0-98ed-27d2d4aeab05}">
     <Declaration><![CDATA[TYPE T_PTS_InOutPositions :
 STRUCT
 	uinInput			: UINT;

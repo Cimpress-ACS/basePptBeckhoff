@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_PTS_Out" Id="{23ef33b4-c1f0-4093-8901-5116478a0b44}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="T_Ctrl_SIf_PTS_Out" Id="{762e3907-04ae-4163-bbed-10b4d24a0490}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PTS_Out :
 STRUCT
 END_STRUCT

@@ -1,5 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="E_ALM_PTS" Id="{5ee9350c-0126-4652-a534-eefce3ce5877}">
+﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+  <DUT Name="E_ALM_PTS" Id="{506c89d2-02c5-4460-989f-9802a2d8828d}">
     <Declaration><![CDATA[TYPE E_ALM_PTS :
 (
 	PaperTransport			:= 1,
