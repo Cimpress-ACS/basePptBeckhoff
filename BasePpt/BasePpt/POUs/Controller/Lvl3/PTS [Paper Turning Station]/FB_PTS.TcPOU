@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FB_PTS" Id="{bd257b07-83b0-47f5-9382-67ec01275ca0}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_PTS EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -43,6 +43,9 @@ Version		Date			Author		Comment
 ___________________________________________________________________________________________________*)
 
 
+SUPER^();
+
+(*
 IF (me.bolActivate) THEN // cyclic call enabled
 	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
 		CtrlInit();
@@ -53,11 +56,11 @@ IF (me.bolActivate) THEN // cyclic call enabled
 		Always();
 		
 		StateMachine();
-
+		
 		CycleEndDuty();
 	END_IF
 END_IF;
-]]></ST>
+*)]]></ST>
     </Implementation>
     <Method Name="sta_STOPbusy" Id="{01db8d43-ebef-47de-8465-8adeb8882b1b}">
       <Declaration><![CDATA[METHOD PROTECTED sta_STOPbusy : BOOL
@@ -221,7 +224,7 @@ END_VAR
       </Implementation>
     </Method>
     <Method Name="CtrlInit" Id="{5706b448-cb48-4c12-a649-6d12f95a558d}">
-      <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
+      <Declaration><![CDATA[METHOD PUBLIC CtrlInit : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -465,9 +468,6 @@ END_VAR
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-//		Log Message ---------------------
-		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'%s','sta_WaitPaper');
-//		---------------------------------
 	END_IF
 
 
@@ -488,8 +488,8 @@ END_VAR
 		END_IF
 		
 		CASE me.intCmd OF
-			BasePpt.PTS_CmdState.cCMD_STANDBY:
-				me.StateMachine.intStateNext := BasePpt.PTS_CmdState.cSTA_InitializeBusy;
+			PTS_CmdState.cCMD_STANDBY:
+				me.StateMachine.intStateNext := PTS_CmdState.cSTA_InitializeBusy;
 			Base_PLC.cCMD_STOP:
 				me.StateMachine.intStateNext := Base_PLC.cSTA_STOPBusy;
 		END_CASE
@@ -528,9 +528,6 @@ END_VAR
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-//		Log Message ---------------------
-		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'%s','sta_PaperDelayBusy');
-//		---------------------------------
 	END_IF
 
 
@@ -683,9 +680,6 @@ END_VAR
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-//		Log Message ---------------------
-		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'%s','sta_TurnEmptyBusy');
-//		---------------------------------
 		p_fbMalteser^.CtrlSIf^.Par.intTurnDirection := E_TURN_DIRECTION.AUTOMATIC;
 		p_fbMalteser^.CtrlSIf^.Par.uinPositionToGo := SIf.Cur.rInOutPosition.uinInput;
 		
@@ -1107,7 +1101,7 @@ END_VAR
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 //		Log Message ---------------------
-		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'%s','sta_TurnPaperBusy');
+//		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'%s','sta_TurnPaperBusy');
 //		---------------------------------
 		p_fbMalteser^.CtrlSIf^.Par.intTurnDirection := SIf.Cur.rInOutPosition.eDirection;
 		p_fbMalteser^.CtrlSIf^.Par.uinPositionToGo := SIf.Cur.rInOutPosition.uinOutput;

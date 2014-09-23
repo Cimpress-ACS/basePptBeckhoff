@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FB_PTB" Id="{655f278b-e80b-449e-a7e9-7932049a4287}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_PTB EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -53,6 +54,9 @@ Version		Date			Author		Comment
 ___________________________________________________________________________________________________*)
 
 
+SUPER^();
+
+(*
 IF (me.bolActivate) THEN // cyclic call enabled
 	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
 		CtrlInit();
@@ -67,7 +71,7 @@ IF (me.bolActivate) THEN // cyclic call enabled
 		CycleEndDuty();
 	END_IF
 END_IF;
-]]></ST>
+*)]]></ST>
     </Implementation>
     <Method Name="Always" Id="{0b720a96-2ec8-4c16-9a79-0d2a3f6cb6e5}">
       <Declaration><![CDATA[METHOD PROTECTED Always : BOOL
@@ -482,7 +486,7 @@ END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="CtrlInit" Id="{5dfd68b1-32d1-4c5f-aab2-8dcaa084427a}">
-      <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
+      <Declaration><![CDATA[METHOD PUBLIC CtrlInit : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>

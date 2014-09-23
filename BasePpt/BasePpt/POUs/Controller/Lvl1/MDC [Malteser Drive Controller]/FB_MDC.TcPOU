@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FB_MDC" Id="{caba4f97-8b2b-426d-95b4-6b3a12d61c7c}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_MDC EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -39,7 +40,9 @@ Version		Date			Author		Comment
 
 ___________________________________________________________________________________________________*)
 
+SUPER^();
 
+(*
 IF (me.bolActivate) THEN // cyclic call enabled
 	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
 		CtrlInit();
@@ -54,7 +57,7 @@ IF (me.bolActivate) THEN // cyclic call enabled
 		CycleEndDuty();
 	END_IF
 END_IF;
-]]></ST>
+*)]]></ST>
     </Implementation>
     <Method Name="FB_init" Id="{06b79ec6-0420-451b-9e43-ff78d67d9b45}">
       <Declaration><![CDATA[METHOD FB_init : BOOL
@@ -234,10 +237,6 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 	END_CASE
 	
 	IF me.intCmd = MDC_CmdState.cCMD_TURN THEN
-//		Log Message ---------------------
-		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'sta_PREPOSITIONbusy, %s','MDC_CmdState.cCMD_TURN');
-//		---------------------------------
-		
 		IF SIf.Par.uinPositionToGo <> SIf.Cur.uintActualPosition THEN
 			me.StateMachine.intStateNext := MDC_CmdState.cSTA_StartTurnBusy;
 		ELSE
@@ -832,7 +831,7 @@ END_VAR
       </Get>
     </Property>
     <Method Name="CtrlInit" Id="{df496ca8-1d96-4d90-b1f0-27a20bf34e06}">
-      <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
+      <Declaration><![CDATA[METHOD PUBLIC CtrlInit : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>

@@ -1,4 +1,5 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.23">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FB_PCE" Id="{93652d52-8a0a-445d-8143-1aef990c1715}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_PCE EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -40,6 +41,9 @@ Version		Date			Author		Comment
 ___________________________________________________________________________________________________*)
 
 
+SUPER^();
+
+(*
 IF (me.bolActivate) THEN // cyclic call enabled
 	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
 		CtrlInit();
@@ -54,7 +58,7 @@ IF (me.bolActivate) THEN // cyclic call enabled
 		CycleEndDuty();
 	END_IF
 END_IF;
-]]></ST>
+*)]]></ST>
     </Implementation>
     <Action Name="PaperExitValveActive" Id="{0ca31aa2-f18f-4e3a-90fd-8282e9666d9a}">
       <Implementation>
@@ -325,7 +329,7 @@ END_VAR
       </Set>
     </Property>
     <Method Name="CtrlInit" Id="{6ee0ce48-6960-4f85-aa54-a830ffa154ab}">
-      <Declaration><![CDATA[METHOD PROTECTED CtrlInit : BOOL
+      <Declaration><![CDATA[METHOD PUBLIC CtrlInit : BOOL
 VAR_INPUT
 END_VAR
 ]]></Declaration>
@@ -664,19 +668,21 @@ SIf.Out.bolVacuumValveOut.intern := FALSE;
 ]]></ST>
       </Implementation>
     </Action>
-    <ObjectProperties>﻿<XmlArchive>
-  <Data>
-    <o xml:space="preserve" t="POUImageProperty">
-      <n n="ImageData" />
-      <v n="TransparencyColor">"White"</v>
-      <v n="MakeTransparent">false</v>
-    </o>
-  </Data>
-  <TypeList>
-    <Type n="Boolean">System.Boolean</Type>
-    <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
-    <Type n="String">System.String</Type>
-  </TypeList>
-</XmlArchive></ObjectProperties>
+    <ObjectProperties>
+      <XmlArchive>
+        <Data>
+          <o xml:space="preserve" t="POUImageProperty">
+            <n n="ImageData" />
+            <v n="TransparencyColor">"White"</v>
+            <v n="MakeTransparent">false</v>
+          </o>
+        </Data>
+        <TypeList>
+          <Type n="Boolean">System.Boolean</Type>
+          <Type n="POUImageProperty">{bb741845-1ec5-4be9-bb0d-2cf7058af574}</Type>
+          <Type n="String">System.String</Type>
+        </TypeList>
+      </XmlArchive>
+    </ObjectProperties>
   </POU>
 </TcPlcObject>

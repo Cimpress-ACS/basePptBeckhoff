@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.19</ProjectVersion>
+    <ProjectVersion>0.0.0.20</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.19 - Added newest Elemets Library
+    <Description>0.0.0.20 - Added newest Elemets Library and reworked CtrlInit
+0.0.0.19 - Added newest Elemets Library
 0.0.0.18 - Added newest revision of the PTS
 
 0.0.0.16 - Added new Base and Elements 
@@ -40,10 +41,10 @@
     <AssemblyName>MyApplication</AssemblyName>-->
   </PropertyGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.1.19,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.1.20,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Base_PLC,0.3.4.8,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.4.9,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_Standard,3.3.0.0,Beckhoff Automation GmbH">
