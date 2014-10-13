@@ -47,7 +47,7 @@
     <LibraryReference Include="Base_Elements,0.0.1.24,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Base_PLC,0.3.4.9,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.5.0,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_Standard,3.3.0.0,Beckhoff Automation GmbH">
