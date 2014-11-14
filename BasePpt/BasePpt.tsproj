@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <TcSmProject xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.beckhoff.com/schemas/2012/07/TcSmProject" TcSmVersion="1.0">
-	<Project ProjectGUID="{1470913B-7D8D-43EF-8608-8E82F50F6F4F}" ModifiedGUID="{C68C7CD7-93F4-487D-A519-6CD2E64E9BEC}" Target64Bit="true">
+	<Project ProjectGUID="{1470913B-7D8D-43EF-8608-8E82F50F6F4F}" ModifiedGUID="{0A512D02-1F35-4F01-B007-ABAE60B01409}">
 		<Plc>
 			<Project GUID="{A2B5C62D-9C27-4135-A5A1-0AAC74675234}" Name="BasePpt" PrjFilePath="BasePpt\BasePpt.plcproj" TmcFilePath="BasePpt\BasePpt.tmc" ReloadTmc="true" AmsPort="851" FileArchiveSettings="#x000e">
 				<Instance Id="#x01010010" TcSmClass="TComPlcObjDef">
