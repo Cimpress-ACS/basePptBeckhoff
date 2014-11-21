@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_JCL_ID" Id="{e4c246e3-a5b5-4306-91ed-3dd7d5c5e83f}">
+    <Declaration><![CDATA[TYPE T_JCL_ID :
+STRUCT
+	Jcl: INT;
+	Jcl_Tcp: INT;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

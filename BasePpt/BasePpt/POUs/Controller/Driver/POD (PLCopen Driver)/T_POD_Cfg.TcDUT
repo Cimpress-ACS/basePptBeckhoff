@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_POD_Cfg" Id="{9a7641d6-234c-4570-9f7a-048ed4fda205}">
+    <Declaration><![CDATA[TYPE T_POD_Cfg :
+STRUCT
+	bolSimulation: BOOL;
+	///>0 Homeposition set if calibsignal active
+	lreHomePosition: LREAL;
+	/// Home Mode
+	eHomingMode: MC_HomingMode;
+	/// define home switch: 0 use FUB input, 
+	eUseHomeSwitch: E_POD_UseHomeSwitch;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

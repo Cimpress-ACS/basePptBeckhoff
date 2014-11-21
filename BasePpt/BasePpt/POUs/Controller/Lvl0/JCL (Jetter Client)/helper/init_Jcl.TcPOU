@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="init_Jcl" Id="{0cb4d841-d3e5-4d68-aeab-b01140410af8}">
+    <Declaration><![CDATA[FUNCTION init_Jcl : BOOL
+VAR_INPUT
+	pJcl			: POINTER TO T_JCL;
+	/// instance array of all controller instances
+	pCtrlInst		: POINTER TO fb_CtrlBase;
+	/// common interface array of all controllers (main use for PLC)
+	pCtrlCIf		: POINTER TO T_Ctrl_CIf;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[pJcl^.ctrl.fbJcl_Tcp.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pJcl^.id.Jcl_Tcp);
+pJcl^.ctrl.fbJcl.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pJcl^.id.Jcl);
+pJcl^.ctrl.fbJcl.TCP := ADR(pJcl^.ctrl.fbJcl_Tcp);]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

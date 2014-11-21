@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_PTS" Id="{be7806cb-f5cc-490e-a410-394ce19bae4a}">
+    <Declaration><![CDATA[TYPE T_PTS :
+STRUCT
+	io			: T_PTS_IO;
+	ctrl		: T_PTS_CTRL;
+	id			: T_PTS_ID;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

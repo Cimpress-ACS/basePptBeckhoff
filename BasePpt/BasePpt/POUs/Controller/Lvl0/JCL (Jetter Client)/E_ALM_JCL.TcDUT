@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="E_ALM_JCL" Id="{90726db9-4e7f-4c42-ad94-dded6d72e80b}">
+    <Declaration><![CDATA[TYPE E_ALM_JCL :
+(
+	none := 1,
+	MAX_E_ALM_JCL
+) UINT;
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

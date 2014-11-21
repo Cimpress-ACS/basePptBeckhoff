@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_PST_IO" Id="{4e76754d-836d-43a4-9fa3-cf4cac853ea4}">
+    <Declaration><![CDATA[TYPE T_PST_IO :
+STRUCT
+	In_bolSensorPaperAtOperatorPos: REFERENCE TO BOOL;
+	In_bolSensorStopperPosition: REFERENCE TO BOOL;
+	In_bolSensorInfeed: REFERENCE TO BOOL;
+	In_bolSensorOutfeed: REFERENCE TO BOOL;
+	
+	In_bolPtb_InputSensor: REFERENCE TO BOOL;
+	In_bolPtb_OutputSensor: REFERENCE TO BOOL;
+	
+	In_bolPtb_Vpc_VacuumSensor: REFERENCE TO BOOL;
+	In_bolPtb_Vpc_PumpOk: REFERENCE TO BOOL;
+	Out_bolPtb_Vpc_PumpOn: REFERENCE TO BOOL;
+	
+	In_bolPtb_Umc_EmoOk: REFERENCE TO BOOL;
+	In_uinPtb_Umc_Status: REFERENCE TO UINT;
+	In_uinPtb_Umc_ActualSpeed: REFERENCE TO UINT;
+	In_uinPtb_Umc_SetSpeed: REFERENCE TO UINT;
+	In_uinPtb_Umc_ECatState: REFERENCE TO UINT;
+	In_strPtb_Umc_ECatNetId: REFERENCE TO AMSNETID;
+	In_uinPtb_Umc_ECatPort: REFERENCE TO WORD;
+	Out_uinPtb_Umc_Control: REFERENCE TO UINT;
+	Out_uinPtb_Umc_SetSpeed: REFERENCE TO UINT;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

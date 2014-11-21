@@ -1,0 +1,1268 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_JCL" Id="{c17da65c-a92e-4a2e-8441-640d2b3c5bca}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_JCL EXTENDS FB_CtrlBase
+VAR
+	/// Specific interface struct for public access
+	SIf: T_Ctrl_SIf_JCL;
+	/// pointer to function block
+	p_fbTCP: POINTER TO FB_TCP;
+	pTCP_CIF: POINTER TO BASE_PLC.T_Ctrl_CIf;
+	fbStateLookup: FB_LookupTable;
+	fbCommandLookup: FB_LookupTable;
+	bolServerConnectionError: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+ToDo: DSC...
+
+History:
+Version		Date			Author				Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		20.05.2014		AVME/DSC			Start history. Insert all basic functionalities.
+___________________________________________________________________________________________________*)
+
+SUPER^();]]></ST>
+    </Implementation>
+    <Method Name="checkChildAlmClass" Id="{15937101-835a-4bf3-877d-83913fec039f}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'checkChildAlmClass'}
+METHOD checkChildAlmClass : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// If there is a TCP connection problem to the server
+IF (pTCP_CIF^.Job.eMe_ActivAlmClass >= E_AlmClass.TSTOP) THEN
+	bolServerConnectionError:= TRUE;
+	// set me alarm class OFF
+	CIf.Job.eMe_ActivAlmClass := E_AlmClass.OFF;
+	me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StateMachine" Id="{1e4f8fa9-fba9-4241-8343-b116547f5754}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
+METHOD PROTECTED StateMachine : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.StateMachine();
+
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+	JCL_CmdState.cSTA_ConnectBusy: 
+        THIS^.sta_CONNECTBusy();
+	cSTA_RUNBusy: 
+        THIS^.sta_RUNBusy();
+	cSTA_RUN: 
+        THIS^.sta_RUN();
+	JCL_CmdState.cSTA_StandbyBusy: 
+        THIS^.sta_STANDBYBusy();
+	JCL_CmdState.cSTA_Standby: 
+        THIS^.sta_STANDBY();	
+	JCL_CmdState.cSTA_CleanPrintHeadsBusy: 
+        THIS^.sta_CLEANINGBusy();
+	JCL_CmdState.cSTA_CleanPrintHeads: 
+        THIS^.sta_CLEANING();	
+	JCL_CmdState.cSTA_CalibrationBusy:
+		THIS^.sta_CALIBRATIONBusy();
+	JCL_CmdState.cSTA_Calibration:
+		THIS^.sta_CALIBRATION();
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_CLEANING" Id="{2b6869b4-593d-466b-a586-e1209f907aa1}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_CLEANING'}
+METHOD PROTECTED sta_CLEANING : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		;
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		CASE me.intCmd OF	
+			Base_PLC.cCMD_RUN:
+				me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;	
+			JCL_CmdState.cCMD_Standby:
+				me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;			
+		END_CASE
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="RequestState" Id="{2b7e6663-25f1-478c-b6a3-1fbd71e7bcc6}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'RequestState'}
+METHOD PROTECTED RequestState : BOOL
+VAR
+	stNextCommand: T_JCL_Command;
+	pNextCommand: POINTER TO T_JCL_Command;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Request jetter state
+IF NOT (CIf.SwCfg.bolSimulation) THEN
+	stNextCommand.stHeader.uinMsgId := JCL_MsgId_Command;
+	stNextCommand.stHeader.udiMsgSize := SIZEOF(T_JCL_Command) - SIZEOF(ST_Header);
+	stNextCommand.usiCommand := JCL_CMD_RequestState;
+	pNextCommand := ADR(stNextCommand);	
+	p_fbTCP^.M_Push(paPushMsg := pNextCommand);		
+END_IF	]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="TCP" Id="{2c8d1a07-12f1-438b-a245-8375a97ed2ad}">
+      <Declaration><![CDATA[PROPERTY TCP : POINTER TO FB_TCP
+]]></Declaration>
+      <Get Name="Get" Id="{6830a6d0-8e6e-42d1-aa2a-65323fc373fd}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[TCP := p_fbTCP;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{b5b9b4de-48cd-40b4-9657-1b2207ab83ba}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[p_fbTCP := TCP;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Method Name="ResetAlarms" Id="{3c007c49-d20a-497d-a883-dffcb37df804}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'ResetAlarms'}
+METHOD PROTECTED ResetAlarms : BOOL
+VAR
+	stNextCommand: T_JCL_Command;
+	pNextCommand: POINTER TO T_JCL_Command;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// Request jetter state
+IF NOT (CIf.SwCfg.bolSimulation) THEN
+	stNextCommand.stHeader.uinMsgId := JCL_MsgId_Command;
+	stNextCommand.stHeader.udiMsgSize := SIZEOF(T_JCL_Command) - SIZEOF(ST_Header);
+	stNextCommand.usiCommand := JCL_CMD_ResetAlarm;
+	pNextCommand := ADR(stNextCommand);	
+	p_fbTCP^.M_Push(paPushMsg := pNextCommand);		
+END_IF	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PONBusy" Id="{3e2c3a4a-23e7-45c1-a73c-6b9911f844a1}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_PONBusy'}
+METHOD PROTECTED sta_PONBusy : BOOL
+VAR
+	stNextCommand: T_JCL_Command;
+	pNextCommand: POINTER TO T_JCL_Command;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	
+	IF NOT (CIf.SwCfg.bolSimulation) THEN
+		// If the socket is already connected, trigger a reconnet.
+		IF (pTCP_CIF^.Job.intState = TCP_CmdState.cSTA_Connect) OR (pTCP_CIF^.Job.intState = Base_PLC.cSTA_ERROR) THEN
+			// Initialize sub state machine
+			me.SubStateMachine.intStateNext:= JCL_CmdState.cSUB_WaitingSocketClosed;		
+			me.SubStateMachine.intState:= me.SubStateMachine.intStateNext-1;
+			// Connect to jetter server
+			pTCP_CIF^.Job.intACmd:= TCP_CmdState.cCMD_Close;	
+		ELSE		
+			// Initialize sub state machine
+			me.SubStateMachine.intStateNext:= JCL_CmdState.cSUB_WaitingForConnection;		
+			me.SubStateMachine.intState:= me.SubStateMachine.intStateNext-1;
+			// Connect to jetter server
+			pTCP_CIF^.Job.intACmd:= TCP_CmdState.cCMD_Connect;	
+		END_IF
+	ELSE
+		SIf.Cur.bolReadyForProduction:= TRUE;			
+		SIf.Cur.bolRunning:= FALSE;		
+		SIf.Cur.bolNeedsAttention:= FALSE;			
+		SIf.Cur.bolError:= FALSE;			
+		SIf.Cur.bolCleaningIncomplete:= FALSE;			
+		SIf.Cur.bolIsLocalControlled:= FALSE;		
+		SIf.Cur.bolIsRemoteControlled:= TRUE;
+		SIf.Cur.intJETState := BASE_PLC.cSTA_PON;
+	END_IF
+	
+END_IF
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+	
+	CASE me.SubStateMachine.intState OF
+			
+		JCL_CmdState.cSUB_WaitingSocketClosed:	
+			IF (CIf.SwCfg.bolSimulation) THEN
+				me.SubStateMachine.intStateNext:= JCL_CmdState.cSUB_WaitingForConnection;	
+			ELSE							
+				// Wait for socket closed
+				IF (pTCP_CIF^.Job.intState = TCP_CmdState.cSTA_Close) THEN			
+					me.SubStateMachine.intStateNext:= JCL_CmdState.cSUB_WaitingForConnection;	
+				END_IF		
+			END_IF
+	
+		JCL_CmdState.cSUB_WaitingForConnection:		
+			IF (CIf.SwCfg.bolSimulation) THEN
+				me.SubStateMachine.intStateNext:= JCL_CmdState.cSUB_SendPon;	
+			ELSE							
+				// Connect to jetter server
+				pTCP_CIF^.Job.intACmd:= TCP_CmdState.cCMD_Connect;	
+					
+				// Wait for connection
+				IF (pTCP_CIF^.Job.intState = TCP_CmdState.cSTA_Connect) THEN			
+					me.SubStateMachine.intStateNext:= JCL_CmdState.cSUB_SendPon;	
+				END_IF		
+			END_IF
+					
+		JCL_CmdState.cSUB_SendPon:	
+			// Prepare telegram for PON
+			// -----------------------------------------
+			// Define header
+			stNextCommand.stHeader.uinMsgId := JCL_MsgId_Command;
+			stNextCommand.stHeader.udiMsgSize := SIZEOF(T_JCL_Command) - SIZEOF(ST_Header);
+			// Set jetter CMD
+			stNextCommand.usiCommand := JCL_CMD_PowerOn;
+			// Push telegram to send buffer
+			pNextCommand := ADR(stNextCommand);
+			p_fbTCP^.M_Push(paPushMsg := pNextCommand);	
+			me.SubStateMachine.intStateNext:= JCL_CmdState.cSUB_Done;	
+					
+		JCL_CmdState.cSUB_Done:
+			// ... do nothing
+	
+	END_CASE
+
+	// Wait for feedback -> PON
+	IF (SIf.Cur.intJETState = BASE_PLC.cSTA_PON) OR (SIf.Cur.intJETState = BASE_PLC.cSTA_OFF) THEN
+		me.StateMachine.intStateNext := cSTA_PON;
+	END_IF
+	
+END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+	;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_RUN" Id="{410e6f68-21db-410b-b96f-bc4c1b1b2b1f}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_RUN'}
+METHOD PROTECTED sta_RUN : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		CASE me.intCmd OF
+			Base_PLC.cCMD_RUN:
+				me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;	
+			JCL_CmdState.cCMD_CleanPrintHeads:
+				me.StateMachine.intStateNext := JCL_CmdState.cSTA_CleanPrintHeadsBusy;
+			JCL_CmdState.cCMD_Standby:
+				me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;
+		END_CASE
+		
+	END_IF
+	
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="CtrlSIf" Id="{6cd7df45-f8a7-47ec-aacd-12ea1150d983}">
+      <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIf_JCL
+]]></Declaration>
+      <Get Name="Get" Id="{f109c573-fc6f-41bd-bc60-c1e8e8fd11cd}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="sta_CALIBRATIONBusy" Id="{6e3b4cee-e470-4bbc-b03b-cdb86b48504d}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_CALIBRATIONBusy'}
+METHOD PROTECTED sta_CALIBRATIONBusy : BOOL
+VAR
+	stNextCommand: T_JCL_Command;
+	pNextCommand: POINTER TO T_JCL_Command;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		// Simulation
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := T#5S;
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+				
+		IF CIf.SwCfg.bolSimulation THEN
+			;
+		ELSE
+			// -----------------------------------------
+			// Prepare telegram for standby
+			// -----------------------------------------
+			// Define header		
+			stNextCommand.stHeader.uinMsgId := JCL_MsgId_Command;
+			stNextCommand.stHeader.udiMsgSize := SIZEOF(T_JCL_Command) - SIZEOF(ST_Header);
+			// Set DJM CMD
+			stNextCommand.usiCommand := JCL_CMD_Calibration;
+			// Push telegram to send buffer	
+			pNextCommand := ADR(stNextCommand);
+			p_fbTCP^.M_Push(paPushMsg := pNextCommand);	
+		END_IF
+		
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			fbSimulationTimer(); // simulation time
+			IF (fbSimulationTimer.Q) THEN
+				SIf.Cur.intJETState  := JCL_CmdState.cSTA_Calibration;
+			END_IF
+		END_IF	
+	
+		// Wait for feedback -> maintenance automatic done	
+		IF (SIf.Cur.intJETState = JCL_CmdState.cSTA_Calibration) THEN
+			me.StateMachine.intStateNext := JCL_CmdState.cSTA_Calibration;
+		END_IF
+		
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_CALIBRATION" Id="{80dcaaf1-1abe-4ac8-a0a6-e250f4b2976e}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_CALIBRATION'}
+METHOD PROTECTED sta_CALIBRATION : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		;
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		CASE me.intCmd OF		
+			JCL_CmdState.cCMD_Standby:
+				me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;			
+		END_CASE
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Always" Id="{85bc3f9d-4ca1-4c4f-a2fe-cc610bf02f20}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Always'}
+METHOD PROTECTED Always : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// not inherite from base !!!  special behaviour for this controller
+// SUPER^.Always();
+
+// Conditions Always
+IF (me.bolChangeBackToAUTO=TRUE) THEN // switch mode to automatic switch off controller
+	//me.StateMachine.intStateNext := cSTA_OFFBusy;
+	me.bolChangeBackToAUTO := FALSE;
+END_IF
+
+IF (CIf.SwCfg.bolExist=FALSE) THEN // hardware of controller does not exist
+	me.StateMachine.intStateNext := cSTA_SINGLE_ANSWER;
+ELSE
+	// Handle command PON
+	IF (me.intCmd=cCMD_PON) 
+		AND (me.StateMachine.intState<>cSTA_PONBusy) AND (me.StateMachine.intState<>cSTA_PON)
+		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) 
+		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy) THEN
+		me.StateMachine.intStateNext := cSTA_PONBusy;
+	END_IF
+END_IF
+		
+// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	
+	// Simulation
+	IF (CIf.SwCfg.bolSimulation) THEN
+		;
+	END_IF
+	
+	// Always handle recieve data from jetter server
+	IF NOT CIf.SwCfg.bolSimulation THEN
+		THIS^.HandleReceiveData();
+	END_IF
+	
+	// Request state
+	// ------------------------------
+	IF (me.intCmd=cCMD_RequestState) THEN
+		// Request state one time
+		CIf.Job.intACmd := Base_PLC.cCMD_DONE;
+		CIf.Job.intMCmd := Base_PLC.cCMD_DONE;
+		THIS^.RequestState();
+	END_IF
+	
+	// Reset Jetter alarms
+	// ------------------------------
+	// Can be done over command "cCMD_ResetAlarm" or normal global AlmReset
+	IF (me.intCmd=cCMD_ResetAlarm) OR ((CIf.Job.bolAlmReset = TRUE) AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)) THEN
+		CIf.Job.bolAlmReset := FALSE;
+		IF (me.intCmd=cCMD_ResetAlarm) THEN
+			CIf.Job.intACmd := Base_PLC.cCMD_DONE;
+			CIf.Job.intMCmd := Base_PLC.cCMD_DONE;
+		END_IF
+		// Reset Jetter alarms one time
+		THIS^.ResetAlarms();
+	END_IF	
+		
+END_IF
+
+// ----------------------------------------------------------------------------------
+// Always change actions in Base Library
+// ----------------------------------------------------------------------------------
+// overrule error always from base -> no EOFF State!! in EOFF go to OFF
+IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
+	IF (me.StateMachine.intState=cSTA_OFF) THEN
+		me.StateMachine.intStateNext := cSTA_OFF;
+	ELSE // stay in OFF
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	END_IF
+END_IF
+
+// Conditions Always
+IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF))
+		 AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) AND
+		(me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)) THEN
+	// alarm evt EOFF, OFF or cmd off
+	me.StateMachine.intStateNext := cSTA_OFFBusy;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFFBusy" Id="{934eaf8c-df3e-4c08-83d5-a4b6b1e22736}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFFBusy'}
+METHOD PROTECTED sta_OFFBusy : BOOL
+VAR
+	stNextCommand: T_JCL_Command;
+	pNextCommand: POINTER TO T_JCL_Command;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	
+	IF (CIf.SwCfg.bolSimulation) THEN 
+		SIf.Cur.bolReadyForProduction:= TRUE;			
+		SIf.Cur.bolRunning:= FALSE;		
+		SIf.Cur.bolNeedsAttention:= FALSE;			
+		SIf.Cur.bolError:= FALSE;			
+		SIf.Cur.bolCleaningIncomplete:= FALSE;			
+		SIf.Cur.bolIsLocalControlled:= FALSE;		
+		SIf.Cur.bolIsRemoteControlled:= TRUE;
+		SIf.Cur.intJETState := BASE_PLC.cSTA_OFF;
+	ELSE 
+		// -----------------------------------------
+		// Prepare telegram for off
+		// -----------------------------------------
+		// Define header
+		stNextCommand.stHeader.uinMsgId := JCL_MsgId_Command;
+		stNextCommand.stHeader.udiMsgSize := SIZEOF(T_JCL_Command) - SIZEOF(ST_Header);
+		// Set jetter CMD
+		stNextCommand.usiCommand := JCL_CMD_Off;
+		// Push telegram to send buffer
+		pNextCommand := ADR(stNextCommand);
+		p_fbTCP^.M_Push(paPushMsg := pNextCommand);	
+	END_IF
+	
+END_IF
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+	
+	// Wait for feedback -> OFF
+	IF (SIf.Cur.intJETState = BASE_PLC.cSTA_OFF) THEN
+		me.StateMachine.intStateNext := cSTA_OFF;
+	END_IF
+	
+END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+	;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCmdState" Id="{9986243b-d95e-481d-bc8c-06938d2d3e01}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
+METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime	
+	IF (bolState=FALSE) THEN
+		// States's
+		CASE intCmdState OF
+			JCL_CmdState.cCMD_Standby: 
+				getCmdState := 'cCMD_Standby';
+			JCL_CmdState.cCMD_CleanPrintHeads: 
+				getCmdState := 'cCMD_CleanPrintHeads';		
+				
+		END_CASE;
+	ELSE
+		// States's
+		CASE intCmdState OF			
+			// Main states
+			JCL_CmdState.cSTA_StandbyBusy: 
+				getCmdState := 'cSTA_StandbyBusy'; 
+			JCL_CmdState.cSTA_Standby:
+				getCmdState := 'cSTA_Standby';			
+			JCL_CmdState.cSTA_ConnectBusy:
+				getCmdState := 'cSTA_ConnectBusy';
+			JCL_CmdState.cSTA_CleanPrintHeadsBusy: 
+				getCmdState := 'cSTA_CleanPrintHeadsBusy'; 
+			JCL_CmdState.cSTA_CleanPrintHeads:
+				getCmdState := 'cSTA_CleanPrintHeads';		
+			JCL_CmdState.cSTA_CalibrationBusy:
+				getCmdState := 'cSTA_CalibrationBusy';	
+			JCL_CmdState.cSTA_Calibration:
+				getCmdState := 'cSTA_Calibration';	
+						
+			// Sub states
+			JCL_CmdState.cSUB_WaitingForConnection:
+				getCmdState := 'cSUB_WaitingForConnection';
+			JCL_CmdState.cSUB_WaitingForState:
+				getCmdState := 'cSUB_WaitingForState';
+			JCL_CmdState.cSUB_Done:
+				getCmdState := 'cSUB_Done';			
+		END_CASE;
+	END_IF 
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_CLEANINGBusy" Id="{99b7c4db-620b-4eb8-9e01-174bd12ca3f3}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_CLEANINGBusy'}
+METHOD PROTECTED sta_CLEANINGBusy : BOOL
+VAR
+	stNextCommand: T_JCL_Command;
+	pNextCommand: POINTER TO T_JCL_Command;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		// Simulation
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := T#5S;
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+				
+		IF CIf.SwCfg.bolSimulation THEN
+			;
+		ELSE
+			// -----------------------------------------
+			// Prepare telegram for standby
+			// -----------------------------------------
+			// Define header		
+			stNextCommand.stHeader.uinMsgId := JCL_MsgId_Command;
+			stNextCommand.stHeader.udiMsgSize := SIZEOF(T_JCL_Command) - SIZEOF(ST_Header);
+			// Set DJM CMD
+			stNextCommand.usiCommand := JCL_CMD_CleanPrintHeads;
+			// Push telegram to send buffer	
+			pNextCommand := ADR(stNextCommand);
+			p_fbTCP^.M_Push(paPushMsg := pNextCommand);	
+		END_IF
+		
+	END_IF
+
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			fbSimulationTimer(); // simulation time
+			IF (fbSimulationTimer.Q) THEN
+				SIf.Cur.intJETState  := JCL_CmdState.cSTA_CleanPrintHeads;
+			END_IF
+		END_IF	
+	
+		// Wait for feedback -> maintenance automatic done	
+		IF (SIf.Cur.intJETState = JCL_CmdState.cSTA_CleanPrintHeads) THEN
+			me.StateMachine.intStateNext := JCL_CmdState.cSTA_CleanPrintHeads;
+		END_IF
+		
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ERROR" Id="{a4186c2a-3c2d-4f21-add2-eca9a9ec681b}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
+METHOD PROTECTED sta_ERROR : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+	
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_ERRORQuit;
+		END_IF
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_CONNECTBusy" Id="{ac336442-1e4a-4eb5-b029-45ff288ad37b}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_CONNECTBusy'}
+METHOD sta_CONNECTBusy : BOOL
+VAR
+	stNextCommand: T_JCL_Command;
+	pNextCommand: POINTER TO T_JCL_Command;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	
+		// **********************************************************************************
+		// This state will be executed one time after startup or after an error ack.
+		// State open the TCP communication to jetter remote server to get the actual machine state
+		// **********************************************************************************
+		// Reset state 
+		SIf.Cur.intJETState:= 0;
+		
+		// Connect to the jetter server
+		pTCP_CIF^.Job.intACmd:= TCP_CmdState.cCMD_Connect;
+		
+		// Initialize sub state machine
+		me.SubStateMachine.intStateNext:= JCL_CmdState.cSUB_WaitingForConnection;		
+		me.SubStateMachine.intState:= me.SubStateMachine.intStateNext-1;
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// -----------------------------------------------
+		// Sub state machine handle 
+		// -----------------------------------------------
+		CASE me.SubStateMachine.intState OF
+			
+			JCL_CmdState.cSUB_WaitingForConnection:			
+				// Wait for connection
+				IF (pTCP_CIF^.Job.intState = TCP_CmdState.cSTA_Connect) THEN	
+					// Request jetter states the first time after TCP client connected				
+					THIS^.RequestState();		
+					me.SubStateMachine.intStateNext:= JCL_CmdState.cSUB_WaitingForState;	
+				END_IF
+			
+			JCL_CmdState.cSUB_WaitingForState:
+				// Wait for first status msg 
+				IF (SIf.Cur.intJETState > 0) THEN 
+					me.SubStateMachine.intStateNext:= JCL_CmdState.cSUB_Done;
+				END_IF	
+
+			JCL_CmdState.cSUB_Done:
+				// Change to the init state
+				me.StateMachine.intStateNext := SIf.Cur.intJETState;
+			
+		END_CASE
+			
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ERRORQuit" Id="{adf19422-dc17-48cb-8f8a-5cb59d955679}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERRORQuit'}
+METHOD PROTECTED sta_ERRORQuit : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// evtl. wait time if reset of device is necessary and then decide to go to states or ERROR state
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
+			CIf.Job.bolAlmReset := FALSE;
+		END_IF
+		
+		// State Change Condition
+		IF (pTCP_CIF^.Job.bolAlmReset = FALSE) THEN
+	
+			// If the error was triggered because of an TCP connection problem to the server
+			IF (bolServerConnectionError) AND (pTCP_CIF^.Job.eMe_ActivAlmClass = E_AlmClass.NONE) THEN
+				bolServerConnectionError:= FALSE;
+				// Try to reopen the connection to server
+				me.StateMachine.intStateNext := JCL_CmdState.cSTA_ConnectBusy;
+			END_IF
+		
+			CASE me.intCmd OF
+				BASE_PLC.cCMD_OFF:
+					me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
+			END_CASE
+			
+		END_IF
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PON" Id="{b86f8b4f-ce8b-43ee-81a3-3eec36c9fad4}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_PON'}
+METHOD PROTECTED sta_PON : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+
+		
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN	
+		
+		CASE me.intCmd OF
+			cCMD_OFF: 				
+				me.StateMachine.intStateNext := cSTA_OFFBusy;
+			JCL_CmdState.cCMD_Standby:
+				me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;
+			cCMD_Run:
+				me.StateMachine.intStateNext := cSTA_RUNBusy;
+		END_CASE
+	
+	END_IF
+	
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_STANDBY" Id="{cebb3bdf-9820-4455-87e1-114e0c27c6fa}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_STANDBY'}
+METHOD PROTECTED sta_STANDBY : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		;
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		CASE me.intCmd OF
+			BASE_PLC.cCMD_RUN:
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
+			JCL_CmdState.cCMD_Standby:
+				me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;
+			JCL_CmdState.cCMD_CleanPrintHeads: 				
+				me.StateMachine.intStateNext := JCL_CmdState.cSTA_CleanPrintHeadsBusy;
+			JCL_CmdState.cCMD_Calibration: 				
+				me.StateMachine.intStateNext := JCL_CmdState.cSTA_CalibrationBusy;	
+		END_CASE
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{d0d4f76e-1abe-4e60-941a-41971f9b27d0}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'FB_init'}
+METHOD FB_init : BOOL
+VAR_INPUT
+	/// if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	/// if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
+END_VAR
+VAR
+	iIdx: UINT;
+	iLength: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// ------------------------------------------------------------------------------------------------------------------------
+// to manually change in new FUB implementation!!!
+// define valid commands for this controller
+iLength := SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0]);
+iIdx := 0;
+
+WHILE (iIdx < iLength) AND (CIf.Job.aCmdList[iIdx].intCmd <> cCMD_INITIALIZED) DO
+	iIdx := iIdx + 1; 
+END_WHILE
+
+IF (iIdx < iLength) THEN
+// Add configuration of own comands	
+	CIf.Job.aCmdList[iIdx].intCmd := BASE_PLC.cCMD_RUN;
+	CIf.Job.aCmdList[iIdx].strName := 'RUN'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+    iIdx := iIdx + 1;
+	CIf.Job.aCmdList[iIdx].intCmd := JCL_CmdState.cCMD_Standby;
+	CIf.Job.aCmdList[iIdx].strName := 'STANDBY'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+	iIdx := iIdx + 1;
+	CIf.Job.aCmdList[iIdx].intCmd := JCL_CmdState.cCMD_CleanPrintHeads;
+	CIf.Job.aCmdList[iIdx].strName := 'CLEANING'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+	iIdx := iIdx + 1;
+	CIf.Job.aCmdList[iIdx].intCmd := JCL_CmdState.cCMD_Calibration;
+	CIf.Job.aCmdList[iIdx].strName := 'CALIBRATION'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+	iIdx := iIdx + 1;
+	CIf.Job.aCmdList[iIdx].intCmd := JCL_CmdState.cCMD_ResetAlarm;
+	CIf.Job.aCmdList[iIdx].strName := 'RESET ALARM'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+	iIdx := iIdx + 1;
+	CIf.Job.aCmdList[iIdx].intCmd := JCL_CmdState.cCMD_RequestState;
+	CIf.Job.aCmdList[iIdx].strName := 'REQUEST STATE'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+ELSE
+	// Error if the aCmdList Array is to small
+END_IF
+
+// set name of class/typ
+CIf.Info.strType := 'FB_JCL'; 
+
+// set alarm class
+SIf.Alm[E_ALM_JCL.none].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_JCL.none].strText := ''; 
+
+
+// *******************************************************************************
+// initial values
+// *******************************************************************************
+
+// software configuration
+CIf.SwCfg.bolExist := TRUE;
+CIf.SwCfg.bolEnable := TRUE;
+CIf.SwCfg.bolSimulation :=  FALSE;
+
+// Fill the lookup table with all valid jetter states
+fbStateLookup.A_Add(iAddKey := Base_PLC.cSTA_EOFFBusy, iAddValue:= 3);
+fbStateLookup.A_Add(iAddKey := Base_PLC.cSTA_EOFF, iAddValue:= 4);
+fbStateLookup.A_Add(iAddKey := Base_PLC.cSTA_PONBusy, iAddValue:= 1);
+fbStateLookup.A_Add(iAddKey := Base_PLC.cSTA_PON, iAddValue:= 2);
+fbStateLookup.A_Add(iAddKey := BASE_PLC.cSTA_OFFBusy, iAddValue:= 5);
+fbStateLookup.A_Add(iAddKey := BASE_PLC.cSTA_OFF, iAddValue:= 6);
+fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_ParkBusy, iAddValue:= 211);
+fbStateLookup.A_Add(iAddKey := BASE_PLC.cSTA_INITBusy, iAddValue:= 7);
+fbStateLookup.A_Add(iAddKey := BASE_PLC.cSTA_INIT, iAddValue:= 8);
+fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_StandbyBusy, iAddValue:= 201);
+fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_Standby, iAddValue:= 202);
+fbStateLookup.A_Add(iAddKey := BASE_PLC.cSTA_RUNBusy, iAddValue:= 9);
+fbStateLookup.A_Add(iAddKey := BASE_PLC.cSTA_RUN, iAddValue:= 10);
+fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_CalibrationBusy, iAddValue:= 203);
+fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_Calibration, iAddValue:= 204);
+fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_CleanPrintHeadsBusy, iAddValue:= 205);
+fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_CleanPrintHeads, iAddValue:= 206);
+fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_MaintenanceBusy, iAddValue:= 208);
+fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_MaintenanceInWork, iAddValue:= 209);
+fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_MaintenanceDone, iAddValue:= 210);
+
+// prepare to recieve data
+SIf.Cur.paNextMsg := ADR(SIf.Cur.naNextMsg);
+SIf.Cur.puNextMsg := SIf.Cur.paNextMsg;
+
+SIf.Cur.bolNeedsCleaning:= FALSE;	
+SIf.Cur.intJETState:= 0;  // current state not yet known
+
+
+	]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="HandleReceiveData" Id="{d23c1ec9-0f23-4228-9823-285078731e43}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'HandleReceiveData'}
+METHOD HandleReceiveData
+VAR
+	bPop: BOOL;
+	ii: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// get next message
+p_fbTCP^.M_Pop(naPopMsg => SIf.Cur.naNextMsg, bPop => bPop);
+
+IF bPop THEN // something has been recieved
+	CASE SIf.Cur.puNextMsg^.State.stHeader.uinMsgId OF
+
+		// -----------------------------------------------
+		// Handle received state
+		// -----------------------------------------------
+		// Note: The Status is send on Request and on Status Change
+		JCL_MsgId_State:
+			
+			// Update the main state
+			fbStateLookup.A_LookupByValue(iLookupValue := SIf.Cur.puNextMsg^.State.usiMainState, iFoundKey => SIf.Cur.intJETState);
+	
+			// Prepare additional states
+			(*
+			State				BIT		Description
+			-------------------------------------------------------------------------------------------------
+			ReadyForProduction	0		Jetter ready for production
+			Running				1		Print running, in production
+			NeedsAttention		2		System needs attention. Info or warning active
+			Error				3		General error active
+			CleaningIncomplete	4		Cleaning cycle was aborted before finishing. Production not possible.
+			 -					5	 	-
+			IsLocalControlled	6		Local control active. Commands from Client are ignored
+			IsRemoteControlled	7		Remote control active. Commands from Client are accepted
+			*)
+	
+			SIf.Cur.bolReadyForProduction:= SIf.Cur.puNextMsg^.State.usiAddState.0;			
+			SIf.Cur.bolRunning:= SIf.Cur.puNextMsg^.State.usiAddState.1;		
+			SIf.Cur.bolNeedsAttention:= SIf.Cur.puNextMsg^.State.usiAddState.2;			
+			SIf.Cur.bolError:= SIf.Cur.puNextMsg^.State.usiAddState.3;			
+			SIf.Cur.bolCleaningIncomplete:= SIf.Cur.puNextMsg^.State.usiAddState.4;			
+			SIf.Cur.bolIsLocalControlled:= SIf.Cur.puNextMsg^.State.usiAddState.6;		
+			SIf.Cur.bolIsRemoteControlled:= SIf.Cur.puNextMsg^.State.usiAddState.7;
+			
+		// -----------------------------------------------
+		// Handle received print info (print done)
+		// -----------------------------------------------		
+		JCL_MsgId_PrintDone:
+			;
+		
+		// -----------------------------------------------
+		// Handle received alarm message
+		// -----------------------------------------------
+		JCL_MsgId_Alarm:
+			;
+			
+		// -----------------------------------------------
+		// Handle received request for cleaning
+		// -----------------------------------------------
+		JCL_MsgId_ReqCleaning:
+				
+			SIf.Cur.bolNeedsCleaning:= TRUE;			
+			SIf.Cur.strDTOfLastCleaningCycle:= SIf.Cur.puNextMsg^.ReqCleaning.strDTLastClean;
+		
+		// nothing received	
+		0:
+			; 
+	ELSE
+		; // To do: Add error	
+	END_CASE
+	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCtrlSIf" Id="{d469cb63-b13b-4816-939d-d3359f05ff70}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
+METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_JCL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFF" Id="{e70977e4-9671-496f-a249-01c257a80de9}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFF'}
+METHOD PROTECTED sta_OFF : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;	
+		;
+	END_IF
+
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+	
+		CASE me.intCmd OF
+			Base_PLC.cCMD_RUN: 				
+				me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;	
+			JCL_CmdState.cCMD_Standby: 				
+				me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;
+			JCL_CmdState.cCMD_CleanPrintHeads: 				
+				me.StateMachine.intStateNext := JCL_CmdState.cSTA_CleanPrintHeadsBusy;
+		END_CASE
+		
+	END_IF
+
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CtrlInit" Id="{ef3f1c8e-f4d1-401d-9812-7ace1918aaf7}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'CtrlInit'}
+METHOD CtrlInit : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.CtrlInit();
+
+// one time first cyclic call!
+// Open the TCP communication to jetter remote server to get the actual machine state
+me.StateMachine.intStateNext := JCL_CmdState.cSTA_ConnectBusy;
+
+// get child if
+pTCP_CIF := p_fbTCP^.CtrlCIf;
+THIS^.AddChild(p_fbTCP^);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_RUNBusy" Id="{f27e9cf8-1161-450e-b7fa-40b808c2f2f3}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_RUNBusy'}
+METHOD PROTECTED sta_RUNBusy : BOOL
+VAR
+	stNextCommand: T_JCL_Command;
+	pNextCommand: POINTER TO T_JCL_Command;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		IF CIf.SwCfg.bolSimulation THEN
+			SIf.Cur.bolReadyForProduction:= TRUE;			
+			SIf.Cur.bolRunning:= TRUE;		
+			SIf.Cur.bolNeedsAttention:= FALSE;			
+			SIf.Cur.bolError:= FALSE;			
+			SIf.Cur.bolCleaningIncomplete:= FALSE;			
+			SIf.Cur.bolIsLocalControlled:= FALSE;		
+			SIf.Cur.bolIsRemoteControlled:= TRUE;
+			SIf.Cur.intJETState := cSTA_RUN;
+		ELSE
+			// -----------------------------------------
+			// Prepare telegram for run
+			// -----------------------------------------
+			// Define header
+			stNextCommand.stHeader.uinMsgId := JCL_MsgId_Command;
+			stNextCommand.stHeader.udiMsgSize := SIZEOF(T_JCL_Command) - SIZEOF(ST_Header);
+			// Set jetter CMD
+			stNextCommand.usiCommand := JCL_CMD_Run;
+			// Push telegram to send buffer
+			pNextCommand := ADR(stNextCommand);
+			p_fbTCP^.M_Push(paPushMsg := pNextCommand);
+		END_IF
+			 
+	END_IF
+
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// Wait for feedback -> RUN
+		IF (SIf.Cur.intJETState = cSTA_RUN) THEN
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_RUN;
+		END_IF
+		
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_STANDBYBusy" Id="{ff89a528-d6b1-4d60-8bb7-eaabc0530ce1}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_STANDBYBusy'}
+METHOD PROTECTED sta_STANDBYBusy : BOOL
+VAR
+	stNextCommand: T_JCL_Command;
+	pNextCommand: POINTER TO T_JCL_Command;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		// Simulation
+		fbSimulationTimer.IN := FALSE;
+		fbSimulationTimer.PT := T#5S;
+		fbSimulationTimer(); // set time/reset timer
+		fbSimulationTimer.IN := TRUE; // start timer
+				
+		IF CIf.SwCfg.bolSimulation THEN
+			;
+		ELSE
+			// -----------------------------------------
+			// Prepare telegram for standby
+			// -----------------------------------------
+			// Define header		
+			stNextCommand.stHeader.uinMsgId := JCL_MsgId_Command;
+			stNextCommand.stHeader.udiMsgSize := SIZEOF(T_JCL_Command) - SIZEOF(ST_Header);
+			// Set DJM CMD
+			stNextCommand.usiCommand := JCL_CMD_Standby;
+			// Push telegram to send buffer	
+			pNextCommand := ADR(stNextCommand);
+			p_fbTCP^.M_Push(paPushMsg := pNextCommand);	
+		END_IF
+		
+	END_IF
+
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			fbSimulationTimer(); // simulation time
+			IF (fbSimulationTimer.Q) THEN
+				SIf.Cur.bolReadyForProduction:= TRUE;			
+				SIf.Cur.bolRunning:= TRUE;		
+				SIf.Cur.bolNeedsAttention:= FALSE;			
+				SIf.Cur.bolError:= FALSE;			
+				SIf.Cur.bolCleaningIncomplete:= FALSE;			
+				SIf.Cur.bolIsLocalControlled:= FALSE;		
+				SIf.Cur.bolIsRemoteControlled:= TRUE;
+				SIf.Cur.intJETState  := JCL_CmdState.cSTA_Standby;
+			END_IF
+		END_IF	
+	
+		// Wait for feedback -> standby	
+		IF (SIf.Cur.intJETState  = JCL_CmdState.cSTA_Standby) THEN
+			me.StateMachine.intStateNext := JCL_CmdState.cSTA_Standby;
+		END_IF
+		
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

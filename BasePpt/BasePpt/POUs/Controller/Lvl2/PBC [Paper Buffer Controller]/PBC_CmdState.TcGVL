@@ -1,29 +1,32 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <GVL Name="PBC_CmdState" Id="{66834613-d751-4391-bc67-ce7a954dc943}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="PBC_CmdState" Id="{a05aad05-ca53-4c94-96f6-c0b16010cb52}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	///ctrl specific command definitions
-	cCMD_SINGLE				: INT := 202;
-	cCMD_STANDBY			: INT := 204;
-	
+	cCMD_SINGLE: INT := 202;
+	cCMD_STANDBY: INT := 204;
 	///ctrl specific states definitions
-	cSTA_STANDBYBusy		: INT := 203;
-	cSTA_STANDBY			: INT := 204;
-	cSTA_PositionPaperBusy	: INT := 205;
-	cSTA_RUNEmpty			: INT := 207;
-	cSTA_EjectBusy			: INT := 209;
-	cSTA_EjectCheck			: INT := 211;
-	
-	cSUB_WAITPAPER			: INT := 300;
-	cSUB_POSITIONbusy		: INT := 301;
-	cSUB_POSITIONSTOPbusy	: INT := 302;
-	cSUB_EVALUATEEJECT		: INT := 303;
-	cSUB_EJECTbusy			: INT := 304;
-	cSUB_EJECTSTOPbusy		: INT := 305;
-	cSUB_POSITIONSTARTbusy	: INT := 306;
-	cSUB_EJECTSTARTbusy		: INT := 307;
-	cSUB_READYEJECT			: INT := 308;
-	
-//	cSUB_WAITPAPER
+	cSTA_STANDBYBusy: INT := 203;
+	cSTA_STANDBY: INT := 204;
+	cSTA_PositionPaperBusy: INT := 205;
+	cSTA_RUNEmpty: INT := 207;
+	cSTA_EjectBusy: INT := 209;
+	cSTA_EjectCheck: INT := 211;
+	cSUB_WAITPAPER: INT := 300;
+	cSUB_POSITIONbusy: INT := 301;
+	cSUB_POSITIONSTOPbusy: INT := 302;
+	cSUB_EVALUATEEJECT: INT := 303;
+	cSUB_EJECTbusy: INT := 304;
+	cSUB_EJECTSTOPbusy: INT := 305;
+	cSUB_POSITIONSTARTbusy: INT := 306;
+	cSUB_EJECTSTARTbusy: INT := 307;
+	cSUB_READYEJECT: INT := 308;
+	cSUB_WAITPAPERGONETABLE: INT := 309;
+	///	cSUB_BARCODEREADstart	: INT := 310;
+	///	cSUB_BARCODREREADbusy	: INT := 311;
+	///	cSUB_BARCODREREAD  		: INT := 312;
+	cSUB_POSITIONRETRYDELAY: INT := 313;
+	cSUB_POSITIONRETRYSTOP: INT := 314;
 END_VAR]]></Declaration>
     <ObjectProperties />
   </GVL>

@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_PST_CTRL" Id="{01636854-f3a0-43cb-92ed-a3ddc238745c}">
+    <Declaration><![CDATA[TYPE T_PST_CTRL :
+STRUCT
+	fbPst: FB_PST;
+	fbPst_Ptb: FB_PTB;
+	fbPst_Ptb_Umc: FB_UMC;
+	fbPst_Ptb_Vpc: FB_VPC;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

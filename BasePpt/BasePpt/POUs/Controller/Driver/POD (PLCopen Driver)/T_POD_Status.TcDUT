@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_POD_Status" Id="{701949fe-00c5-44cf-912e-33db26c1ddf2}">
+    <Declaration><![CDATA[TYPE T_POD_Status :
+STRUCT
+	/// Hardware enable:0 = Open 1 = Closed  
+	bolEnable: BOOL;
+	/// 1 = Network initialized  
+	bolNetwOk: BOOL;
+	/// 1 = Initialization done 
+	bolInitOk: BOOL;
+	bolReady: BOOL;
+	/// 1 = Controller switched on  
+	bolCtrlOn: BOOL;
+	/// 1 = Homing done  
+	bolHomeOk: BOOL;
+	/// 1 = In position (target position reached)  
+	bolInPos: BOOL;
+	/// 1 = Axis moving  
+	bolMoving: BOOL;
+	/// 1 = negativ endswitch active -> no movement negative allowed
+	bolNegHWSwitch: BOOL;
+	/// 1 = positive endswitch active -> no movement positive allowed
+	bolPosHWSwitch: BOOL;
+	/// 1 = negativ endswitch active -> no movement negative allowed
+	bolNegSWSwitch: BOOL;
+	/// 1 = positive endswitch active -> no movement positive allowed
+	bolPosSWSwitch: BOOL;
+	/// drive digital inputs of elmo drive
+	stDigIn: T_POD_DigitalInputs;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

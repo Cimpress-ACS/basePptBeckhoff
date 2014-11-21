@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_JCL_Cur" Id="{a6acc4c7-c62a-4f80-80ef-536e12199f51}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_JCL_Cur :
+STRUCT
+	/// Additional states from TCP server
+	/// Local control active. Commands from this client are ignored
+	bolIsLocalControlled: BOOL;
+	/// Remote control active. Commands from this client are accepted
+	bolIsRemoteControlled: BOOL;
+	/// Jetter ready for production
+	bolReadyForProduction: BOOL;
+	/// Print running, in production
+	bolRunning: BOOL;
+	/// System needs attention. Info or warning active
+	bolNeedsAttention: BOOL;
+	/// General error active
+	bolError: BOOL;
+	/// Cleaning cycle was aborted before finishing. Production not possible.
+	bolCleaningIncomplete: BOOL;
+	/// Print head needs cleaning.
+	bolNeedsCleaning: BOOL;
+	/// Timestamp of the last cleaning cycle. Format: YYYY-MM-DD-hh:mm:ss.xxx
+	strDTOfLastCleaningCycle: STRING := '';
+	/// Jetter state
+	intJETState: INT;
+	/// variables for receiving msgs
+	naNextMsg: ARRAY[0..MAX_DATASET_SIZE] OF BYTE;
+	paNextMsg: POINTER TO ARRAY[0..MAX_DATASET_SIZE] OF BYTE;
+	puNextMsg: POINTER TO U_JCL_Message;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

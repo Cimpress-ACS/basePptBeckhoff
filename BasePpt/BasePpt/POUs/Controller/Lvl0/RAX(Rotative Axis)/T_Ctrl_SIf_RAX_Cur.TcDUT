@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_RAX_Cur" Id="{842fb757-2b8f-4768-ab11-5f7866ab5764}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_RAX_Cur :
+STRUCT
+	/// [0.1°/s] current speed
+	dinSpeed_0_1deg_s: DINT;
+	/// [0.1°] current position
+	dinPosition_0_1deg: DINT;
+	/// [°] current modulo position
+	dinModPosition_0_1deg: DINT;
+	/// [0.1Nm] current torque
+	dinTorque_0_1Nm: DINT;
+	/// digital input1 from drive
+	bol_di1: BOOL;
+	/// digital input2 from drive
+	bol_di2: BOOL;
+	/// digital input3 from drive
+	bol_di3: BOOL;
+	/// digital input4 from drive
+	bol_di4: BOOL;
+	/// digital input5 from drive
+	bol_di5: BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

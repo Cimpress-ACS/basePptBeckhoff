@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_BCH_ID" Id="{7522e6f7-2328-45a9-b57a-5b63b3ad836a}">
+    <Declaration><![CDATA[TYPE T_BCH_ID :
+STRUCT
+	Bch					: INT;
+	Bch_Bcc				: INT;
+	Bch_Bcc_Bcd			: INT;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

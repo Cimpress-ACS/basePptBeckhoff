@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_POD_Move" Id="{2d2fdfc8-8551-4038-8980-0c2442a9f2d6}">
+    <Declaration><![CDATA[TYPE T_POD_Move :
+STRUCT
+	///target position [Units] 
+	lreSetPos: LREAL;
+	/// Direction used for Modulo position
+	eDirection: MC_Direction;
+	///set speed [Units/s] 
+	lreSetSpeed: LREAL;
+	///set acc  [Units/s^2] 
+	lreSetAcc: LREAL;
+	///set dec  [Units/s^2] 
+	lreSetDec: LREAL;
+	///set dec  [Units/s^2] quickstop
+	lreSetDecFast: LREAL;
+	///lreSetDec : DINT; //set dec  [Units/s^2] 
+	lreSetJerk: LREAL;
+	/// speed override for all drive commands (0 ≤Override≤ 100.0)
+	lreSpeedOverride: LREAL := 100.0;
+	lreSWLimitNeg_mm: LREAL;
+	lreSWLimitPos_mm: LREAL;
+	/// Actual position [Units] 
+	lreActPos: LREAL;
+	/// Actual modulo position [Units] 
+	lreActModPos: LREAL;
+	/// act speed [Units/s] 
+	lreActVel: LREAL;
+	/// [Nm] actual torque The torque actual value corresponds to the instantaneous torque in the drive motor. The value is given in units of per thousand of rated torque.
+	lreActTorque: LREAL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

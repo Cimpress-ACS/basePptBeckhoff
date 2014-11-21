@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_PTA_CTRL" Id="{60c434a5-805d-46de-b3c5-3464f5565dce}">
+    <Declaration><![CDATA[TYPE T_PTA_CTRL :
+STRUCT
+	fbPta: FB_PTB;	// PTA is a special type of PTB
+	fbPta_Umc: FB_UMC;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

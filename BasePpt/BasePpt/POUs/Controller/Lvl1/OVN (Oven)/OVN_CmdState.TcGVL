@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="OVN_CmdState" Id="{ccca8449-98a5-48f9-9794-5a85756397ca}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	///ctrl commands definitions
+	///specific commands >200 - every command has to be a even number
+	cCMD_BELTONLY: INT := 202;
+	///ctrl specific states definitions
+	cSTA_BELTONLYBusy: INT := 201;
+	cSTA_BELTONLY: INT := 202;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

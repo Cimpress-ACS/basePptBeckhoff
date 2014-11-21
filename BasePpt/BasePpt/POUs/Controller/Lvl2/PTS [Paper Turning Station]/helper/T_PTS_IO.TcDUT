@@ -1,0 +1,38 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_PTS_IO" Id="{2ba2100c-0020-49d9-9f6f-98123c511758}">
+    <Declaration><![CDATA[TYPE T_PTS_IO :
+STRUCT
+	In_bolPaperSensor: REFERENCE TO BOOL;
+	
+	In_bolMdc_CrossPositionSensor: REFERENCE TO BOOL;
+	In_bolMdc_TablePositionSensor: REFERENCE TO BOOL;
+	
+	In_bolMdc_Umc_EmoOk: REFERENCE TO BOOL;
+	In_uinMdc_Umc_Status: REFERENCE TO UINT;
+	In_uinMdc_Umc_ActualSpeed: REFERENCE TO UINT;
+	In_uinMdc_Umc_SetSpeed: REFERENCE TO UINT;
+	In_uinMdc_Umc_ECatState: REFERENCE TO UINT;
+	In_strMdc_Umc_ECatNetId: REFERENCE TO AMSNETID;
+	In_uinMdc_Umc_ECatPort: REFERENCE TO WORD;
+	Out_uinMdc_Umc_Control: REFERENCE TO UINT;
+	Out_uinMdc_Umc_SetSpeed: REFERENCE TO UINT;
+	
+	In_bolPtb_Umc_EmoOk: REFERENCE TO BOOL;
+	In_uinPtb_Umc_Status: REFERENCE TO UINT;
+	In_uinPtb_Umc_ActualSpeed: REFERENCE TO UINT;
+	In_uinPtb_Umc_SetSpeed: REFERENCE TO UINT;
+	In_uinPtb_Umc_ECatState: REFERENCE TO UINT;
+	In_strPtb_Umc_ECatNetId: REFERENCE TO AMSNETID;
+	In_uinPtb_Umc_ECatPort: REFERENCE TO WORD;
+	Out_uinPtb_Umc_Control: REFERENCE TO UINT;
+	Out_uinPtb_Umc_SetSpeed: REFERENCE TO UINT;
+	
+	In_bolPtb_Vpc_VacuumSensor: REFERENCE TO BOOL;
+	In_bolPtb_Vpc_PumpOk: REFERENCE TO BOOL;
+	Out_bolPtb_Vpc_PumpOn: REFERENCE TO BOOL;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

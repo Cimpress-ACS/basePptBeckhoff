@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="TCP_Constants" Id="{451b7cbc-47f8-4a47-ade8-694f9d4c2371}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	/// Define length of data buffer. Max. 900 Byte
+	MAX_DATASET_SIZE: UDINT := 900;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

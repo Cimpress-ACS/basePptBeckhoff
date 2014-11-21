@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_PCE" Id="{fbf96a47-db7e-4d62-b6bd-22e5b5bdbc89}">
+    <Declaration><![CDATA[TYPE T_PCE :
+STRUCT
+	io:		T_PCE_IO;
+	ctrl:	T_PCE_CTRL;
+	id:		T_PCE_ID;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

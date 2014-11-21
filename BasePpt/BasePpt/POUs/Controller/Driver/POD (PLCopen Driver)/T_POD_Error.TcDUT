@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_POD_Error" Id="{53170a35-0272-4571-871a-1e44be633ee3}">
+    <Declaration><![CDATA[TYPE T_POD_Error :
+STRUCT
+	/// Reset failure
+	bolErrAck: BOOL;
+	/// atleast one failure active
+	bolErrorActive: BOOL;
+	/// error in MC fub error
+	bolMCError: BOOL;
+	/// error in NC (motion controller)
+	bolNCError: BOOL;
+	/// error in drive (ELMO)
+	bolDriveError: BOOL;
+	/// error ID
+	dwoErrorID: DWORD;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

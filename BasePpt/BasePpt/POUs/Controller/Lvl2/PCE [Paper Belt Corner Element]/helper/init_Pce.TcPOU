@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="init_Pce" Id="{ab97e4c9-cf53-4c54-b273-aa215f7a464b}">
+    <Declaration><![CDATA[FUNCTION init_Pce : BOOL
+VAR_INPUT
+	pPce			: POINTER TO T_PCE;
+	/// instance array of all controller instances
+	pCtrlInst		: POINTER TO fb_CtrlBase;
+	/// common interface array of all controllers (main use for PLC)
+	pCtrlCIf		: POINTER TO T_Ctrl_CIf;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[pPce^.ctrl.fbPce_PtbIn_Vpc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPce^.id.Pce_PtbIn_Vpc);
+pPce^.ctrl.fbPce_PtbIn_Umc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPce^.id.Pce_PtbIn_Umc);
+pPce^.ctrl.fbPce_PtbIn.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPce^.id.Pce_PtbIn);
+pPce^.ctrl.fbPce_PtbIn.Drive := ADR(pPce^.ctrl.fbPce_PtbIn_Umc);
+pPce^.ctrl.fbPce_PtbIn.VacuumPump := ADR(pPce^.ctrl.fbPce_PtbIn_Vpc);
+
+pPce^.ctrl.fbPce_PtbOut_Umc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPce^.id.Pce_PtbOut_Umc);
+pPce^.ctrl.fbPce_PtbOut.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPce^.id.Pce_PtbOut);
+pPce^.ctrl.fbPce_PtbOut.Drive := ADR(pPce^.ctrl.fbPce_PtbOut_Umc);
+
+pPce^.ctrl.fbPce.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPce^.id.Pce);
+pPce^.ctrl.fbPce.DriveIn := ADR(pPce^.ctrl.fbPce_PtbIn);
+pPce^.ctrl.fbPce.DriveOut := ADR(pPce^.ctrl.fbPce_PtbOut);]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

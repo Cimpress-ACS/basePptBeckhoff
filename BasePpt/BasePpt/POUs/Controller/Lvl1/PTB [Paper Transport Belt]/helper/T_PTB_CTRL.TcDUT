@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_PTB_CTRL" Id="{730e6765-7006-4ad3-a3cd-be9016d6d61d}">
+    <Declaration><![CDATA[TYPE T_PTB_CTRL :
+STRUCT
+	fbPtb: FB_PTB;
+	fbPtb_Umc: FB_UMC;
+	fbPtb_Vpc: FB_VPC;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

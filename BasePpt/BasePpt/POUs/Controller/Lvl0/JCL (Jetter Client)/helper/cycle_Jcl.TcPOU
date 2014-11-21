@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="cycle_Jcl" Id="{0619ad29-d99a-4dbf-91df-434d08bb1bec}">
+    <Declaration><![CDATA[FUNCTION cycle_Jcl : BOOL
+VAR_INPUT
+	pJcl: POINTER TO T_JCL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[pJcl^.ctrl.fbJcl_Tcp();
+
+pJcl^.ctrl.fbJcl();]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

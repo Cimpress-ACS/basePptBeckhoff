@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="fSetPar" Id="{254c1726-95bb-4634-9e35-6b1cde5fd766}">
+    <Declaration><![CDATA[FUNCTION fSetPar : LREAL
+VAR_INPUT
+	///factor * SetValue
+	In_dinSetValue: DINT;
+	/// % from SetValue
+	In_dinSetValue_per: DINT;
+END_VAR
+VAR
+	/// every value is scaled with 10
+	dinFactor: DINT := 10;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fSetPar := DINT_TO_LREAL((In_dinSetValue*In_dinSetValue_per) /(10*100));]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_BCH" Id="{f2b56563-483b-4abb-a499-eedade206d2e}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCH :
+STRUCT
+	/// configuration
+	Cfg: T_Ctrl_SIf_BCH_Cfg;
+	/// parameter
+	Par: T_Ctrl_SIf_BCH_Par;
+	/// current values
+	Cur: T_Ctrl_SIf_BCH_Cur;
+	/// Input layer
+	In: T_Ctrl_SIf_BCH_In;
+	/// alarm number used in this controller
+	Alm: ARRAY[1..(E_ALM_BCH.MAX_E_ALM_BCH - 1)] OF T_Ctrl_Alm;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

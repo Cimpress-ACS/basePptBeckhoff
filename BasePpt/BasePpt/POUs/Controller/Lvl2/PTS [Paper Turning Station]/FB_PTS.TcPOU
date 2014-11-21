@@ -1,0 +1,1402 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_PTS" Id="{ce4721d8-0ee6-4269-bb23-f91a21a98bc0}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PTS EXTENDS FB_CtrlBase
+VAR_INPUT
+	In_bol_PaperAvailable: BOOL;
+	In_bol_PaperAtBeltExit: BOOL;
+END_VAR
+VAR
+	/// Specific interface struct for public access
+	SIf: T_Ctrl_SIf_PTS;
+	///pointer to function block
+	p_fbBelt: POINTER TO FB_PTB;
+	pBeltCIf: POINTER TO BASE_PLC.T_Ctrl_CIf;
+	p_fbMalteser: POINTER TO FB_MDC;
+	pMalteserCIf: POINTER TO BASE_PLC.T_Ctrl_CIf;
+	/// Rotary Axis instead of Malteser
+	p_fbRAX: POINTER TO FB_RAX;
+	/// Rotary Axis instead of Malteser
+	pRaxCIf: POINTER TO BASE_PLC.T_Ctrl_CIf;
+	bolPrePositionBusy: BOOL;
+	intActualPosition: INT;
+	intTargetPosition: INT;
+	/// Position to go to if comand turn is given. 0 = initialization position, 1, 2, 3
+	uinPositionToGo: UINT;
+	/// <0 = Turn left; =0 automatic; >0 turn right
+	intTurnDirection: INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Destacker/Buffer implementation. 
+
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		09.07.2013		PC			Start history
+0.00.2		24.09.2014		AVME/MRU	Servo instead of MCD added
+0.00.3		19.11.2014		AVME/MRU	Changes after Commissioning
+___________________________________________________________________________________________________*)
+
+
+IF (me.bolActivate) THEN // cyclic call enabled
+	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
+		CtrlInit();
+		CIf.Info.bolInitDone := TRUE;
+	ELSE
+		CycleStartDuty();
+	
+		Always();
+		
+		StateMachine();
+
+		CycleEndDuty();
+	END_IF
+END_IF;
+]]></ST>
+    </Implementation>
+    <Method Name="IoInBridge" Id="{07fa2a9a-5cf1-4304-820c-dcfd32c717c1}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'IoInBridge'}
+METHOD PROTECTED IoInBridge : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+SIf.In.bolPaperAvailable.map			:= NOT THIS^.In_bol_PaperAvailable;
+SIf.In.bolPaperAtBeltExit.map			:= THIS^.In_bol_PaperAtBeltExit;
+
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolPaperAvailable));
+	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolPaperAtBeltExit));
+ELSE
+	SIf.In.bolPaperAvailable.map		:= FALSE;
+	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolPaperAvailable));
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_WaitPaper" Id="{0e7414cf-d0dd-4b81-b8be-f72855b24544}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_WaitPaper'}
+METHOD PROTECTED sta_WaitPaper : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+//		Log Message ---------------------
+		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'%s','sta_WaitPaper');
+//		---------------------------------
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState = me.StateMachine.intStateLastCycle) THEN
+		IF ((me.StateMachine.udiTimeInState_ms > SIf.Par.udiPaperBarcodeToInputSensorTime) AND (SIf.Cfg.bolEntrySensorAvailable)) THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PTS.PaperTransport),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_RUN;
+		END_IF
+		
+		IF (SIf.In.bolPaperAvailable.intern)  THEN
+			IF SIf.Par.udiPaperInTurnDelayTime = 0 THEN
+				me.StateMachine.intStateNext := PTS_CmdState.cSTA_TurnPaperBusy;
+			ELSE	
+				me.StateMachine.intStateNext := PTS_CmdState.cSTA_PaperDelayBusy;
+			END_IF
+		END_IF
+		
+		CASE me.intCmd OF
+			PTS_CmdState.cCMD_STANDBY:
+				me.StateMachine.intStateNext := PTS_CmdState.cSTA_InitializeBusy;
+			cCMD_STOP:
+				me.StateMachine.intStateNext := cSTA_STOPBusy;
+		END_CASE
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_STOPbusy" Id="{1e8226ab-a796-4450-b0cc-a69381437714}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_STOPbusy'}
+METHOD PROTECTED sta_STOPbusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+		//pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
+		pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_OFF;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF (pBeltCIf^.Job.intState = BASE_PLC.cSTA_OFF) OR (pBeltCIf^.Job.intState = BASE_PLC.cSTA_STOP) THEN
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_STOP;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Always" Id="{381a9ccd-3a98-40f6-a6fb-a7765f4ac8c3}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Always'}
+METHOD PROTECTED Always : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.Always();
+
+// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	
+	; // always error supervision
+	
+END_IF
+
+// ----------------------------------------------------------------------------------
+// Conditions Always
+IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF) OR (me.intCmd=BASE_PLC.cCMD_EOFF))
+		 AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) AND
+		(me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy)) THEN
+	// alarm evt EOFF, OFF or cmd off
+	me.StateMachine.intStateNext := cSTA_OFFBusy;
+END_IF
+
+IF SIf.Cfg.bolRaxEnable THEN
+	IF pRaxCIf = NULL THEN
+		SIf.Cfg.bolRaxEnable := FALSE;
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PTS.TurnTableConfigMissmatch),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+	END_IF
+ELSE
+	IF pMalteserCIf = NULL THEN
+		SIf.Cfg.bolRaxEnable := TRUE;
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PTS.TurnTableConfigMissmatch),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+	END_IF
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_STOP" Id="{382ba73c-aba8-402d-b897-f2f986d6d285}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_STOP'}
+METHOD PROTECTED sta_STOP : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		CIf.Job.intACmd := BASE_PLC.cCMD_DONE;
+		CIf.Job.intMCmd := BASE_PLC.cCMD_DONE;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState = me.StateMachine.intStateLastCycle) THEN
+		CASE me.intCmd OF
+			BASE_PLC.cCMD_RUN:
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
+		END_CASE
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="ChangeDistributionModeParameter" Id="{3a1c3596-39d4-450d-8741-8f9f36bb6cf5}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'ChangeDistributionModeParameter'}
+METHOD ChangeDistributionModeParameter : BOOL
+VAR_INPUT
+	eMode: E_PTS_MODE;
+	uinBeltSpeed: UINT;
+	uinRotationSpeed: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SIf.Par.eMode := eMode;
+p_fbBelt^.CtrlSIf^.Par.rBeltParam.uinBeltSpeed := uinBeltSpeed;		
+IF (SIf.Cfg.bolRaxEnable) THEN
+	p_fbRAX^.CtrlSIf^.Par.dinSpeed_0_1deg_s := uinRotationSpeed;
+ELSE
+	p_fbMalteser^.Drive^.CtrlSIf^.Par.uinSpeed_rpm := uinRotationSpeed;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_TurnPaperBusy" Id="{47d5f644-c3ba-4ffc-9f61-ec41e3b5e681}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_TurnPaperBusy'}
+METHOD PROTECTED sta_TurnPaperBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+//		Log Message ---------------------
+		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'%s','sta_TurnPaperBusy');
+//		---------------------------------
+		(*p_fbMalteser^.CtrlSIf^.Par.*)intTurnDirection := SIf.Cur.rInOutPosition.eDirection;
+		(*p_fbMalteser^.CtrlSIf^.Par.*)uinPositionToGo := SIf.Cur.rInOutPosition.uinOutput;
+		
+		IF (SIf.Cfg.bolRaxEnable) THEN
+			IF (SIf.Cur.rInOutPosition.uinOutput*90*10 = p_fbRAX^.CtrlSIf^.Cur.dinModPosition_0_1deg) THEN
+				me.StateMachine.intStateNext := PTS_CmdState.cSTA_WaitPaperGone;
+			ELSE	
+				p_fbRAX^.CtrlCIf^.Job.intACmd := RAX_CmdState.cCMD_TURN;
+				me.SubStateMachine.intState := PTS_CmdState.cSUB_TURNbusy;
+				me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_TURNbusy;
+			END_IF
+		ELSE
+			IF SIf.Cur.rInOutPosition.uinOutput = p_fbMalteser^.CtrlSIf^.Cur.uintActualPosition THEN
+				me.StateMachine.intStateNext := PTS_CmdState.cSTA_WaitPaperGone;
+			ELSE	
+				p_fbMalteser^.CtrlCIf^.Job.intACmd := MDC_CmdState.cCMD_TURN;
+				me.SubStateMachine.intState := PTS_CmdState.cSUB_TURNbusy;
+				me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_TURNbusy;
+			END_IF
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		//--------------------------------------------------------------------------------------
+		IF (SIf.Cfg.bolRaxEnable) THEN
+			// sub state machine for sequence
+			CASE me.SubStateMachine.intState OF
+				//--------------------------------------------------------------------------------------
+				PTS_CmdState.cSUB_TURNbusy:
+					IF (p_fbRAX^.CtrlCIf^.Job.intState = RAX_CmdState.cSTA_TURN) THEN
+						p_fbRAX^.CtrlCIf^.Job.intACmd := cCMD_STOP;
+						me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_TURNDONE;
+					END_IF
+				//--------------------------------------------------------------------------------------
+				PTS_CmdState.cSUB_TURNDONE:
+					IF (p_fbRAX^.CtrlCIf^.Job.intState = cStA_Stop) THEN
+						IF NOT SIf.In.bolPaperAvailable.intern THEN
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PTS.PaperTransport),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+						END_IF
+	
+						me.StateMachine.intStateNext := PTS_CmdState.cSTA_WaitPaperGone;
+					END_IF
+			END_CASE
+		ELSE
+			CASE me.SubStateMachine.intState OF
+				//--------------------------------------------------------------------------------------
+				PTS_CmdState.cSUB_TURNbusy:
+					IF (p_fbMalteser^.CtrlCIf^.Job.intState = MDC_CmdState.cSTA_TURNDONE) THEN
+						p_fbMalteser^.CtrlCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+						me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_TURNDONE;
+					END_IF
+				//--------------------------------------------------------------------------------------
+				PTS_CmdState.cSUB_TURNDONE:
+					IF (p_fbMalteser^.CtrlCIf^.Job.intState = MDC_CmdState.cSTA_InPosition) THEN
+						IF NOT SIf.In.bolPaperAvailable.intern THEN
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PTS.PaperTransport),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+						END_IF
+	
+						me.StateMachine.intStateNext := PTS_CmdState.cSTA_WaitPaperGone;
+					END_IF
+			END_CASE
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StateMachine" Id="{4a4e8c3a-10d7-4566-8587-98d593354e84}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
+METHOD PROTECTED StateMachine : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.StateMachine();
+
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+    PTS_CmdState.cSTA_STANDBYBusy: 
+        THIS^.sta_STANDBYBusy();
+    PTS_CmdState.cSTA_STANDBY: 
+        THIS^.sta_STANDBY();
+    BASE_PLC.cSTA_RUNBusy: 
+        THIS^.sta_RUNBusy();
+    BASE_PLC.cSTA_RUN: 
+        THIS^.sta_RUN();
+    BASE_PLC.cSTA_STOPBusy: 
+        THIS^.sta_STOPBusy();
+    BASE_PLC.cSTA_STOP: 
+        THIS^.sta_STOP();
+    PTS_CmdState.cSTA_PaperDelayBusy: 
+        THIS^.sta_PaperDelayBusy();
+    PTS_CmdState.cSTA_TurnPaperBusy: 
+        THIS^.sta_TurnPaperBusy();
+    PTS_CmdState.cSTA_WaitPaperGone: 
+        THIS^.sta_WaitPaperGone();
+    PTS_CmdState.cSTA_TurnEmptyBusy: 
+        THIS^.sta_TurnEmptyBusy();
+    PTS_CmdState.cSTA_InitializeBusy: 
+        THIS^.sta_InitializeBusy();
+    PTS_CmdState.cSTA_WaitPaper: 
+        THIS^.sta_WaitPaper();
+    PTS_CmdState.cSTA_GetItemBusy: 
+        THIS^.sta_GetItemBusy();
+END_CASE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFFBusy" Id="{4c084565-49f2-4582-83bc-98b4408003f3}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFFBusy'}
+METHOD PROTECTED sta_OFFBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_OFF;
+		IF (SIf.Cfg.bolRaxEnable) THEN
+			pRaxCIf^.Job.intACmd := cCMD_OFF;
+		ELSE
+			pMalteserCIf^.Job.intACmd := BASE_PLC.cCMD_OFF;
+		END_IF
+		SIf.Cur.iActualDistributionIndex := 0;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF (SIf.Cfg.bolRaxEnable) THEN
+			IF (pBeltCIf^.Job.intState = BASE_PLC.cSTA_OFF) AND (pRaxCIf^.Job.intState = BASE_PLC.cSTA_OFF) THEN
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_OFF;
+			END_IF
+		ELSE			
+			IF (pBeltCIf^.Job.intState = BASE_PLC.cSTA_OFF) AND (pMalteserCIf^.Job.intState = BASE_PLC.cSTA_OFF) THEN
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_OFF;
+			END_IF
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{50e652e7-733a-43d7-a9db-3119c16717fe}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'FB_init'}
+METHOD FB_init : BOOL
+VAR_INPUT
+	/// if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	/// if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
+END_VAR
+VAR
+	iIdx: UINT;
+	iLength: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
+// to manually change in new FUB implementation!!!
+// define valid commands for this controller
+iLength := SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0]);
+iIdx := 0;
+
+WHILE (iIdx < iLength) AND (CIf.Job.aCmdList[iIdx].intCmd <> cCMD_INITIALIZED) DO
+	iIdx := iIdx + 1; 
+END_WHILE
+
+IF (iIdx < iLength) THEN
+// Add configuration of own comands	
+	CIf.Job.aCmdList[iIdx].intCmd := BASE_PLC.cCMD_RUN;
+	CIf.Job.aCmdList[iIdx].strName := 'RUN'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+	iIdx := iIdx + 1;
+	CIf.Job.aCmdList[iIdx].intCmd := BASE_PLC.cCMD_STOP;
+	CIf.Job.aCmdList[iIdx].strName := 'STOP'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+	iIdx := iIdx + 1;
+	CIf.Job.aCmdList[iIdx].intCmd := PTS_CmdState.cCMD_STANDBY;
+	CIf.Job.aCmdList[iIdx].strName := 'STANDBY'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+	iIdx := iIdx + 1;
+	CIf.Job.aCmdList[iIdx].intCmd := PTS_CmdState.cCMD_TURN;
+	CIf.Job.aCmdList[iIdx].strName := 'TURN'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+ELSE
+	// Error if the aCmdList Array is to small
+END_IF
+
+// set name of class/typ
+CIf.Info.strType := 'FB_PTS'; 
+
+// set alarm class
+SIf.Alm[E_ALM_PTS.PaperTransport].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_PTS.PaperTransport].strText := 'Possible Paper Jam';
+SIf.Alm[E_ALM_PTS.ModeParameter].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_PTS.ModeParameter].strText := 'Wrong Mode Parameter';
+SIf.Alm[E_ALM_PTS.TurnTableConfigMissmatch].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[E_ALM_PTS.TurnTableConfigMissmatch].strText := 'Turn Table Type Configuration Missmatch';
+
+//*******************************************************************************
+// initial values
+//*******************************************************************************
+
+// software configuration
+CIf.SwCfg.bolExist := TRUE;
+CIf.SwCfg.bolEnable := TRUE;
+CIf.SwCfg.bolSimulation := FALSE;
+
+// configuration
+SIf.Cfg.bolPositionMalteserEnable := TRUE;
+
+// parameter
+SIf.Cfg.bolBarcodeReaderAvailable := FALSE;
+SIf.Cfg.aDefaultAutoPos := 0;
+SIf.Cfg.aFixPosDef[E_PTS_MODE.FixA].uinInput := 0;
+SIf.Cfg.aFixPosDef[E_PTS_MODE.FixA].uinOutput := 1;
+SIf.Cfg.aFixPosDef[E_PTS_MODE.FixB].uinInput := 3;
+SIf.Cfg.aFixPosDef[E_PTS_MODE.FixB].uinOutput := 2;
+SIf.Cfg.aFixPosDef[E_PTS_MODE.FixC].uinInput := 0;
+SIf.Cfg.aFixPosDef[E_PTS_MODE.FixC].uinOutput := 0;
+SIf.Cfg.aAutoPosDef[0].uinInput := 0;
+SIf.Cfg.aAutoPosDef[0].uinOutput := 0;
+SIf.Cfg.aAutoPosDef[1].uinInput := 0;
+SIf.Cfg.aAutoPosDef[1].uinOutput := 1;
+SIf.Cfg.aDistributionPositionDefinition[0] := E_PTS_MODE.FixC; 
+SIf.Cfg.aDistributionPositionDefinition[1] := E_PTS_MODE.FixA; 
+SIf.Cfg.bolRaxEnable := True;		// Use Servo Axis instead of Malteser 
+SIf.Par.eMode := E_PTS_MODE.FixC;
+SIf.Par.udiPaperBarcodeToInputSensorTime := 2000;
+SIf.Par.udiPaperInTurnDelayTime := 000;
+SIf.Par.udiPaperOutTurnDelayTime := 300;
+SIf.Par.udiSimPaperBarcodeToInputSensorTime := SIf.Par.udiPaperBarcodeToInputSensorTime / 2;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_STANDBYBusy" Id="{544b3e4d-972a-4d34-a50a-cac645562a34}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_STANDBYBusy'}
+METHOD PROTECTED sta_STANDBYBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		CASE SIf.Par.eMode OF
+			E_PTS_MODE.Automatic:
+				uinPositionToGo := SIf.Cfg.aDefaultAutoPos;
+			E_PTS_MODE.Distribute:
+				uinPositionToGo := SIf.Cfg.aFixPosDef[SIf.Cfg.aDistributionPositionDefinition[SIf.Cur.iActualDistributionIndex]].uinInput;
+			ELSE
+				uinPositionToGo := SIf.Cfg.aFixPosDef[SIf.Par.eMode].uinInput;
+		END_CASE
+
+		// p_fbMalteser^.SetPositionToGo(uinPositionToGo);
+
+		IF (SIf.Cfg.bolRaxEnable) THEN
+			IF p_fbRAX^.CtrlSIf^.Cur.dinPosition_0_1Deg <> uinPositionToGo*90*10 THEN
+				pRaxCIf^.Job.intACmd := RAX_CmdState.cCMD_TURN;
+			END_IF
+		ELSE
+			IF p_fbMalteser^.ActualPosition <> uinPositionToGo THEN
+				pMalteserCIf^.Job.intACmd := MDC_CmdState.cCMD_TURN;
+			END_IF
+		END_IF
+		
+		pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
+		
+		me.SubStateMachine.intState 	:= PTS_CmdState.cSUB_TURNbusy;
+		me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_TURNbusy;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF (SIf.Cfg.bolRaxEnable) THEN
+			CASE me.SubStateMachine.intState OF
+				PTS_CmdState.cSUB_TURNbusy:
+					IF    (p_fbRAX^.CtrlSIf^.Cur.dinPosition_0_1Deg = p_fbRAX^.CtrlSIf^.Par.dinPos_0_1Deg) 
+					  AND (  (pRaxCIf^.Job.intState = cSTA_STOP) 
+						   OR(pRaxCIf^.Job.intState = cSTA_TURN))THEN 
+						pRaxCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+						me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_TURNDONE;
+					END_IF
+				PTS_CmdState.cSUB_TURNDONE:
+					IF (pRaxCIf^.Job.intState = cSTA_STOP) 
+					  AND ((pBeltCIf^.Job.intState = BASE_PLC.cSTA_OFF) OR (pBeltCIf^.Job.intState = BASE_PLC.cSTA_STOP)) THEN
+						me.StateMachine.intStateNext := PTS_CmdState.cSTA_STANDBY;
+					END_IF
+			END_CASE
+		ELSE
+			CASE me.SubStateMachine.intState OF
+				PTS_CmdState.cSUB_TURNbusy:
+					IF    (p_fbMalteser^.CtrlSIf^.Cur.uintActualPosition = p_fbMalteser^.CtrlSIf^.Par.uinPositionToGo) 
+					  AND (  (pMalteserCIf^.Job.intState = MDC_CmdState.cSTA_InPosition) 
+						   OR(pMalteserCIf^.Job.intState = MDC_CmdState.cSTA_TURNDONE))THEN 
+						pMalteserCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+						me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_TURNDONE;
+					END_IF
+				PTS_CmdState.cSUB_TURNDONE:
+					IF (pMalteserCIf^.Job.intState = MDC_CmdState.cSTA_InPosition) 
+					  AND ((pBeltCIf^.Job.intState = BASE_PLC.cSTA_OFF) OR (pBeltCIf^.Job.intState = BASE_PLC.cSTA_STOP)) THEN
+						me.StateMachine.intStateNext := PTS_CmdState.cSTA_STANDBY;
+					END_IF
+			END_CASE	
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Belt" Id="{5d9153e8-6ba7-4004-9ccd-8bf2bafb85e2}">
+      <Declaration><![CDATA[PROPERTY Belt : POINTER TO FB_PTB
+]]></Declaration>
+      <Set Name="Set" Id="{2b9135a2-5213-459e-8955-76ba9b8b9ea5}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[p_fbBelt := Belt;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{350d90cb-d183-4ea9-a781-e2282ffbceb0}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Belt := p_fbBelt;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="sta_STANDBY" Id="{6353d14a-33c5-4909-91bf-e4aa5034bf37}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_STANDBY'}
+METHOD PROTECTED sta_STANDBY : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		CIf.Job.intACmd := BASE_PLC.cCMD_DONE;
+		CIf.Job.intMCmd := BASE_PLC.cCMD_DONE;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState = me.StateMachine.intStateLastCycle) THEN
+		CASE me.intCmd OF
+			BASE_PLC.cCMD_RUN:
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
+		END_CASE
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ERRORQuit" Id="{6393f466-56a5-442a-a7d6-65b0c2ec1472}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERRORQuit'}
+METHOD PROTECTED sta_ERRORQuit : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		// evtl. wait time if reset of device is necessary and then decide to go to states or ERROR state
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
+			CIf.Job.bolAlmReset := FALSE;
+		END_IF
+		
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = FALSE) THEN
+			IF (me.StateMachine.intStateHistory<=cSTA_PON) THEN
+				me.StateMachine.intStateNext := cSTA_PONBusy;
+			ELSE
+				IF me.intCmd >= 0 THEN
+					CASE me.intCmd OF
+						cCMD_OFF:
+							me.StateMachine.intStateNext := cSTA_OFFBusy;
+						cCMD_RUN:
+							me.StateMachine.intStateNext := cSTA_STOPBusy;
+						cCMD_STOP:
+							me.StateMachine.intStateNext := cSTA_RUNBusy;
+					END_CASE
+				ELSE
+					CASE me.StateMachine.intStateHistory OF
+						cSTA_PaperDelayBusy,cSTA_TurnPaperBusy,
+						cSTA_WaitPaperGone,cSTA_EmptyDelayBusy,
+						cSTA_TurnEmptyBusy,cSTA_WaitPaper,
+						cSTA_RUNBusy, cSTA_RUN:
+							me.StateMachine.intStateNext := cSTA_RUNBusy;
+					ELSE
+						me.StateMachine.intStateNext := cSTA_OFFBusy;
+					END_CASE
+				END_IF
+			END_IF
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Malteser" Id="{64e06aa1-5ce3-4995-b01c-f8f723ea0cb3}">
+      <Declaration><![CDATA[PROPERTY Malteser : POINTER TO FB_MDC
+]]></Declaration>
+      <Set Name="Set" Id="{809d1f78-6b64-419d-bdc8-f43e2cb0a173}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[p_fbMalteser := Malteser;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{f8715459-3915-48d6-bd80-8a4db0106a17}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Malteser := p_fbMalteser;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="sta_InitializeBusy" Id="{6e4022a2-cd39-449a-8c5a-c1e8a06be683}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_InitializeBusy'}
+METHOD PROTECTED sta_InitializeBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		IF (SIf.Cfg.bolRaxEnable) THEN
+			pRaxCIf^.Job.intACmd := cCMD_INIT;
+		ELSE
+			pMalteserCIf^.Job.intACmd := MDC_CmdState.cCMD_INITIALIZE;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF (SIf.Cfg.bolRaxEnable) THEN
+			IF (pRaxCIf^.Job.intState = cSTA_INIT) THEN
+				pRaxCIf^.Job.intACmd := cCMD_STOP;				
+				me.StateMachine.intStateNext := PTS_CmdState.cSTA_STANDBYBusy;
+			END_IF
+		ELSE
+			IF (pMalteserCIf^.Job.intState = MDC_CmdState.cSTA_InPosition) THEN
+				me.StateMachine.intStateNext := PTS_CmdState.cSTA_STANDBYBusy;
+			END_IF
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFF" Id="{735e9e3a-a43c-44ea-a9bf-d652656df3eb}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFF'}
+METHOD PROTECTED sta_OFF : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		CASE me.intCmd OF
+			BASE_PLC.cCMD_RUN : 
+				me.StateMachine.intStateNext := PTS_CmdState.cSTA_InitializeBusy;
+			PTS_CmdState.cCMD_STANDBY : 
+				me.StateMachine.intStateNext := PTS_CmdState.cSTA_InitializeBusy;
+		END_CASE
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_RUN" Id="{73d92433-8a02-4e03-b79a-2b3880ff02f4}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_RUN'}
+METHOD PROTECTED sta_RUN : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		CIf.Job.intACmd := BASE_PLC.cCMD_DONE;
+		CIf.Job.intMCmd := BASE_PLC.cCMD_DONE;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState = me.StateMachine.intStateLastCycle) THEN
+		CASE SIf.Par.eMode OF
+			E_PTS_MODE.Automatic:
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PTS.ModeParameter),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+	(*
+				IF SIf.Cfg.bolBarcodeReaderAvailable (* AND BCR has a new barcode read *) THEN
+					me.StateMachine.intStateNext := PTS_CmdState.cSTA_GetItemBusy;
+				ELSE
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PTS.ModeParameter),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				END_IF
+	*)
+			E_PTS_MODE.Distribute:
+				IF ((NOT SIf.Cfg.bolEntrySensorAvailable) OR (SIf.In.bolPaperAtBeltExit.intern)) THEN
+//					SIf.Cur.rInOutPosition := SIf.Cfg.aFixPosDef[SIf.Cfg.aDistributionPositionDefinition[SIf.Cur.iActualDistributionIndex]];
+					me.StateMachine.intStateNext := PTS_CmdState.cSTA_WaitPaper;
+				END_IF
+			ELSE
+				IF ((NOT SIf.Cfg.bolEntrySensorAvailable) OR (SIf.In.bolPaperAtBeltExit.intern)) THEN
+//					SIf.Cur.rInOutPosition := SIf.Cfg.aFixPosDef[SIf.Par.eMode];
+					me.StateMachine.intStateNext := PTS_CmdState.cSTA_WaitPaper;
+				END_IF
+		END_CASE
+
+		CASE me.intCmd OF
+			BASE_PLC.cCMD_STOP:
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_STOPBusy;
+			PTS_CmdState.cCMD_STANDBY:
+				me.StateMachine.intStateNext := PTS_CmdState.cSTA_STANDBYBusy;
+		END_CASE
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_WaitPaperGone" Id="{795726bb-f351-4be6-9ce9-9ae5e0345bd4}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_WaitPaperGone'}
+METHOD PROTECTED sta_WaitPaperGone : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+		IF (SIf.Cfg.bolRaxEnable) THEN
+			p_fbRAX^.CtrlCIf^.Job.intACmd := cCMD_STOP;
+		ELSE
+			IF (SIf.Cur.rInOutPosition.uinInput <> p_fbMalteser^.CtrlSIf^.Cur.uintActualPosition)
+			  AND SIf.Cfg.bolPositionMalteserEnable THEN
+				p_fbMalteser^.CtrlSIf^.Par.intTurnDirection := E_TURN_DIRECTION.AUTOMATIC;
+				p_fbMalteser^.CtrlSIf^.Par.uinPositionToGo := SIf.Cur.rInOutPosition.uinInput;
+				p_fbMalteser^.CtrlCIf^.Job.intACmd := MDC_CmdState.cCMD_PREPOSITION;
+			END_IF
+		END_IF
+		
+		me.SubStateMachine.intState := cSTA_WaitPaperGone;
+		me.SubStateMachine.intStateNext := cSTA_WaitPaperGone;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		// sub state machine for sequence
+		CASE me.SubStateMachine.intState OF
+			//--------------------------------------------------------------------------------------
+			PTS_CmdState.cSTA_WaitPaperGone:
+				IF NOT SIf.In.bolPaperAvailable.intern THEN
+					me.SubStateMachine.intStateNext := cSUB_DELAYbusy;
+				END_IF
+
+				IF (me.SubStateMachine.udiTimeInState_ms > SIf.Par.udiPaperBarcodeToInputSensorTime) THEN
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PTS.PaperTransport),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+					me.StateMachine.intStateNext := BASE_PLC.cSTA_ERROR;
+				END_IF
+			//--------------------------------------------------------------------------------------
+			PTS_CmdState.cSUB_DELAYbusy:
+			  	IF SIf.Par.udiPaperOutTurnDelayTime = 0 THEN
+					me.StateMachine.intStateNext := PTS_CmdState.cSTA_TurnEmptyBusy;
+				ELSE	
+					IF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiPaperOutTurnDelayTime) THEN
+						me.StateMachine.intStateNext := PTS_CmdState.cSTA_TurnEmptyBusy;
+					END_IF
+				END_IF
+			//--------------------------------------------------------------------------------------
+			PTS_CmdState.cSUB_PREPOSITIONbusy:
+				IF (SIf.Cfg.bolRaxEnable = FALSE) THEN
+					IF (p_fbMalteser^.CtrlCIf^.Job.intState = MDC_CmdState.cSTA_PREPOSITION) THEN
+						p_fbMalteser^.CtrlCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+						me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_WAIT_DONE;
+					END_IF
+				END_IF
+			//--------------------------------------------------------------------------------------
+			PTS_CmdState.cSUB_WAIT_DONE:
+				IF (p_fbMalteser^.CtrlCIf^.Job.intState = MDC_CmdState.cSTA_InPosition) THEN
+					me.SubStateMachine.intStateNext := cSTA_WaitPaperGone;
+				END_IF
+		END_CASE
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Servo" Id="{8057dbca-8b6a-4a74-aa85-d95637e4a07b}">
+      <Declaration><![CDATA[PROPERTY Servo : POINTER TO FB_MDC
+]]></Declaration>
+      <Get Name="Get" Id="{1e19f8e1-9fef-4943-89a2-ff5de964c768}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Servo := p_fbRAX;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{691cc4c1-1bf6-4f6f-8fc8-a8c3970997dd}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[p_fbRAX := Servo;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Method Name="GetItemBusy" Id="{8c53f2e8-a595-4aa9-ba8a-6898e80cf5b8}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'GetItemBusy'}
+METHOD PROTECTED GetItemBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CalculateOutputDelay" Id="{96c61c3d-d4e9-42a8-a197-d3f0cd07aa0d}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'CalculateOutputDelay'}
+METHOD PRIVATE CalculateOutputDelay : UDINT
+VAR_INPUT
+	uinBeltSpeed: UINT;
+	udiInputDelay: UDINT;
+END_VAR
+VAR
+	relBeltSpeed: LREAL;
+	relInputDelay: LREAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[relBeltSpeed := UINT_TO_REAL(uinBeltSpeed);
+relInputDelay := UDINT_TO_LREAL(udiInputDelay);
+CalculateOutputDelay := LREAL_TO_UDINT((1000.0*(750.0 - ((relBeltSpeed/1000)*(750.0+relInputDelay))))/relBeltSpeed);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCmdState" Id="{ac174f0d-5494-411d-927b-dac3867c0b10}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
+METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime
+	IF (bolState=FALSE) THEN
+		CASE intCmdState OF
+			PTS_CmdState.cCMD_STANDBY: 
+				getCmdState := 'cCMD_STANDBY';
+			PTS_CmdState.cCMD_TURN: 
+				getCmdState := 'cCMD_TURN';
+		END_CASE;
+	ELSE
+		// States's
+		CASE intCmdState OF
+			PTS_CmdState.cSTA_EmptyDelayBusy: 
+				getCmdState := 'cSTA_EmptyDelayBusy';
+			PTS_CmdState.cSTA_GetItemBusy: 
+				getCmdState := 'cSTA_GetItemBusy';
+			PTS_CmdState.cSTA_InitializeBusy: 
+				getCmdState := 'cSTA_InitializeBusy';
+			PTS_CmdState.cSTA_PaperDelayBusy: 
+				getCmdState := 'cSTA_PaperDelayBusy';
+			PTS_CmdState.cSTA_STANDBY: 
+				getCmdState := 'cSTA_STANDBY';
+			PTS_CmdState.cSTA_STANDBYBusy: 
+				getCmdState := 'cSTA_STANDBYBusy';
+			PTS_CmdState.cSTA_TurnEmptyBusy: 
+				getCmdState := 'cSTA_TurnEmptyBusy';
+			PTS_CmdState.cSTA_TurnPaperBusy: 
+				getCmdState := 'cSTA_TurnPaperBusy';
+			PTS_CmdState.cSTA_WaitPaper: 
+				getCmdState := 'cSTA_WaitPaper';
+			PTS_CmdState.cSTA_WaitPaperGone: 
+				getCmdState := 'cSTA_WaitPaperGone';
+		END_CASE;
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_TurnEmptyBusy" Id="{adb0932f-4f2e-4c0e-b38f-44f9e9562984}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_TurnEmptyBusy'}
+METHOD PROTECTED sta_TurnEmptyBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+//		Log Message ---------------------
+		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'%s','sta_TurnEmptyBusy');
+//		---------------------------------
+		(*p_fbMalteser^.CtrlSIf^.Par.*)intTurnDirection := E_TURN_DIRECTION.AUTOMATIC;
+		(*p_fbMalteser^.CtrlSIf^.Par.*)uinPositionToGo := SIf.Cur.rInOutPosition.uinInput;
+		
+		IF (SIf.Cfg.bolRaxEnable) THEN
+			IF SIf.Cur.rInOutPosition.uinInput*90*10 = p_fbRAX^.CtrlSIf^.Cur.dinModPosition_0_1deg THEN
+				p_fbRAX^.CtrlCIf^.Job.intACmd := cCMD_STOP;
+				me.SubStateMachine.intState := PTS_CmdState.cSUB_WAIT_DONE;
+				me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_WAIT_DONE;
+			ELSE	
+				p_fbRAX^.CtrlCIf^.Job.intACmd := RAX_CmdState.cCMD_TURN;
+				me.SubStateMachine.intState := PTS_CmdState.cSUB_TURNbusy;
+				me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_TURNbusy;
+			END_IF
+		ELSE
+			IF SIf.Cur.rInOutPosition.uinInput = p_fbMalteser^.CtrlSIf^.Cur.uintActualPosition THEN
+				p_fbMalteser^.CtrlCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+				me.SubStateMachine.intState := PTS_CmdState.cSUB_WAIT_DONE;
+				me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_WAIT_DONE;
+			ELSE	
+				p_fbMalteser^.CtrlCIf^.Job.intACmd := MDC_CmdState.cCMD_TURN;
+				me.SubStateMachine.intState := PTS_CmdState.cSUB_TURNbusy;
+				me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_TURNbusy;
+			END_IF
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		//--------------------------------------------------------------------------------------
+		// sub state machine for sequence
+		IF (SIf.Cfg.bolRaxEnable) THEN
+			CASE me.SubStateMachine.intState OF
+				//--------------------------------------------------------------------------------------
+				PTS_CmdState.cSUB_TURNbusy :
+					IF (p_fbRAX^.CtrlCIf^.Job.intState = RAX_CmdState.cSTA_TURN) THEN
+						p_fbRAX^.CtrlCIf^.Job.intACmd := cCMD_STOP;
+						me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_WAIT_DONE;
+					END_IF
+				//--------------------------------------------------------------------------------------
+				PTS_CmdState.cSUB_WAIT_DONE:
+					IF (p_fbRAX^.CtrlCIf^.Job.intState = cSTA_STOP) THEN
+						IF SIf.Par.eMode = E_PTS_MODE.Distribute THEN
+							SIf.Cur.iActualDistributionIndex := (SIf.Cur.iActualDistributionIndex + 1) MOD PTS_CmdState.cPTS_MAX_DISTRIBUTION;	
+						END_IF
+	
+						me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
+					END_IF
+				//--------------------------------------------------------------------------------------
+			END_CASE
+		ELSE			
+			CASE me.SubStateMachine.intState OF
+				//--------------------------------------------------------------------------------------
+				PTS_CmdState.cSUB_TURNbusy :
+					IF (p_fbMalteser^.CtrlCIf^.Job.intState = MDC_CmdState.cSTA_TURNDONE) THEN
+						p_fbMalteser^.CtrlCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+						me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_WAIT_DONE;
+					END_IF
+				//--------------------------------------------------------------------------------------
+				PTS_CmdState.cSUB_WAIT_DONE:
+					IF (p_fbMalteser^.CtrlCIf^.Job.intState = MDC_CmdState.cSTA_InPosition) THEN
+						IF SIf.Par.eMode = E_PTS_MODE.Distribute THEN
+							SIf.Cur.iActualDistributionIndex := (SIf.Cur.iActualDistributionIndex + 1) MOD PTS_CmdState.cPTS_MAX_DISTRIBUTION;	
+						END_IF
+	
+						me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
+					END_IF
+				//--------------------------------------------------------------------------------------
+			END_CASE
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IoOutBridge" Id="{c341110f-826b-44a8-9ae8-49de824fd750}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'IoOutBridge'}
+METHOD PROTECTED IoOutBridge : BOOL
+VAR
+	bolSwitchValvesOff: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	;
+END_IF
+
+// Write Outputs to Turning Child (Malteser or ServoDrive)
+IF (SIf.Cfg.bolRaxEnable) THEN
+	// ToDo: p_fbRAX^.CtrlSIf^.Par. intTurnDirection := intTurnDirection;
+	p_fbRAX^.CtrlSIf^.Par.dinPos_0_1Deg := uinPositionToGo*90*10;	
+ELSE
+	p_fbMalteser^.CtrlSIf^.Par.intTurnDirection := intTurnDirection;	// <0 = Turn left; =0 automatic; >0 turn right
+	p_fbMalteser^.CtrlSIf^.Par.uinPositionToGo := uinPositionToGo;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PON" Id="{d2d1ecf6-99ed-4416-9979-7a24ac10612a}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_PON'}
+METHOD PROTECTED sta_PON : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		;
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PaperDelayBusy" Id="{d51453da-bd30-41c5-98b4-ce967a096ea0}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_PaperDelayBusy'}
+METHOD PROTECTED sta_PaperDelayBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+//		Log Message ---------------------
+		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'%s','sta_PaperDelayBusy');
+//		---------------------------------
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState = me.StateMachine.intStateLastCycle) THEN
+		IF (me.StateMachine.udiTimeInState_ms > SIf.Par.udiPaperInTurnDelayTime) THEN
+			me.StateMachine.intStateNext := PTS_CmdState.cSTA_TurnPaperBusy;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_RUNBusy" Id="{d53d27d0-b437-473d-b721-78d5723d7dbe}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_RUNBusy'}
+METHOD PROTECTED sta_RUNBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+	CASE SIf.Par.eMode OF
+		E_PTS_MODE.Automatic:
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PTS.ModeParameter),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+(*
+			IF SIf.Cfg.bolBarcodeReaderAvailable (* AND BCR has a new barcode read *) THEN
+				me.StateMachine.intStateNext := PTS_CmdState.cSTA_GetItemBusy;
+			ELSE
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PTS.ModeParameter),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			END_IF
+*)
+		E_PTS_MODE.Distribute:
+			SIf.Cur.rInOutPosition := SIf.Cfg.aFixPosDef[SIf.Cfg.aDistributionPositionDefinition[SIf.Cur.iActualDistributionIndex]];
+
+		ELSE
+			SIf.Cur.rInOutPosition := SIf.Cfg.aFixPosDef[SIf.Par.eMode];
+	END_CASE
+
+	(*p_fbMalteser^.CtrlSIf^.Par.*)intTurnDirection := E_TURN_DIRECTION.AUTOMATIC;
+	(*p_fbMalteser^.CtrlSIf^.Par.*)uinPositionToGo := SIf.Cur.rInOutPosition.uinOutput;
+
+	IF (SIf.Cfg.bolRaxEnable = FALSE) THEN
+		IF SIf.Cfg.bolPositionMalteserEnable THEN
+			p_fbMalteser^.CtrlCIf^.Job.intACmd := MDC_CmdState.cCMD_PREPOSITION;
+	
+			me.SubStateMachine.intState := PTS_CmdState.cSUB_PREPOSITIONbusy;
+			me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_PREPOSITIONbusy;
+		ELSE	
+			p_fbMalteser^.CtrlCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+	
+			me.SubStateMachine.intState := PTS_CmdState.cSUB_WAIT_DONE;
+			me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_WAIT_DONE;
+		END_IF
+	END_IF
+	
+	p_fbBelt^.CtrlSIf^.Par.intDirection := E_BELT_DIRECTION.FORWARD;
+	pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+	IF (SIf.Cfg.bolRaxEnable) THEN
+		me.StateMachine.intStateNext := cSTA_RUN;
+	ELSE
+		//--------------------------------------------------------------------------------------
+		// sub state machine for sequence
+		CASE me.SubStateMachine.intState OF
+			//--------------------------------------------------------------------------------------
+			PTS_CmdState.cSUB_PREPOSITIONbusy:
+				IF (p_fbMalteser^.CtrlCIf^.Job.intState = MDC_CmdState.cSTA_PREPOSITION) THEN
+					p_fbMalteser^.CtrlCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+					me.SubStateMachine.intStateNext := PTS_CmdState.cSUB_WAIT_DONE;
+				END_IF
+			//--------------------------------------------------------------------------------------
+			PTS_CmdState.cSUB_WAIT_DONE:
+				IF (p_fbMalteser^.CtrlCIf^.Job.intState = MDC_CmdState.cSTA_InPosition) 
+				  AND (pBeltCIf^.Job.intState = BASE_PLC.cSTA_RUN) THEN
+		//			SIf.Cur.udiPaperInTurnDelayTime := 150000 / p_fbBelt^.CtrlSIf^.Par.uinBeltSpeed;
+		//			SIf.Cur.udiPaperOutTurnDelayTime := CalculateOutputDelay(p_fbBelt^.CtrlSIf^.Par.uinBeltSpeed,SIf.Cur.udiPaperInTurnDelayTime);
+					me.StateMachine.intStateNext := BASE_PLC.cSTA_RUN;
+				END_IF
+			//--------------------------------------------------------------------------------------
+		END_CASE
+	END_IF
+	
+	IF SIf.In.bolPaperAvailable.intern THEN
+		me.StateMachine.intStateNext := PTS_CmdState.cSTA_WaitPaper;
+	END_IF
+END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+	;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_GetItemBusy" Id="{e5b7da0b-5845-40b2-b836-8ebe250a7e27}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_GetItemBusy'}
+METHOD PROTECTED sta_GetItemBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="CtrlSIf" Id="{e6aa0218-2698-496f-89cc-ed7463afbdc0}">
+      <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIf_PTS
+]]></Declaration>
+      <Set Name="Set" Id="{16e6a992-9ef8-45f6-8f11-5cb5a568b54a}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{43298112-8d03-4f50-8048-6b6cb4c63c59}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="CtrlInit" Id="{e72e0771-1032-4225-a926-fb885add5154}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'CtrlInit'}
+METHOD CtrlInit : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.CtrlInit();
+
+IF (SIf.Cfg.bolRaxEnable) THEN
+	THIS^.AddChild(p_fbRAX^);
+
+	pRaxCIf := p_fbRAX^.CtrlCIf;
+ELSE
+	THIS^.AddChild(p_fbMalteser^);
+
+	pMalteserCIf := p_fbMalteser^.CtrlCIf;
+END_IF
+
+THIS^.AddChild(p_fbBelt^);
+
+pBeltCIf := p_fbBelt^.CtrlCIf;
+
+(*
+// set parent id
+pMalteserCIf^.Info.intParentCtrlId := CIf.Info.intCtrlId;			
+pBeltCIf^.Info.intParentCtrlId := CIf.Info.intCtrlId;			
+
+//necessary???
+THIS^.CIf.Info.p_aCIf[0] := pMalteserCIf;
+THIS^.CIf.Info.p_aCIf[1] := pBeltCIf;
+*)]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ERROR" Id="{f097df25-2b08-4c3f-a239-d39a12bbf963}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
+METHOD PROTECTED sta_ERROR : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		IF (SIf.Cfg.bolRaxEnable) THEN
+			pRaxCIf^.Job.intACmd := cCMD_OFF;
+		ELSE
+			pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_OFF;
+			pMalteserCIf^.Job.intACmd := BASE_PLC.cCMD_OFF;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_ERRORQuit;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCtrlSIf" Id="{f666f961-c45f-48a6-aefd-c0f724032b89}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
+METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_PTS
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

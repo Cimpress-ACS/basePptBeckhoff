@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_RAX_Par" Id="{ab33df0c-5c7f-4883-8d83-f3076b888399}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_RAX_Par :
+STRUCT
+	/// [deg] home offset 
+	dinHomeOffset_0_1deg: DINT;
+	/// [0.1°] position init
+	dinPositionInit_0_1deg: DINT;
+	/// [0.1°] position absolute 
+	dinPos_0_1deg: DINT;
+	/// [0.1°] rel distance
+	dinRelDist_0_1deg: DINT;
+	/// [0.1°/s] position speed
+	dinSpeed_0_1deg_s: DINT;
+	///[%] percent from dinSetSpeed_0_1deg_s
+	dinSpeed_per: DINT;
+	/// [0.1°/s^2] position acceleration
+	dintAccDec_0_1deg_s2: DINT;
+	///[%] percent from dintAccDec_0_1deg_s2
+	dinAcc_per: DINT;
+	///[%] percent from dintAccDec_0_1deg_s2
+	dinDec_per: DINT;
+	/// [0.1°/s^2] position deceleration fast em stop
+	dinSetDecFast_0_1deg_s2: DINT;
+	/// [0.1°] negative sw limite
+	dinSWLimitNeg_0_1deg: DINT;
+	/// [0.1°] positive sw limite
+	dinSWLimitPos_0_1deg: DINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

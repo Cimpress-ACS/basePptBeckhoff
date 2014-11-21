@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="E_POD_UseHomeSwitch" Id="{cfc63ea8-8688-4ab6-9cf1-fb245a660988}">
+    <Declaration><![CDATA[TYPE E_POD_UseHomeSwitch :
+(
+	FUB_Input := 0,
+	HomeSwitch,
+	/// internal IO 2 Home switch 					0: Switched off, 1: Switched on
+	SI0,
+	/// internal IO 16 SI0:				0: Switched off (Open),1: Switched on (Close)
+	SI1,
+	/// internal IO 17 SI0:				0: Switched off (Open),1: Switched on (Close)
+	SI2,
+	/// internal IO 18 SI0:			0: Switched off (Open),1: Switched on (Close)
+	SI3,
+	/// internal IO 19 SI0:				0: Switched off (Open),1: Switched on (Close)
+	SI4,
+	/// internal IO 20 SI0:					0: Switched off (Open),1: Switched on (Close)
+	SI5,
+	/// internal IO 21 SI0:	 				0: Switched off (Open),1: Switched on (Close)
+	/// internal IO 22 SI0:					0: Switched off (Open),1: Switched on (Close)
+	SI6
+) USINT;
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

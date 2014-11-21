@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="cycle_Pst" Id="{82ffccb5-01a2-4256-bb7a-01afc149eef0}">
+    <Declaration><![CDATA[FUNCTION cycle_Pst : BOOL
+VAR_INPUT
+	pPst: POINTER TO T_PST;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[pPst^.ctrl.fbPst_Ptb_Umc.In_bolEmoOk 				:= pPst^.io.In_bolPtb_Umc_EmoOk;
+pPst^.ctrl.fbPst_Ptb_Umc.In_uinStatus 				:= pPst^.io.In_uinPtb_Umc_Status;
+pPst^.ctrl.fbPst_Ptb_Umc.In_intMotorActualSpeed 	:= pPst^.io.In_uinPtb_Umc_ActualSpeed;
+pPst^.ctrl.fbPst_Ptb_Umc.In_uinMotorSetSpeed 		:= pPst^.io.In_uinPtb_Umc_SetSpeed;
+pPst^.ctrl.fbPst_Ptb_Umc.In_uinECATState 			:= pPst^.io.In_uinPtb_Umc_ECatState;
+pPst^.ctrl.fbPst_Ptb_Umc.In_strNetId 				:= pPst^.io.In_strPtb_Umc_ECatNetId;
+pPst^.ctrl.fbPst_Ptb_Umc.In_uintPort 				:= pPst^.io.In_uinPtb_Umc_ECatPort;
+pPst^.ctrl.fbPst_Ptb_Umc();
+pPst^.io.Out_uinPtb_Umc_SetSpeed 					:= pPst^.ctrl.fbPst_Ptb_Umc.Out_uinSpeedSetpoint;
+pPst^.io.Out_uinPtb_Umc_Control 					:= pPst^.ctrl.fbPst_Ptb_Umc.Out_uinControl;
+
+pPst^.ctrl.fbPst_Ptb_Vpc.In_bolPumpOk 				:= pPst^.io.In_bolPtb_Vpc_PumpOk;
+pPst^.ctrl.fbPst_Ptb_Vpc.In_bolVacuumOk 			:= pPst^.io.In_bolPtb_Vpc_VacuumSensor;
+pPst^.ctrl.fbPst_Ptb_Vpc();
+pPst^.io.Out_bolPtb_Vpc_PumpOn 						:= pPst^.ctrl.fbPst_Ptb_Vpc.Out_bolVaccumPumpOn;
+
+pPst^.ctrl.fbPst_Ptb.In_bolBeltEntrySensor		 	:= pPst^.io.In_bolPtb_InputSensor;
+pPst^.ctrl.fbPst_Ptb.In_bolBeltExitSensor 			:= pPst^.io.In_bolPtb_OutputSensor;
+pPst^.ctrl.fbPst_Ptb();
+
+pPst^.ctrl.fbPst.In_bolSensorPaperAtOperatorPos		:= pPst^.io.In_bolSensorPaperAtOperatorPos;
+pPst^.ctrl.fbPst.In_bolSensorStopperPosition		:= pPst^.io.In_bolSensorStopperPosition;
+pPst^.ctrl.fbPst.In_bolSensorInfeed					:= pPst^.io.In_bolSensorInfeed;
+pPst^.ctrl.fbPst.In_bolSensorOutfeed				:= pPst^.io.In_bolSensorOutfeed;
+pPst^.ctrl.fbPst();]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

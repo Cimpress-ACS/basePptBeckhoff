@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_IBH_Cfg" Id="{747e4551-0fe4-4b72-9c19-1d7e12b2a96f}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_IBH_Cfg :
+STRUCT
+	/// Number of Modules in use, <= 8 
+	uiNumberOfModules: UINT;
+	/// IPv4 network address 
+	tIpAddress: T_IPv4Addr;
+	/// Remote (server) port address 
+	udiPortAdress: UDINT;
+	/// MPI device address 
+	nDeviceAddress: BYTE;
+	/// Read/write from/to datablock number 
+	nDatablockNumber: BYTE;
+	/// Maximum time allowed for the execution of the command 
+	tTimeout: TIME;
+	/// Write byte/word offset/start address 
+	nWriteStartAddress: WORD;
+	/// Read byte/word offset/start address 
+	nReadStartAddress: WORD;
+	uiByteOffset_rd_iStatus: UINT;
+	uiByteOffset_rd_bOff: UINT;
+	uiBitOffset_rd_bOff: UINT;
+	uiByteOffset_rd_bBeltOn: UINT;
+	uiBitOffset_rd_bBeltOn: UINT;
+	uiByteOffset_rd_bManual: UINT;
+	uiBitOffset_rd_bManual: UINT;
+	uiByteOffset_rd_bRun: UINT;
+	uiBitOffset_rd_bRun: UINT;
+	uiByteOffset_rd_bSetParam: UINT;
+	uiBitOffset_rd_bSetParam: UINT;
+	uiByteOffset_rd_bGetParam: UINT;
+	uiBitOffset_rd_bGetParam: UINT;
+	uiByteOffset_rd_bAckError: UINT;
+	uiBitOffset_rd_bAckError: UINT;
+	uiByteOffset_rd_adiTemp_mc: UINT;
+	uiByteOffset_rd_adiAir_p: UINT;
+	uiByteOffset_rd_diSpeed_mm_min: UINT;
+	uiByteOffset_rd_iErrorLevel: UINT;
+	uiByteOffset_rd_iErrorID: UINT;
+	uiByteOffset_rd_iErrorValue: UINT;
+	uiByteOffset_wr_iOff: UINT;
+	uiByteOffset_wr_iBeltOn: UINT;
+	uiByteOffset_wr_iManual: UINT;
+	uiByteOffset_wr_iRun: UINT;
+	uiByteOffset_wr_iSetParam: UINT;
+	uiByteOffset_wr_iGetParam: UINT;
+	uiByteOffset_wr_iAckError: UINT;
+	uiByteOffset_wr_adiTemp_mc: UINT;
+	uiByteOffset_wr_adiAir_p: UINT;
+	uiByteOffset_wr_diSpeed_mm_min: UINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

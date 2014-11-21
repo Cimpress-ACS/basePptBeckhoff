@@ -1,5 +1,6 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_PCE_Cfg" Id="{914dc26f-68b7-4b49-9271-71c3e42a4ebf}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_PCE_Cfg" Id="{37000d34-edca-4045-8234-1a4fa51301ad}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PCE_Cfg :
 STRUCT
 END_STRUCT

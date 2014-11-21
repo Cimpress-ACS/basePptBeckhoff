@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_PCE_CTRL" Id="{b04df3cb-698e-4867-b5a0-1e6d152bafc1}">
+    <Declaration><![CDATA[TYPE T_PCE_CTRL :
+STRUCT
+	fbPce: FB_PCE;
+	fbPce_PtbIn: FB_PTB;
+	fbPce_PtbIn_Umc: FB_UMC;
+	fbPce_PtbIn_Vpc: FB_VPC;
+	fbPce_PtbOut: FB_PTB;
+	fbPce_PtbOut_Umc: FB_UMC;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

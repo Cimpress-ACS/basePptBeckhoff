@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_POD_StatusWord" Id="{e87a1ec7-a1f2-40ac-a515-3e362015acae}">
+    <Declaration><![CDATA[TYPE T_POD_StatusWord :
+STRUCT
+	/// 0	Ready TO Switch on =1
+	bolReadyToSwitchOn: BOOL;
+	///1	Switched on =1
+	bolSwitchedOn: BOOL;
+	///2	Operation enabeld =1
+	bolOperationEnabled: BOOL;
+	///3	Fault/Fault Reaction
+	bolFault: BOOL;
+	///4	MainPower on =1
+	bolMainPowerOn: BOOL;
+	///5	Quickstop inaktive =1
+	bolQuickStopInactive: BOOL;
+	///6	Switch on disabled =1
+	bolSwitchOnDisabled: BOOL;
+	///7	Warning is occurred =1
+	bolWarning: BOOL;
+	///8	not used always 0
+	bolBit08: BOOL;
+	///9	The Remote bit is always set by the Elmo servo drive
+	bolRemote: BOOL;
+	///10	Target Reached
+	bolTargetReached: BOOL;
+	///11	Internal Limit active =1
+	bolInternLimit: BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

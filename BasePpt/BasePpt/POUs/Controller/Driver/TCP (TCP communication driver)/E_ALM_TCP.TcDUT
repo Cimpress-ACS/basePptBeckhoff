@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="E_ALM_TCP" Id="{f836299a-6fde-4c28-8245-b3ccb02f077f}">
+    <Declaration><![CDATA[TYPE E_ALM_TCP :
+(
+	SocketConnectionLost := 1,
+	AddToSendBufferFailed := 2,
+	RemoveFromSendBufferFailed := 3,
+	GetFromSendBufferFailed := 4,
+	AddToReceiveBufferFailed := 5,
+	RemoveFromReceiveBufferFailed := 6,
+	GetFromReceiveBufferFailed := 7,
+	NotSent := 8,
+	NoAckRecieved := 9,
+	FubErrorClientConnection := 10,
+	FubErrorSendData := 11,
+	FubErrorReceiveData := 12,
+	MAX_E_ALM_TCP
+) UINT;
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

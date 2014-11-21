@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_OVN_Par" Id="{8b0526c2-c659-4685-a2db-21c1fba552d3}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_OVN_Par EXTENDS T_Ctrl_SIf_MOD_Par :
+STRUCT
+	/// Belt Speed in mm/min 
+	diSpeed_mm_min: DINT;
+	/// Belt Speed Band in mm/min 
+	diSpeedBand1_mm_min: DINT;
+	/// Belt Speed Band in mm/min 
+	diSpeedBand2_mm_min: DINT;
+	/// Belt Speed Timeout in ms 
+	udiSpeedTimeout_ms: UDINT;
+	/// Temperature in deci °C 
+	adiTemp_dc: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
+	/// Temperature Band in deci °C 
+	adiTempBand1_dc: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
+	/// Temperature Band in deci °C 
+	adiTempBand2_dc: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
+	/// Temperature Timeout in ms 
+	audiTempTimeout_ms: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF UDINT;
+	/// Airflow in % 
+	adiAir_p: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
+	/// Airflow Band in % 
+	adiAirBand1_p: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
+	/// Airflow Band in % 
+	adiAirBand2_p: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
+	/// Airflow Timeout in ms 
+	audiAirTimeout_ms: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF UDINT;
+	udiTimeoutOffBusyReaction_ms: UDINT;
+	udiTimeoutOffBusy_ms: UDINT;
+	udiTimeoutRunBusyReaction_ms: UDINT;
+	udiTimeoutRunBusyInBand_ms: UDINT;
+	udiTimeoutBeltOnlyReaction_ms: UDINT;
+	udiTimeoutBeltOnlyBusy_ms: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

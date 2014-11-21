@@ -1,0 +1,100 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_DataSetFifo" Id="{5f999324-e911-42e2-acc5-05637b7d1f00}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_DataSetFifo
+VAR_INPUT
+	bOverwrite: BOOL;
+	in: POINTER TO BYTE;
+	iAddSize: INT;
+END_VAR
+VAR_OUTPUT
+	bOk: BOOL;
+	nCount: UDINT;
+	nLoad: UDINT;
+	out: ARRAY[0..MAX_DATASET_SIZE] OF BYTE;
+	pHeader: POINTER TO ST_Header;
+END_VAR
+VAR
+	/// Buffer memory used by FB_MemRingBuffer function block 
+	arrBuffer: ARRAY[0..MAX_BUFFER_SIZE] OF BYTE;
+	fbBuffer: FB_MemRingBuffer;
+	intLoopRemove: INT;
+	intLoopReset: INT;
+END_VAR
+VAR CONSTANT
+	MAX_BUFFER_SIZE: UDINT := 1000;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[;]]></ST>
+    </Implementation>
+    <Action Name="A_Add" Id="{354f56b0-10da-4f61-968e-e1e0997fba19}">
+      <Implementation>
+        <ST><![CDATA[fbBuffer.A_AddTail( pWrite:= in,
+					cbWrite:= INT_TO_UDINT(iAddSize),
+					pBuffer:= ADR( arrBuffer ),
+					cbBuffer:= SIZEOF( arrBuffer ),
+					bOk=> bOk,
+					nCount => nCount );
+
+IF NOT bOk THEN (* overflow ? *)
+	IF bOverwrite THEN
+		fbBuffer.A_RemoveHead(); (* remove one oldest entry *)
+		fbBuffer.A_AddTail( bOk => bOk, nCount => nCount );
+	END_IF
+END_IF
+
+nLoad := (fbBuffer.cbSize * 100) / MAX_BUFFER_SIZE;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="A_Get" Id="{528fe388-fbd0-4c9d-9d0b-32ddfc26b84f}">
+      <Implementation>
+        <ST><![CDATA[fbBuffer.A_GetHead( pRead:= ADR( out ),
+					cbRead:= SIZEOF( out ),
+					pBuffer:= ADR( arrBuffer ),
+					cbBuffer:= SIZEOF( arrBuffer ),
+					bOk=> bOk,
+					nCount => nCount );
+
+pHeader := ADR(out);					
+					
+nLoad := (fbBuffer.cbSize * 100) / MAX_BUFFER_SIZE;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="A_Reset" Id="{aac67239-23f4-4ba1-afd0-7a0070873d9f}">
+      <Implementation>
+        <ST><![CDATA[// MEMSET not working!
+//MEMSET( ADR( arrBuffer ), 0, SIZEOF( arrBuffer ) ); (* reset (optional) internal buffer *)
+FOR intLoopReset:=0 TO SIZEOF(arrBuffer)-1 DO
+	arrBuffer[intLoopReset]:= 0;
+END_FOR
+
+fbBuffer.A_Reset( 	bOk=> bOk,
+					nCount => nCount );
+
+nLoad := (fbBuffer.cbSize * 100) / MAX_BUFFER_SIZE;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="A_Remove" Id="{da30d440-c58f-44b6-892a-ab279b11fd1a}">
+      <Implementation>
+        <ST><![CDATA[// Clean up package buffer
+FOR intLoopRemove:=0 TO SIZEOF(out)-1 DO
+	out[intLoopRemove]:= 0;
+END_FOR
+
+// Remove data from buffer. Get next package.
+fbBuffer.A_RemoveHead( 	pRead:= ADR(out),
+						cbRead:= SIZEOF(out),
+						pBuffer:= ADR(arrBuffer),
+						cbBuffer:= SIZEOF(arrBuffer),
+						bOk=> bOk,
+						nCount => nCount );
+// Return						
+pHeader := ADR(out);
+
+nLoad := (fbBuffer.cbSize * 100) / MAX_BUFFER_SIZE;]]></ST>
+      </Implementation>
+    </Action>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

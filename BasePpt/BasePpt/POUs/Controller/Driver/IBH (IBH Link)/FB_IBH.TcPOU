@@ -1,0 +1,1174 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_IBH" Id="{ab5e21ba-37ea-488a-9047-540da2984858}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_IBH EXTENDS FB_CtrlBase
+VAR_OUTPUT
+	/// Status 
+	Out_iStatus: INT;
+	/// Machine off 
+	Out_bOff: BOOL;
+	/// Band on 
+	Out_bBeltOn: BOOL;
+	/// Manual Mode 
+	Out_bManual: BOOL;
+	/// Standart drying process 
+	Out_bRun: BOOL;
+	/// Set Parameter 
+	Out_bSetParam: BOOL;
+	/// Get Parameter 
+	Out_bGetParam: BOOL;
+	/// Resetting error 
+	Out_bAckError: BOOL;
+	/// Actual temperature in deci °C 
+	Out_adiTemp_dc: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
+	/// Aactual airflow in % 
+	Out_adiAir_p: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
+	/// Actual belt speed in mm/min 
+	Out_diSpeed_mm_min: DINT;
+	/// 1=Information, 2=Warning, 3=Error 
+	Out_iErrorLevel: INT;
+	/// Error ID (e.g. 100=temperature overflow) 
+	Out_iErrorID: INT;
+	Out_bDriverConnected: BOOL;
+	Out_bDriverError: BOOL;
+	Out_udiDriverErrorID: UDINT;
+END_VAR
+VAR
+	/// Specific interface struct for public access
+	SIf: T_Ctrl_SIf_IBH;
+	/// Turns oven off 
+	iOff: INT;
+	/// Turns belt on 
+	iBeltOn: INT;
+	/// Puts oven to manual  
+	iManual: INT;
+	/// Standart drying process 
+	iRun: INT;
+	/// Set Parameter 
+	iSetParam: INT;
+	/// Get Parameter 
+	iGetParam: INT;
+	/// Temperature in deci °C 
+	adiTemp_dc: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
+	/// Airflow in % 
+	adiAir_p: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
+	/// Belt speed in mm/min 
+	diSpeed_mm_min: DINT;
+	/// Try to reset error 
+	iAckError: INT;
+	bIncrementSetParam: BOOL;
+	bRememberIncrementSetParam: BOOL;
+	fbOpen: Tc2_S5S7Com.FB_NLinkOpen;
+	fbWrite: Tc2_S5S7Com.FB_NLinkWrite;
+	fbFetch: Tc2_S5S7Com.FB_NLinkFetch;
+	fbClose: Tc2_S5S7Com.FB_NLinkClose;
+	/// Communication link handle 
+	hLink: T_HNLINK;
+	/// read data buffer 
+	anReadBuffer: ARRAY[0..(READ_BUFFER_LENGTH - 1)] OF BYTE;
+	/// data to write 
+	anWriteBuffer: ARRAY[0..(WRITE_BUFFER_LENGTH - 1)] OF BYTE;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+IBH Link Connection Implementation
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		09.01.2014		BB			Start history
+___________________________________________________________________________________________________*)
+
+SUPER^();
+]]></ST>
+    </Implementation>
+    <Method Name="getCtrlSIf" Id="{0cf38412-f89b-4046-9212-3abef2fa56a4}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
+METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_IBH
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCmdState" Id="{139761fb-8c3a-4aee-851b-10cdd88377d7}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
+METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime
+	IF (bolState=FALSE) THEN
+		// cmd's
+		CASE intCmdState OF
+			IBH_CmdState.cCMD_CONNECT:
+				getCmdState := 'CONNECT';
+			IBH_CmdState.cCMD_WRITE:
+				getCmdState := 'WRITE';
+			IBH_CmdState.cCMD_READ:
+				getCmdState := 'READ';
+			IBH_CmdState.cCMD_DISCONNECT:
+				getCmdState := 'DISCONNECT';
+		ELSE
+			getCmdState := 'Cmd not defined';
+		END_CASE;
+	ELSE
+		// state's
+		CASE intCmdState OF
+			// CONNECT
+			IBH_CmdState.cSTA_CONNECTBusy: 
+				getCmdState := 'CONNECTBusy';
+			IBH_CmdState.cSTA_CONNECT: 
+				getCmdState := 'CONNECT';
+			// WRITE
+			IBH_CmdState.cSTA_WRITEBusy: 
+				getCmdState := 'WRITEBusy';
+			IBH_CmdState.cSTA_WRITE: 
+				getCmdState := 'WRITE';
+			// READ
+			IBH_CmdState.cSTA_READBusy: 
+				getCmdState := 'READBusy';
+			IBH_CmdState.cSTA_READ: 
+				getCmdState := 'READ';
+			// DISCONNECT
+			IBH_CmdState.cSTA_DISCONNECTBusy: 
+				getCmdState := 'DISCONNECTBusy';
+			IBH_CmdState.cSTA_DISCONNECT: 
+				getCmdState := 'DISCONNECT';
+		ELSE
+			getCmdState := 'State not defined';
+		END_CASE
+	END_IF
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_DISCONNECTBusy" Id="{145b71e1-3925-4cc5-81a6-e9e038854f7c}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_DISCONNECTBusy'}
+METHOD PROTECTED sta_DISCONNECTBusy : BOOL
+VAR
+	bBusy: BOOL;
+	bError: BOOL;
+	udiErrID: UDINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+
+// Entry action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateLastCycle) THEN
+		// state changed since last cycle
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		// Close connection
+		fbClose(hLink := hLink, bExecute := FALSE);
+		fbClose(hLink := hLink, bExecute := TRUE);
+		
+		Out_bDriverConnected := FALSE;
+	END_IF
+
+	
+// Cyclic action
+//--------------------------------------------------------------------------------------	
+	
+	// check status of fbClose
+	fbClose(hLink := hLink, bExecute := FALSE, bBusy=>bBusy, bError=>bError, nErrID=>udiErrID);
+	
+	// Simulation
+	IF (CIf.SwCfg.bolSimulation) THEN
+		bBusy := FALSE;
+		bError := FALSE;
+		udiErrID := 0;
+	END_IF
+	
+	// State Change Condition
+	IF NOT bBusy THEN
+		Out_udiDriverErrorID := udiErrID;
+		IF bError THEN
+			Out_bDriverError := TRUE;
+		ELSE
+			Out_bDriverError := FALSE;
+		END_IF
+		me.StateMachine.intStateNext := IBH_CmdState.cSTA_DISCONNECT;
+	END_IF
+
+// Exit action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateNext) THEN
+		// state is going to change
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PONBusy" Id="{17f0fcdd-4065-422a-90ff-ee30b4b3ca41}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_PONBusy'}
+METHOD PROTECTED sta_PONBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+
+// Entry action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateLastCycle) THEN
+		// state changed since last cycle
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	END_IF
+
+	
+// Cyclic action
+//--------------------------------------------------------------------------------------	
+	// Simulation
+	IF (CIf.SwCfg.bolSimulation) THEN
+		;
+	END_IF
+
+	// State Change Condition
+	me.StateMachine.intStateNext := Base_PLC.cSTA_PON;
+
+
+// Exit action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateNext) THEN
+		// state is going to change
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="setAirflow" Id="{19c28167-8ed1-44ac-ad62-3a028af4991e}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'setAirflow'}
+METHOD setAirflow
+VAR_INPUT
+	/// Airflow in % 
+	In_adiAir_p: ARRAY[1..MAX_NUMBER_OF_OVEN_MODULES] OF DINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[adiAir_p := In_adiAir_p;
+bIncrementSetParam := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PON" Id="{1fe1981b-8590-4ad9-a17d-aa3af1ce0ad3}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_PON'}
+METHOD PROTECTED sta_PON : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+
+// Entry action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateLastCycle) THEN
+		// state changed since last cycle
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	END_IF
+
+	
+// Cyclic action
+//--------------------------------------------------------------------------------------	
+	// Simulation
+	IF (CIf.SwCfg.bolSimulation) THEN
+		;
+	END_IF
+	
+	// State Change Condition
+	me.StateMachine.intStateNext := Base_PLC.cSTA_OFFBusy;
+	
+
+// Exit action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateNext) THEN
+		// state is going to change
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_READBusy" Id="{2fdbb62e-ff7f-4a46-8153-5512b912ccf1}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_READBusy'}
+METHOD PROTECTED sta_READBusy : BOOL
+VAR
+	bBusy: BOOL;
+	bError: BOOL;
+	udiErrID: UDINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+
+// Entry action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateLastCycle) THEN
+		// state changed since last cycle
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		// Read data
+		fbFetch(hLink := hLink, bExecute := FALSE );
+		fbFetch(hLink := hLink, (* Communication link handle *)
+				devAddr := SIf.Cfg.nDeviceAddress, (* Device address, MPI address of the remote component or its PROFIBUS address *)
+				eArea:= eNLinkArea_DB, (* PLC data area *)
+				nDB:= SIf.Cfg.nDatablockNumber, (* Data block number from which the data is read (DB, DX only). *)
+				nOffset:= SIf.Cfg.nReadStartAddress, (* Start byte/word address from which the data are taken to *)
+				cbBuffer:= SIZEOF(anReadBuffer), (* Contains the max. number of destination bytes to be received *)
+				pBuffer:= ADR(anReadBuffer), (* Contains the address of the destination buffer for the received data *)
+				bExecute:= TRUE); (* Rising edge at this input starts command execution *)
+	END_IF
+
+	
+// Cyclic action
+//--------------------------------------------------------------------------------------	
+	
+	// check status of fbFetch
+	fbFetch(hLink := hLink, bExecute := FALSE, bBusy=>bBusy, bError=>bError, nErrID=>udiErrID);
+	
+	// Simulation
+	IF (CIf.SwCfg.bolSimulation) THEN
+		bBusy := FALSE;
+		bError := FALSE;
+		udiErrID := 0;
+	END_IF
+	
+	// State Change Condition
+	IF NOT bBusy THEN
+		Out_udiDriverErrorID := udiErrID;
+		IF bError THEN
+			Out_bDriverError := TRUE;
+			me.StateMachine.intStateNext := IBH_CmdState.cSTA_DISCONNECTBusy;
+		ELSE
+			Out_bDriverError := FALSE;
+			me.StateMachine.intStateNext := IBH_CmdState.cSTA_READ;
+		END_IF
+	END_IF
+
+
+// Exit action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateNext) THEN
+		// state is going to change
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="setSpeed" Id="{4d234a62-7878-4612-ac28-3464fa03d4db}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'setSpeed'}
+METHOD setSpeed
+VAR_INPUT
+	/// Belt speed in mm/min 
+	In_diSpeed_mm_min: DINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[diSpeed_mm_min := In_diSpeed_mm_min;
+bIncrementSetParam := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Action Name="setAckError" Id="{538979ac-e6d7-4bef-8328-922d959c25cc}">
+      <Implementation>
+        <ST><![CDATA[IF (iAckError = MAX_INT OR iAckError < 0) THEN
+	iAckError := 0;
+END_IF
+
+iAckError := iAckError + 1;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="setRun" Id="{68446038-8242-4e2c-97c5-39d55d1d61bf}">
+      <Implementation>
+        <ST><![CDATA[IF (iRun = MAX_INT OR iRun < 0) THEN
+	iRun := 0;
+END_IF
+
+iRun := iRun + 1;]]></ST>
+      </Implementation>
+    </Action>
+    <Method Name="sta_CONNECTBusy" Id="{71c4235d-00f1-4c7c-aa24-6553af39e13c}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_CONNECTBusy'}
+METHOD PROTECTED sta_CONNECTBusy : BOOL
+VAR
+	bBusy: BOOL;
+	bError: BOOL;
+	udiErrID: UDINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+
+// Entry action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateLastCycle) THEN
+		// state changed since last cycle
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		THIS^.fbOpen.stSettings.sHost			:= SIf.Cfg.tIpAddress; (* Remote (server) address. String containing an (Ipv4) Internet Protocol dotted address. *)
+		THIS^.fbOpen.stSettings.nPort			:= SIf.Cfg.udiPortAdress; (* Remote (server) Internet Protocol (IP) port. *)
+		THIS^.fbOpen.stSettings.eProtocol		:= eNLinkProtocol_MPI; (* Lan link protocol type *)
+		THIS^.fbOpen.stSettings.eTransport		:= eNLinkTransport_TCPIP; (* Used transport protocol *)
+		THIS^.fbOpen.tTimeout					:= SIf.Cfg.tTimeout; (* Maximum time allowed for the execution of the command *)
+		
+		// Open connection
+		THIS^.fbOpen( hLink := hLink, bExecute := FALSE);
+		THIS^.fbOpen( hLink := hLink, bExecute := TRUE);
+	END_IF
+
+	
+// Cyclic action
+//--------------------------------------------------------------------------------------	
+	
+	// check status of fbOpen
+	THIS^.fbOpen( hLink := hLink, bExecute := FALSE, bBusy=>bBusy, bError=>bError, nErrID=>udiErrID);
+	
+	// Simulation
+	IF (CIf.SwCfg.bolSimulation) THEN
+		bBusy := FALSE;
+		bError := FALSE;
+		udiErrID := 0;
+	END_IF
+	
+	// State Change Condition
+	IF NOT bBusy THEN
+		Out_udiDriverErrorID := udiErrID;
+		IF bError THEN
+			Out_bDriverError := TRUE;
+			me.StateMachine.intStateNext := IBH_CmdState.cSTA_DISCONNECT;
+		ELSE
+			Out_bDriverError := FALSE;
+			Out_bDriverConnected := TRUE;
+			me.StateMachine.intStateNext := IBH_CmdState.cSTA_CONNECT;
+		END_IF
+	END_IF
+
+
+// Exit action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateNext) THEN
+		// state is going to change
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFF" Id="{7a01fe63-8cbf-4c76-877a-d44e66e90076}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFF'}
+METHOD PROTECTED sta_OFF : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+
+// Entry action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateLastCycle) THEN
+		// state changed since last cycle
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	END_IF
+
+	
+// Cyclic action
+//--------------------------------------------------------------------------------------	
+	// Simulation
+	IF (CIf.SwCfg.bolSimulation) THEN
+		;
+	END_IF
+	
+	// State Change Condition
+	CASE me.intCmd OF
+		// CONNECT
+		IBH_CmdState.cCMD_CONNECT, IBH_CmdState.cCMD_WRITE, IBH_CmdState.cCMD_READ:
+			me.StateMachine.intStateNext := IBH_CmdState.cSTA_CONNECTBusy;
+	ELSE
+		// DEFAULT
+		;
+	END_CASE
+
+
+// Exit action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateNext) THEN
+		// state is going to change
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StateMachine" Id="{7f66f709-ab6f-4f59-b200-263bee656967}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
+METHOD PROTECTED StateMachine : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.StateMachine();
+
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+	// CONNECT
+    IBH_CmdState.cSTA_CONNECT: 
+        THIS^.sta_CONNECT();
+    IBH_CmdState.cSTA_CONNECTBusy: 
+        THIS^.sta_CONNECTBusy();
+	// WRITE
+	IBH_CmdState.cSTA_WRITE: 
+        THIS^.sta_WRITE();
+    IBH_CmdState.cSTA_WRITEBusy: 
+        THIS^.sta_WRITEBusy();
+	// READ
+	IBH_CmdState.cSTA_READ: 
+        THIS^.sta_READ();
+    IBH_CmdState.cSTA_READBusy: 
+        THIS^.sta_READBusy();
+	// DISCONNECT
+	IBH_CmdState.cSTA_DISCONNECT: 
+        THIS^.sta_DISCONNECT();
+    IBH_CmdState.cSTA_DISCONNECTBusy: 
+        THIS^.sta_DISCONNECTBusy();
+END_CASE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_DISCONNECT" Id="{8ecf9004-6fe1-4909-a2af-cfa004fab4b5}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_DISCONNECT'}
+METHOD PROTECTED sta_DISCONNECT : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+
+// Entry action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateLastCycle) THEN
+		// state changed since last cycle
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	END_IF
+
+	
+// Cyclic action
+//--------------------------------------------------------------------------------------	
+	// Simulation
+	IF (CIf.SwCfg.bolSimulation) THEN
+		;
+	END_IF
+	
+	// State Change Condition
+	CASE me.intCmd OF
+		// OFF
+		Base_PLC.cCMD_OFF:
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
+	ELSE
+		// DEFAULT
+		me.StateMachine.intStateNext := IBH_CmdState.cSTA_CONNECTBusy;
+	END_CASE
+	
+
+
+// Exit action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateNext) THEN
+		// state is going to change
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{9536c657-9b64-42af-8532-1a68119b0a97}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'FB_init'}
+METHOD FB_init : BOOL
+VAR_INPUT
+	///if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	///if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
+END_VAR
+VAR
+	uiIdx: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
+// to manually change in new FUB implementation!!!
+// define valid commands for this controller
+FOR uiIdx:=0 TO (SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0])-1) BY 1 DO
+	IF (CIf.Job.aCmdList[uiIdx].intCmd=cSTA_INITIALIZED) THEN
+		// found first empty array element
+		EXIT;
+	END_IF
+END_FOR
+
+// Add configuration of own comands
+CIf.Job.aCmdList[uiIdx].intCmd := IBH_CmdState.cCMD_CONNECT;
+CIf.Job.aCmdList[uiIdx].strName := 'CONNECT';
+CIf.Job.aCmdList[uiIdx].bolAvailable := TRUE;
+uiIdx := uiIdx+1;
+CIf.Job.aCmdList[uiIdx].intCmd := IBH_CmdState.cCMD_WRITE;
+CIf.Job.aCmdList[uiIdx].strName := 'WRITE';
+CIf.Job.aCmdList[uiIdx].bolAvailable := TRUE;
+uiIdx := uiIdx+1;
+CIf.Job.aCmdList[uiIdx].intCmd := IBH_CmdState.cCMD_READ;
+CIf.Job.aCmdList[uiIdx].strName := 'READ';
+CIf.Job.aCmdList[uiIdx].bolAvailable := TRUE;
+uiIdx := uiIdx+1;
+CIf.Job.aCmdList[uiIdx].intCmd := IBH_CmdState.cCMD_DISCONNECT;
+CIf.Job.aCmdList[uiIdx].strName := 'DISCONNECT';
+CIf.Job.aCmdList[uiIdx].bolAvailable := TRUE;
+
+// set name of class/typ
+CIf.Info.strType := 'FB_IBH';
+
+//*******************************************************************************
+// initial values
+//*******************************************************************************
+
+// Software configuration
+CIf.SwCfg.bolExist := TRUE;
+CIf.SwCfg.bolEnable := TRUE;
+CIf.SwCfg.bolSimulation := FALSE;
+
+// Internal Variables (Input)
+iOff := 0;
+iBeltOn := 0;
+iManual := 0;
+iRun := 0;
+iSetParam := 0;
+iGetParam := 0;
+FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
+	adiTemp_dc[uiIdx] := 0;
+	adiAir_p[uiIdx] := 0;
+END_FOR
+diSpeed_mm_min := 0;
+iAckError := 0;
+bIncrementSetParam := FALSE;
+bRememberIncrementSetParam := FALSE;
+
+// Configuration
+SIf.Cfg.tIpAddress						:= '192.168.0.50';
+SIf.Cfg.udiPortAdress					:= 1099;
+SIf.Cfg.nDeviceAddress					:= 2;
+SIf.Cfg.nDatablockNumber				:= 22;
+SIf.Cfg.tTimeout						:= T#15S;
+
+SIf.Cfg.nWriteStartAddress				:= 0;
+SIf.Cfg.nReadStartAddress				:= 110;
+
+SIf.Cfg.uiByteOffset_rd_iStatus			:= 0;
+SIf.Cfg.uiByteOffset_rd_bOff			:= 10;
+SIf.Cfg.uiBitOffset_rd_bOff				:= 0;
+SIf.Cfg.uiByteOffset_rd_bBeltOn			:= 10;
+SIf.Cfg.uiBitOffset_rd_bBeltOn			:= 1;
+SIf.Cfg.uiByteOffset_rd_bManual			:= 10;
+SIf.Cfg.uiBitOffset_rd_bManual			:= 2;
+SIf.Cfg.uiByteOffset_rd_bRun			:= 10;
+SIf.Cfg.uiBitOffset_rd_bRun				:= 3;
+SIf.Cfg.uiByteOffset_rd_bSetParam		:= 10;
+SIf.Cfg.uiBitOffset_rd_bSetParam		:= 4;
+SIf.Cfg.uiByteOffset_rd_bGetParam		:= 10;
+SIf.Cfg.uiBitOffset_rd_bGetParam		:= 5;
+SIf.Cfg.uiByteOffset_rd_bAckError		:= 10;
+SIf.Cfg.uiBitOffset_rd_bAckError		:= 6;
+SIf.Cfg.uiByteOffset_rd_adiTemp_mc		:= 30;
+SIf.Cfg.uiByteOffset_rd_adiAir_p		:= 62;
+SIf.Cfg.uiByteOffset_rd_diSpeed_mm_min	:= 94;
+SIf.Cfg.uiByteOffset_rd_iErrorLevel		:= 98;
+SIf.Cfg.uiByteOffset_rd_iErrorID		:= 100;
+SIf.Cfg.uiByteOffset_rd_iErrorValue		:= 102;
+
+SIf.Cfg.uiByteOffset_wr_iOff			:= 0;
+SIf.Cfg.uiByteOffset_wr_iBeltOn			:= 2;
+SIf.Cfg.uiByteOffset_wr_iManual			:= 4;
+SIf.Cfg.uiByteOffset_wr_iRun			:= 6;
+SIf.Cfg.uiByteOffset_wr_iSetParam		:= 8;
+SIf.Cfg.uiByteOffset_wr_iGetParam		:= 10;
+SIf.Cfg.uiByteOffset_wr_iAckError		:= 12;
+SIf.Cfg.uiByteOffset_wr_adiTemp_mc		:= 30;
+SIf.Cfg.uiByteOffset_wr_adiAir_p		:= 62;
+SIf.Cfg.uiByteOffset_wr_diSpeed_mm_min	:= 94;
+
+// Parameter]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_CONNECT" Id="{a2af409c-f0e8-4b41-9672-ea69b9fcc54e}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_CONNECT'}
+METHOD PROTECTED sta_CONNECT : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+
+// Entry action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateLastCycle) THEN
+		// state changed since last cycle
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	END_IF
+
+	
+// Cyclic action
+//--------------------------------------------------------------------------------------	
+	// Simulation
+	IF (CIf.SwCfg.bolSimulation) THEN
+		;
+	END_IF
+	
+	// State Change Condition
+	CASE me.intCmd OF
+		// OFF
+		Base_PLC.cCMD_OFF:
+			me.StateMachine.intStateNext := IBH_CmdState.cSTA_DISCONNECTBusy;
+	ELSE
+		// DEFAULT
+		me.StateMachine.intStateNext := IBH_CmdState.cSTA_WRITEBusy;
+	END_CASE
+
+
+// Exit action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateNext) THEN
+		// state is going to change
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_WRITE" Id="{abc75bbe-5189-4f61-9738-c08c4b8b3672}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_WRITE'}
+METHOD PROTECTED sta_WRITE : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+
+// Entry action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateLastCycle) THEN
+		// state changed since last cycle
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	END_IF
+
+	
+// Cyclic action
+//--------------------------------------------------------------------------------------	
+	// Simulation
+	IF (CIf.SwCfg.bolSimulation) THEN
+		;
+	END_IF
+	
+	// State Change Condition
+	CASE me.intCmd OF
+		// OFF
+		Base_PLC.cCMD_OFF:
+			me.StateMachine.intStateNext := IBH_CmdState.cSTA_DISCONNECTBusy;
+	ELSE
+		// DEFAULT
+		me.StateMachine.intStateNext := IBH_CmdState.cSTA_READBusy;
+	END_CASE
+
+
+// Exit action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateNext) THEN
+		// state is going to change
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Always" Id="{c03b52e2-c3e9-4520-a99f-c2e8cbc37d7a}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Always'}
+METHOD PROTECTED Always : BOOL
+VAR
+	fbOVN: INT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.Always();
+
+// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+IF (me.StateMachine.intState <> cSTA_SINGLE_ANSWER) THEN
+	;
+END_IF
+
+// ----------------------------------------------------------------------------------
+// overrule error always from base -> no EOFF State!! in EOFF go to OFF
+IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
+	IF (me.StateMachine.intState = cSTA_OFF) THEN
+		me.StateMachine.intStateNext := cSTA_OFF;
+	ELSE // stay in OFF
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Action Name="setStandby" Id="{c30bcd78-8b5e-4fa9-a0de-b6e6d7212a05}">
+      <Implementation>
+        <ST><![CDATA[IF (iManual = MAX_INT OR iManual < 0) THEN
+	iManual := 0;
+END_IF
+
+iManual := iManual + 1;]]></ST>
+      </Implementation>
+    </Action>
+    <Method Name="bitAccess" Id="{c9a1b752-c346-4974-b8bd-80c6cf3ddd5b}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'bitAccess'}
+METHOD bitAccess : BOOL
+VAR_INPUT
+	in_byte: BYTE;
+	in_bit: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE in_bit OF
+	0: bitAccess := in_byte.0;
+	1: bitAccess := in_byte.1;
+	2: bitAccess := in_byte.2;
+	3: bitAccess := in_byte.3;
+	4: bitAccess := in_byte.4;
+	5: bitAccess := in_byte.5;
+	6: bitAccess := in_byte.6;
+	7: bitAccess := in_byte.7;
+ELSE
+	bitAccess := in_byte.0;
+END_CASE]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_READ" Id="{d4abdc21-11df-4b31-abe5-3edc19a43757}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_READ'}
+METHOD PROTECTED sta_READ : BOOL
+VAR
+	uiIdx: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+
+// Entry action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateLastCycle) THEN
+		// state changed since last cycle
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	END_IF
+
+	
+// Cyclic action
+//--------------------------------------------------------------------------------------	
+	
+	// Analyse Read Buffer
+	// !!!ATTENTION!!!
+	// Motorola: Big-Endien: Most Significant Bits First (Siemens)
+	// Intel: Little-Endien: Least Significant Bits First (Beckhoff)
+	THIS^.Out_iStatus :=		SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iStatus+0]),1*8)
+							+	SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iStatus+1]),0*8);
+	THIS^.Out_bOff		:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bOff]		,SIf.Cfg.uiBitOffset_rd_bOff);
+	THIS^.Out_bBeltOn	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bBeltOn]		,SIf.Cfg.uiBitOffset_rd_bBeltOn);
+	THIS^.Out_bManual	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bManual]		,SIf.Cfg.uiBitOffset_rd_bManual);
+	THIS^.Out_bRun		:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bRun]		,SIf.Cfg.uiBitOffset_rd_bRun);
+	THIS^.Out_bSetParam	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bSetParam]	,SIf.Cfg.uiBitOffset_rd_bSetParam);
+	THIS^.Out_bGetParam	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bGetParam]	,SIf.Cfg.uiBitOffset_rd_bGetParam);
+	THIS^.Out_bAckError	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bAckError]	,SIf.Cfg.uiBitOffset_rd_bAckError);
+	FOR uiIdx:=0 TO SIf.Cfg.uiNumberOfModules BY 1 DO
+		THIS^.Out_adiTemp_dc[uiIdx] :=		SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiTemp_mc+0 + uiIdx*4]),3*8)
+										+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiTemp_mc+1 + uiIdx*4]),2*8)
+										+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiTemp_mc+2 + uiIdx*4]),1*8)
+										+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiTemp_mc+3 + uiIdx*4]),0*8);
+	END_FOR
+	FOR uiIdx:=0 TO SIf.Cfg.uiNumberOfModules BY 1 DO
+		THIS^.Out_adiAir_p[uiIdx] :=		SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiAir_p+0 + uiIdx*4]),3*8)
+										+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiAir_p+1 + uiIdx*4]),2*8)
+										+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiAir_p+2 + uiIdx*4]),1*8)
+										+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiAir_p+3 + uiIdx*4]),0*8);
+	END_FOR
+	THIS^.Out_diSpeed_mm_min :=		SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_diSpeed_mm_min+0]),3*8)
+								+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_diSpeed_mm_min+1]),2*8)
+								+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_diSpeed_mm_min+2]),1*8)
+								+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_diSpeed_mm_min+3]),0*8);
+	THIS^.Out_iErrorLevel :=		SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iErrorLevel+0]),1*8)
+								+	SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iErrorLevel+1]),0*8);
+	THIS^.Out_iErrorID :=			SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iErrorID+0]),1*8)
+								+	SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iErrorID+1]),0*8);
+	
+	// Simulation
+	IF (CIf.SwCfg.bolSimulation) THEN
+		THIS^.Out_bOff		:= INT_TO_BOOL(THIS^.iOff);
+		THIS^.Out_bBeltOn	:= INT_TO_BOOL(THIS^.iBeltOn);
+		THIS^.Out_bRun		:= INT_TO_BOOL(THIS^.iRun);
+		THIS^.Out_bSetParam	:= INT_TO_BOOL(THIS^.iSetParam);
+		THIS^.Out_bGetParam	:= INT_TO_BOOL(THIS^.iGetParam);
+		THIS^.Out_bAckError	:= INT_TO_BOOL(THIS^.iAckError);
+		FOR uiIdx:=0 TO SIf.Cfg.uiNumberOfModules BY 1 DO
+			THIS^.Out_adiTemp_dc[uiIdx] := THIS^.adiTemp_dc[uiIdx];
+		END_FOR
+		FOR uiIdx:=0 TO SIf.Cfg.uiNumberOfModules BY 1 DO
+			THIS^.Out_adiAir_p[uiIdx] := THIS^.adiAir_p[uiIdx];
+		END_FOR
+		THIS^.Out_diSpeed_mm_min :=	diSpeed_mm_min;
+		THIS^.Out_iErrorLevel := 0;
+		THIS^.Out_iErrorID := 0;
+	END_IF
+	
+	// State Change Condition
+	CASE me.intCmd OF
+		// OFF
+		Base_PLC.cCMD_OFF:
+			me.StateMachine.intStateNext := IBH_CmdState.cSTA_DISCONNECTBusy;
+	ELSE
+		// DEFAULT
+		me.StateMachine.intStateNext := IBH_CmdState.cSTA_WRITEBusy;
+	END_CASE
+
+
+// Exit action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateNext) THEN
+		// state is going to change
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CtrlInit" Id="{e1df1c90-9e4c-49c8-930e-ea2c590c0a30}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'CtrlInit'}
+METHOD CtrlInit : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.CtrlInit();
+
+// add childs
+// ...]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFFBusy" Id="{e3ab6a07-912b-4ad0-b62b-adadcd2ff842}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFFBusy'}
+METHOD PROTECTED sta_OFFBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+
+// Entry action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateLastCycle) THEN
+		// state changed since last cycle
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	END_IF
+
+	
+// Cyclic action
+//--------------------------------------------------------------------------------------	
+	// Simulation
+	IF (CIf.SwCfg.bolSimulation) THEN
+		;
+	END_IF
+	
+	// Reset Output
+	Out_bDriverError := FALSE;
+	Out_udiDriverErrorID := 0;
+	
+	// State Change Condition
+	me.StateMachine.intStateNext := Base_PLC.cCMD_OFF;
+
+
+// Exit action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateNext) THEN
+		// state is going to change
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_WRITEBusy" Id="{e3d469a3-2a46-4ac5-9382-47fa02ac9ae0}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_WRITEBusy'}
+METHOD PROTECTED sta_WRITEBusy : BOOL
+VAR
+	uiIdx: UINT;
+	bBusy: BOOL;
+	bError: BOOL;
+	udiErrID: UDINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+
+// Entry action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateLastCycle) THEN
+		// state changed since last cycle
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		me.SubStateMachine.intState := IBH_CmdState.cSTA_SUB_1;
+		me.SubStateMachine.intStateNext := IBH_CmdState.cSTA_SUB_1;
+		
+		// Prepare Write Buffer
+		// !!!ATTENTION!!!
+		// Motorola: Big-Endien: Most Significant Bits First (Siemens)
+		// Intel: Little-Endien: Least Significant Bits First (Beckhoff)
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iOff		+0]	:= INT_TO_BYTE(SHR( THIS^.iOff,		1*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iOff		+1]	:= INT_TO_BYTE(SHR( THIS^.iOff,		0*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iBeltOn	+0]	:= INT_TO_BYTE(SHR( THIS^.iBeltOn,	1*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iBeltOn	+1]	:= INT_TO_BYTE(SHR( THIS^.iBeltOn,	0*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iManual	+0]	:= INT_TO_BYTE(SHR( THIS^.iManual,	1*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iManual	+1]	:= INT_TO_BYTE(SHR( THIS^.iManual,	0*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iRun		+0]	:= INT_TO_BYTE(SHR( THIS^.iRun,		1*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iRun		+1]	:= INT_TO_BYTE(SHR( THIS^.iRun,		0*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iSetParam	+0]	:= INT_TO_BYTE(SHR( THIS^.iSetParam,	1*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iSetParam	+1]	:= INT_TO_BYTE(SHR( THIS^.iSetParam,	0*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iGetParam	+0]	:= INT_TO_BYTE(SHR( THIS^.iGetParam,	1*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iGetParam	+1]	:= INT_TO_BYTE(SHR( THIS^.iGetParam,	0*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iAckError	+0]	:= INT_TO_BYTE(SHR( THIS^.iAckError,	1*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iAckError	+1]	:= INT_TO_BYTE(SHR( THIS^.iAckError,	0*8));
+		FOR uiIdx:=0 TO SIf.Cfg.uiNumberOfModules BY 1 DO
+			anWriteBuffer[SIf.Cfg.uiByteOffset_wr_adiTemp_mc+0 + uiIdx*4] := DINT_TO_BYTE(SHR( THIS^.adiTemp_dc[uiIdx], 3*8));
+			anWriteBuffer[SIf.Cfg.uiByteOffset_wr_adiTemp_mc+1 + uiIdx*4] := DINT_TO_BYTE(SHR( THIS^.adiTemp_dc[uiIdx], 2*8));
+			anWriteBuffer[SIf.Cfg.uiByteOffset_wr_adiTemp_mc+2 + uiIdx*4] := DINT_TO_BYTE(SHR( THIS^.adiTemp_dc[uiIdx], 1*8));
+			anWriteBuffer[SIf.Cfg.uiByteOffset_wr_adiTemp_mc+3 + uiIdx*4] := DINT_TO_BYTE(SHR( THIS^.adiTemp_dc[uiIdx], 0*8));
+		END_FOR
+		FOR uiIdx:=0 TO SIf.Cfg.uiNumberOfModules BY 1 DO
+			anWriteBuffer[SIf.Cfg.uiByteOffset_wr_adiAir_p+0 + uiIdx*4] := DINT_TO_BYTE(SHR( THIS^.adiAir_p[uiIdx], 3*8));
+			anWriteBuffer[SIf.Cfg.uiByteOffset_wr_adiAir_p+1 + uiIdx*4] := DINT_TO_BYTE(SHR( THIS^.adiAir_p[uiIdx], 2*8));
+			anWriteBuffer[SIf.Cfg.uiByteOffset_wr_adiAir_p+2 + uiIdx*4] := DINT_TO_BYTE(SHR( THIS^.adiAir_p[uiIdx], 1*8));
+			anWriteBuffer[SIf.Cfg.uiByteOffset_wr_adiAir_p+3 + uiIdx*4] := DINT_TO_BYTE(SHR( THIS^.adiAir_p[uiIdx], 0*8));
+		END_FOR
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_diSpeed_mm_min+0] := DINT_TO_BYTE(SHR( THIS^.diSpeed_mm_min, 3*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_diSpeed_mm_min+1] := DINT_TO_BYTE(SHR( THIS^.diSpeed_mm_min, 2*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_diSpeed_mm_min+2] := DINT_TO_BYTE(SHR( THIS^.diSpeed_mm_min, 1*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_diSpeed_mm_min+3] := DINT_TO_BYTE(SHR( THIS^.diSpeed_mm_min, 0*8));
+		
+		bRememberIncrementSetParam := bIncrementSetParam;
+		bIncrementSetParam := FALSE;
+	END_IF
+
+	
+// Cyclic action
+//--------------------------------------------------------------------------------------	
+	
+	// Simulation
+	IF (CIf.SwCfg.bolSimulation) THEN
+		me.SubStateMachine.intState := IBH_CmdState.cSTA_SUB_5;
+		me.SubStateMachine.intStateNext := IBH_CmdState.cSTA_SUB_5;
+	END_IF
+		
+	CASE me.SubStateMachine.intState OF
+		
+		// 1
+		IBH_CmdState.cSTA_SUB_1:
+			
+			// Write data
+			fbWrite(hLink := hLink, bExecute := FALSE );
+			fbWrite(hLink := hLink,
+					devAddr := SIf.Cfg.nDeviceAddress, (* Device address, MPI address of the remote component or its PROFIBUS address *)
+					eArea:= eNLinkArea_DB, (* PLC data area *)
+					nDB:= SIf.Cfg.nDatablockNumber, (* Data block number to which the data is written (DB, DX only) *)
+					nOffset:= SIf.Cfg.nWriteStartAddress, (* Start byte/word address to which the data is send *)
+					cbBuffer:= SIZEOF(anWriteBuffer), (* Contains the number of source bytes to be send *)
+					pBuffer:= ADR(anWriteBuffer), (* Contains the address of the source buffer containing the data to be send *)
+					bExecute:= TRUE); (* Rising edge at this input starts command execution *)
+					
+			me.SubStateMachine.intStateNext := IBH_CmdState.cSTA_SUB_2;
+			
+		// Wait and send 
+		IBH_CmdState.cSTA_SUB_2:
+			// check status of fbWrite
+			fbWrite(hLink := hLink, bExecute := FALSE, bBusy=>bBusy, bError=>bError, nErrID=>udiErrID);
+			
+			// State Change Condition
+			IF NOT bBusy THEN
+				Out_udiDriverErrorID := udiErrID;
+				IF bError THEN
+					Out_bDriverError := TRUE;
+					me.StateMachine.intStateNext := IBH_CmdState.cSTA_DISCONNECTBusy;
+				ELSE
+					Out_bDriverError := FALSE;
+					IF bRememberIncrementSetParam THEN
+						me.SubStateMachine.intStateNext := IBH_CmdState.cSTA_SUB_3;
+					ELSE
+						me.SubStateMachine.intStateNext := IBH_CmdState.cSTA_SUB_5;
+					END_IF
+				END_IF
+			END_IF
+			
+		// 3
+		IBH_CmdState.cSTA_SUB_3:
+			bRememberIncrementSetParam := FALSE;
+			IF (iSetParam = MAX_INT OR iSetParam < 0) THEN
+				iSetParam := 0;
+			END_IF
+			iSetParam := iSetParam + 1;
+		
+			// Adapt Write Buffer
+			anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iSetParam	+0]	:= INT_TO_BYTE(SHR( THIS^.iSetParam,	1*8));
+			anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iSetParam	+1]	:= INT_TO_BYTE(SHR( THIS^.iSetParam,	0*8));
+			
+			// Write data
+			fbWrite(hLink := hLink, bExecute := FALSE );
+			fbWrite(hLink := hLink,
+					devAddr := SIf.Cfg.nDeviceAddress, (* Device address, MPI address of the remote component or its PROFIBUS address *)
+					eArea:= eNLinkArea_DB, (* PLC data area *)
+					nDB:= SIf.Cfg.nDatablockNumber, (* Data block number to which the data is written (DB, DX only) *)
+					nOffset:= SIf.Cfg.nWriteStartAddress, (* Start byte/word address to which the data is send *)
+					cbBuffer:= SIZEOF(anWriteBuffer), (* Contains the number of source bytes to be send *)
+					pBuffer:= ADR(anWriteBuffer), (* Contains the address of the source buffer containing the data to be send *)
+					bExecute:= TRUE); (* Rising edge at this input starts command execution *)
+			
+			me.SubStateMachine.intStateNext := IBH_CmdState.cSTA_SUB_4;
+			
+		// 4
+		IBH_CmdState.cSTA_SUB_4:
+			
+			// check status of fbWrite
+			fbWrite(hLink := hLink, bExecute := FALSE, bBusy=>bBusy, bError=>bError, nErrID=>udiErrID);
+			
+			// State Change Condition
+			IF NOT bBusy THEN
+				Out_udiDriverErrorID := udiErrID;
+				IF bError THEN
+					Out_bDriverError := TRUE;
+					me.StateMachine.intStateNext := IBH_CmdState.cSTA_DISCONNECTBusy;
+				ELSE
+					Out_bDriverError := FALSE;
+					me.SubStateMachine.intStateNext := IBH_CmdState.cSTA_SUB_5;
+				END_IF
+			END_IF
+			
+		// 5
+		IBH_CmdState.cSTA_SUB_5:
+			me.StateMachine.intStateNext := IBH_CmdState.cSTA_WRITE;
+			
+	END_CASE
+		
+
+// Exit action
+//--------------------------------------------------------------------------------------
+	IF (me.StateMachine.intState <> me.StateMachine.intStateNext) THEN
+		// state is going to change
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="setTemp" Id="{e4c13e94-68cb-46e6-bded-f89af54e8f1b}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'setTemp'}
+METHOD setTemp
+VAR_INPUT
+	/// Temperature in deci °C 
+	In_adiTemp_dc: ARRAY[1..MAX_NUMBER_OF_OVEN_MODULES] OF DINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[adiTemp_dc := In_adiTemp_dc;
+bIncrementSetParam := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Action Name="setOff" Id="{f31a4f31-ba38-4f14-bece-0bde247b5847}">
+      <Implementation>
+        <ST><![CDATA[IF (iOff = MAX_INT OR ioff < 0) THEN
+	iOff := 0;
+END_IF
+
+iOff := iOff + 1;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="setBeltOn" Id="{f70402e7-6bcc-4785-8bdf-387e5cac065d}">
+      <Implementation>
+        <ST><![CDATA[IF (iBeltOn = MAX_INT OR iBeltOn < 0) THEN
+	iBeltOn := 0;
+END_IF
+
+iBeltOn := iBeltOn + 1;]]></ST>
+      </Implementation>
+    </Action>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

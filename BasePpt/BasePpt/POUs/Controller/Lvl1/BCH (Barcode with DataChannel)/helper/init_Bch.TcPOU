@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="init_Bch" Id="{0fdc15a4-b773-4910-b536-abf912b27969}">
+    <Declaration><![CDATA[FUNCTION init_Bch : BOOL
+VAR_INPUT
+	pBch			: POINTER TO T_BCH;
+	/// instance array of all controller instances
+	pCtrlInst		: POINTER TO fb_CtrlBase;
+	/// common interface array of all controllers (main use for PLC)
+	pCtrlCIf		: POINTER TO T_Ctrl_CIf;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[pBch^.datachn.rSendData.fbDataChannel.InitChannel(SIZEOF(pBch^.datachn.rSendData.rDataChannelItem), ADR(pBch^.datachn.rSendData.rDataChannelItem));
+pBch^.datachn.rSendData.fbFifo.DataChannel := ADR(pBch^.datachn.rSendData.fbDataChannel);
+pBch^.datachn.rSendData.fbFifo.FreeDataPointer := TRUE;
+pBch^.datachn.rSendData.fbFifo.Enable := TRUE;
+
+pBch^.ctrl.fbBch_Bcc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pBch^.id.Bch_Bcc); // init and entry fb_instance in global fb pointer array
+pBch^.ctrl.fbBch_Bcc.pBCD_SIf_In := pBch^.ctrl.fbBch_Bcc_Bcd.getSIf();
+pBch^.ctrl.fbBch.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pBch^.id.Bch); // init and entry fb_instance in global fb pointer array
+pBch^.ctrl.fbBch.BarcodeReader := ADR(pBch^.ctrl.fbBch_Bcc);
+pBch^.ctrl.fbBch.DataChannel := ADR(pBch^.datachn.rSendData);]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

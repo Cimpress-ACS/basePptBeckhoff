@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_PTS_Ilk" Id="{2a38859f-d5f9-4289-98ef-01ec4024bce0}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_PTS_Ilk :
+STRUCT
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

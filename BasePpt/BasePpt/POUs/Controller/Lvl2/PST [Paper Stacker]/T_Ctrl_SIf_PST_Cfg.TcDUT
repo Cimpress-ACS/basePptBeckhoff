@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_PST_Cfg" Id="{adcb3961-b87b-45f2-8018-1789940ada6d}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_PST_Cfg :
+STRUCT
+	/// Enable data channel to saber
+	bolEnableDataChannel: BOOL;
+	/// Number of retry barcode read command if failed
+	uinNumOfRetryRead: UINT;
+	/// Rotation direction for ejecting
+	/// LEFT  = 1
+	/// RIGHT = 2
+	usiEjectingDirection: INT;
+	/// Rotation direction for reverse
+	/// LEFT  = 1
+	/// RIGHT = 2
+	usiReverseDirection: INT;
+	/// Enable PST controlled Eject
+	bolEnablePstEjectControl: BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

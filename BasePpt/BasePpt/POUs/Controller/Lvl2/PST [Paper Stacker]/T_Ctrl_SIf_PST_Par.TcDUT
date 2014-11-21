@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_PST_Par" Id="{dc629613-ceee-4bb0-9fbd-07d1b49f7bd2}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_PST_Par :
+STRUCT
+	/// Stack hight in # of paper to eject. Sent by saber. 
+	uinStackHight: UINT;
+	/// Last barcode in stack. Sent by saber. 
+	/// If stack hight is reached and last barcode in stack detected, stacker automatically eject the whole stack.
+	uliLastBarCodeInStack: ULINT;
+	/// [mm/s] Belt reverse speed to bring stopper back to up position
+	uinBeltReverseSpeed_mmsec: UINT;
+	/// [mm/s] Belt speed for ejecting the whole stack
+	uinBeltEjectSpeed_mmsec: UINT;
+	/// [ms] Paper is at operator position delay time
+	udiPaperAtOpPosDebounceTime_ms: UDINT;
+	/// [ms] Stopper position delay time
+	udiStopperPosDebounceTime_ms: UDINT;
+	/// [ms] Outfeed sensor delay time
+	udiSensorOutfeedDebounceTime_ms: UDINT;
+	/// [ms] Stack eject delay time - Delay before belt starts to eject the stack if hight is reached.
+	udiStackEjectDelayTime_ms: UDINT;
+	/// [ms] Stack ejecting time - Time for how long the belt should move in eject direction 
+	udiStackEjectingTime_ms: UDINT;
+	/// [ms] Belt reverse delay time - Delay before belt starts moving backward after ejecting stack.
+	udiBeltReverseDelayTime_ms: UDINT;
+	/// [ms] Barcode reader trigger delay time - Delay time, until a read command will be executed, after a new paper was detected at infeed sensor.
+	udiBarcodeReaderTriggerDelayTime_ms: UDINT;
+	/// [ms] Simulation time paper infeed stroke
+	udiSimTimePaperInfeedStroke_ms: UDINT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

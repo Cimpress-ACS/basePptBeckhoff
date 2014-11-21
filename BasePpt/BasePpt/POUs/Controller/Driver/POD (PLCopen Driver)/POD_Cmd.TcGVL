@@ -1,0 +1,72 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="POD_Cmd" Id="{929106cd-f01b-40f8-aa09-ae2b396b3ed0}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	/// Switch controller on 
+	cPOD_STA_PowerOff: INT := 0;
+	/// Error
+	cPOD_STA_Error: INT := 256;
+	cPOD_STA_WaitForJob: INT := 1000;
+	cPOD_STA_PowerOnBusy: INT := 1001;
+	/// Homing 
+	cPOD_STA_HomeBusy: INT := 1006;
+	/// Start move with relative move distance 
+	cPOD_STA_RelMoveBusy: INT := 1007;
+	/// Start move with absolute target position 
+	cPOD_STA_AbsMoveBusy: INT := 1010;
+	/// Start move in positive direction 
+	cPOD_STA_PosMoveBusy: INT := 1011;
+	cPOD_STA_PosMove: INT := 1012;
+	/// Start move in negative direction 
+	cPOD_STA_NegMoveBusy: INT := 1013;
+	cPOD_STA_NegMove: INT := 1014;
+	/// controller on standstill
+	cPOD_STA_StopBusy: INT := 1015;
+	/// controller on standstill
+	cPOD_STA_QStopBusy: INT := 1017;
+	/// controller on standstill
+	cPOD_STA_NegJogBusy: INT := 1019;
+	/// controller on standstil	
+	cPOD_STA_PosJogBusy: INT := 1021;
+	cPOD_STA_ModMoveBusy: INT := 1023;
+	cPOD_STA_ModMove: INT := 1024;
+	cPOD_STA_StorePara: INT := 1050;
+	cPOD_STA_WritePara: INT := 1052;
+	/// ctrl commands definitions
+	/// specific commands >200 - every command has to be a even number
+	cPOD_CMD_DONE: INT := -1;
+	/// Switch controller on 
+	cPOD_CMD_CTRL_ON: INT := 1002;
+	/// Switch controller off 
+	cPOD_CMD_CTRL_OFF: INT := 1004;
+	/// Homing 
+	cPOD_CMD_HOME: INT := 1006;
+	/// Start move with relative move distance 
+	cPOD_CMD_REL_MOVE: INT := 1008;
+	/// Start move with absolute target position 
+	cPOD_CMD_ABS_MOVE: INT := 1010;
+	/// Start move in positive direction 
+	cPOD_CMD_POS_MOVE: INT := 1012;
+	/// Start move in negative direction 
+	cPOD_CMD_NEG_MOVE: INT := 1014;
+	/// Stop movement with controller on 
+	cPOD_CMD_STOP: INT := 1016;
+	/// Emergency stop with controller off 
+	cPOD_CMD_EMCY_STOP_CTRL_OFF: INT := 1018;
+	/// Start move in positive direction 
+	cPOD_CMD_POS_JOG: INT := 1020;
+	cPOD_CMD_NEG_JOG: INT := 1022;
+	/// Start move with modulo positionining (based on modulofactor defined in axis parameter!)
+	cPOD_CMD_MOD_MOVE: INT := 1024;
+	cPOD_CMD_STORE_PARAMETER: INT := 1050;
+	cPOD_CMD_WRITE_PARAMETER: INT := 1052;
+	/// Service Jobs (parallel to active job)
+	cPOD_SCMD_WRITE_PARA: INT := 2002;
+	cPOD_SCMD_READ_PARA: INT := 2004;
+	cPOD_SCMD_RESET_ABSENCODER: INT := 2006;
+	cPOD_SCMD_WRITE_PARA_NC: INT := 2008;
+	cPOD_SCMD_READ_PARA_NC: INT := 2010;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

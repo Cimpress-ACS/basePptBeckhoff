@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="JCL_CmdState" Id="{ef182f02-0639-40ae-b3ff-9e5eec8e6f28}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	/// Preparing jetter for production
+	cCMD_Standby: INT := 202;
+	/// Start calibration routine for MM camera system
+	cCMD_Calibration: INT := 204;
+	/// Start automatic cleaning cycle for both printheads
+	cCMD_CleanPrintHeads: INT := 206;
+	/// Reset pending alarms
+	cCMD_ResetAlarm: INT := 230;
+	/// Send back the state msg.
+	cCMD_RequestState: INT := 240;
+	/// ctrl specific states definitions
+	cSTA_StandbyBusy: INT := 201;
+	cSTA_Standby: INT := cCMD_Standby;
+	cSTA_ConnectBusy: INT := 250;
+	cSTA_CleanPrintHeadsBusy: INT := 205;
+	cSTA_CleanPrintHeads: INT := cCMD_CleanPrintHeads;
+	cSTA_CalibrationBusy: INT := 203;
+	cSTA_Calibration: INT := cCMD_Calibration;
+	cSTA_ParkBusy: INT := 211;
+	cSTA_MaintenanceBusy: INT := 208;
+	cSTA_MaintenanceInWork: INT := 209;
+	cSTA_MaintenanceDone: INT := 210;
+	/// sub states
+	cSUB_WaitingForConnection: INT := 300;
+	cSUB_WaitingForState: INT := 301;
+	cSUB_WaitingSocketClosed: INT := 302;
+	cSUB_SendPon: INT := 303;
+	cSUB_Done: INT := 999;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

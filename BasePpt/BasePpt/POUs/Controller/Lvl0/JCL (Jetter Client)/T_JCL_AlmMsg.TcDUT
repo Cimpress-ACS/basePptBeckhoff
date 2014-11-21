@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_JCL_AlmMsg" Id="{12f53567-06ed-4144-b05d-81a4828233d8}">
+    <Declaration><![CDATA[TYPE T_JCL_AlmMsg :
+STRUCT
+	stHeader: ST_Header;
+	/// Unique alarm number
+	udiAlarmID: UDINT;
+	/// Additional information
+	udiInfo: UDINT;
+	/// Corresponding alarm class
+	usiClass: USINT;
+	/// Corresponding controller ID
+	uinCtrlID: UINT;
+	/// Entry date and time
+	strDTEntry: STRING(25);
+	/// Alarm Text
+	strText: STRING(255);
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

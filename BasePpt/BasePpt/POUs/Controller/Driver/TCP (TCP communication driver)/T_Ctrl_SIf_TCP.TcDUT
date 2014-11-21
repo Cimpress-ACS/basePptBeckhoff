@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_TCP" Id="{bd807549-55a2-4ba3-a676-9c20ba2bc191}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_TCP :
+STRUCT
+	/// configuration
+	Cfg: T_Ctrl_SIf_TCP_Cfg;
+	/// parameter
+	Par: T_Ctrl_SIf_TCP_Par;
+	/// current values
+	Cur: T_Ctrl_SIf_TCP_Cur;
+	/// alarm number used in this controller
+	Alm: ARRAY[1..(E_ALM_TCP.MAX_E_ALM_TCP - 1)] OF T_Ctrl_Alm;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

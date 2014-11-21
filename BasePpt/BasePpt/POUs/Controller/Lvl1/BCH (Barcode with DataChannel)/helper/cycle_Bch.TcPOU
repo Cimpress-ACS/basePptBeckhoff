@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="cycle_Bch" Id="{f44d46ff-1227-4241-8ece-f3d1ed52b54f}">
+    <Declaration><![CDATA[FUNCTION cycle_Bch : BOOL
+VAR_INPUT
+	pBch: POINTER TO T_BCH;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[pBch^.ctrl.fbBch.In_bolSensorTrigScan := pBch^.io.In_bolSensorTrigScan;
+pBch^.ctrl.fbBch();
+pBch^.ctrl.fbBch_Bcc();
+pBch^.ctrl.fbBch_Bcc_Bcd();]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

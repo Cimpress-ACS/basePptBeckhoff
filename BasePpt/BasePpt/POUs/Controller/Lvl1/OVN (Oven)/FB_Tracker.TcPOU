@@ -1,0 +1,284 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_Tracker" Id="{9380dd21-cb22-45d5-b08a-410034e7d992}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_Tracker
+VAR
+	fbList: FB_DLL(In_bDoDataWipe := FALSE);
+	udiSampleTime_us: UDINT;
+	uiNumberOfModules: UINT;
+	diModuleLength_mm: DINT;
+	diDistanceBeforeOven_mm: DINT;
+	diDistanceAfterOven_mm: DINT;
+	pDataChannelFifo: POINTER TO FB_DataChannelSenderFifo;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Property Name="DataChannel" Id="{1403fd9f-56e1-42ed-95da-70a74c2bb5cc}">
+      <Declaration><![CDATA[PROPERTY DataChannel : POINTER TO FB_DataChannelSenderFifo
+]]></Declaration>
+      <Set Name="Set" Id="{1a218141-e3f2-4fe0-9dc9-583eec91ebaf}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[pDataChannelFifo := DataChannel;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="distanceBeforeOven_mm" Id="{2c8f7943-1d21-48e0-84ce-66fb488a3922}">
+      <Declaration><![CDATA[PROPERTY distanceBeforeOven_mm : DINT
+]]></Declaration>
+      <Set Name="Set" Id="{32d80b71-94ef-47aa-89d3-fb9d19b6a1cb}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[diDistanceBeforeOven_mm := distanceBeforeOven_mm;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{f656606e-1e25-4d1a-bf5c-77f906822ba7}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[distanceBeforeOven_mm := diDistanceBeforeOven_mm;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="sendData" Id="{4efebb13-95b5-4aba-b1a9-720bf96e90a4}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sendData'}
+METHOD sendData : BOOL
+VAR_INPUT
+	pData: POINTER TO T_Data;
+END_VAR
+VAR
+	uiIdx: UINT;
+	pItem: POINTER TO T_Oven_DCH;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF pDataChannelFifo <> NULL THEN
+	pItem := __NEW(T_Oven_DCH);
+
+	// prepare temperature values
+	FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
+		IF pData^.diCyclesInModule[uiIdx] > 0 THEN
+			pItem^.diTemperature_mc[uiIdx] := pData^.diSumTemp_mc[uiIdx]/pData^.diCyclesInModule[uiIdx];
+		ELSE
+			pItem^.diTemperature_mc[uiIdx] := 0;
+		END_IF
+	END_FOR
+
+	pItem^.rBaseInfo.bolItemAvailable := TRUE;
+	
+	IF pData^.bTrash THEN
+		pItem^.rBaseInfo.eHealth := E_ItemHealth.Ovn_Temperature;
+	ELSE
+		pItem^.rBaseInfo.eHealth := E_ItemHealth.Healthy;
+	END_IF
+	pItem^.bTrash := pData^.bTrash;
+	
+	pItem^.udiIdentification := pData^.uliBarcode;
+
+	pDataChannelFifo^.Push(pItem);
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="addElement" Id="{52cf92cd-2495-4ab4-a05c-44a99f53dd7b}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'addElement'}
+METHOD addElement
+VAR_INPUT
+	In_uliBarcode: ULINT;
+END_VAR
+VAR
+	pData: POINTER TO T_Data;
+	uiIdx: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[pData := __NEW(T_Data);
+pData^.uliBarcode := In_uliBarcode;
+pData^.bTrash := FALSE;
+pData^.bBarcodeMissed := FALSE;
+pData^.diDistance_um := 0;
+FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
+	pData^.diCyclesInModule[uiIdx] := 0;
+	pData^.diSumTemp_mc[uiIdx] := 0;
+END_FOR
+
+fbList.addElement(In_uliKey:=In_uliBarcode, In_pData:=pData);]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="moduleLength_mm" Id="{5b897dd5-66ad-4588-b019-065d13a009df}">
+      <Declaration><![CDATA[PROPERTY moduleLength_mm : DINT
+]]></Declaration>
+      <Get Name="Get" Id="{0dedbbee-0fcd-450e-ade5-3ff683aa1423}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[moduleLength_mm := diModuleLength_mm;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{278ee7ec-cf35-401d-835d-2e3dd06a0c36}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[diModuleLength_mm := moduleLength_mm;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="numberOfModules" Id="{5f36dd4f-071a-4b93-a58e-273e6d7698fd}">
+      <Declaration><![CDATA[PROPERTY numberOfModules : UINT
+]]></Declaration>
+      <Set Name="Set" Id="{4c62a725-aefe-43ac-aaca-7d254ae3f681}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[uiNumberOfModules := numberOfModules;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{b89eef72-5721-40d7-8bf1-3267291c3af2}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[numberOfModules := uiNumberOfModules;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="markAllTrash" Id="{75433ff9-8e04-4ae8-9a77-4f6f10973e67}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'markAllTrash'}
+METHOD markAllTrash
+VAR
+	pCurrentElement: POINTER TO T_Element;
+	pCurrentData: POINTER TO T_Data;
+	uiIdx: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[pCurrentElement := fbList.firstElement();
+
+WHILE (pCurrentElement <> 0) DO
+	pCurrentData := pCurrentElement^.pData;
+	pCurrentData^.bTrash := TRUE;
+	pCurrentElement := pCurrentElement^.pNextElement;
+END_WHILE]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="sampleTime_us" Id="{85efad67-1d40-4c96-b161-6f407e7dfd6a}">
+      <Declaration><![CDATA[PROPERTY sampleTime_us : UDINT
+]]></Declaration>
+      <Set Name="Set" Id="{26613656-6f07-4bc7-82a7-7938c884ea7d}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[udiSampleTime_us := sampleTime_us;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{b9708d17-1044-4d7f-a949-99b7ed7c8d3e}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[sampleTime_us := udiSampleTime_us;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="update" Id="{8c8fcbc6-4062-4e03-9847-6fed1bc4a810}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'update'}
+METHOD update
+VAR_INPUT
+	In_adiTemp_mc: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
+	In_diSpeed_mm_min: DINT;
+	bolSendToSaber: BOOL;
+END_VAR
+VAR
+	pCurrentElement: POINTER TO T_Element;
+	pCurrentData: POINTER TO T_Data;
+	uiIdx: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[pCurrentElement := fbList.firstElement();
+
+WHILE (pCurrentElement <> 0) DO
+	pCurrentData := pCurrentElement^.pData;
+	
+	// Distance
+	pCurrentData^.diDistance_um := pCurrentData^.diDistance_um + In_diSpeed_mm_min*1000/60/1000000*UDINT_TO_DINT(udiSampleTime_us);
+	
+	IF ( pCurrentData^.diDistance_um < (diDistanceBeforeOven_mm * 1000) ) THEN
+		// Before the Oven
+		;
+	ELSIF (pCurrentData^.diDistance_um > (diDistanceBeforeOven_mm+diDistanceAfterOven_mm+uiNumberOfModules*diModuleLength_mm+1000)*1000) THEN
+		// 1m after the Barcode scanners after the Oven
+		pCurrentData^.bBarcodeMissed := TRUE;
+		deleteElement(uliBarcodeOfElement:=pCurrentData^.uliBarcode,bolSendToSaber:=bolSendToSaber);
+	ELSE
+		// In the Oven
+		FOR uiIdx:=0 TO uiNumberOfModules-1 BY 1 DO
+			IF (	(pCurrentData^.diDistance_um >= (diDistanceBeforeOven_mm + uiIdx*diModuleLength_mm)*1000)
+				AND (pCurrentData^.diDistance_um < (diDistanceBeforeOven_mm + (uiIdx+1)*diModuleLength_mm)*1000) ) THEN
+				pCurrentData^.diCyclesInModule[uiIdx] := pCurrentData^.diCyclesInModule[uiIdx] + 1;
+				pCurrentData^.diSumTemp_mc[uiIdx] := pCurrentData^.diSumTemp_mc[uiIdx] + In_adiTemp_mc[uiIdx];
+			END_IF
+		END_FOR
+	END_IF
+	
+	pCurrentElement := pCurrentElement^.pNextElement;
+END_WHILE]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="distanceAfterOven_mm" Id="{a2995d7c-9d54-4531-b82b-349db8aa3c90}">
+      <Declaration><![CDATA[PROPERTY distanceAfterOven_mm : DINT
+]]></Declaration>
+      <Set Name="Set" Id="{667ba488-5673-4be6-b09c-32b615bc9df3}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[diDistanceAfterOven_mm := distanceAfterOven_mm;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{cfa2743b-e6fa-47a3-9614-2d7ef3ca6b7a}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[distanceAfterOven_mm := diDistanceAfterOven_mm;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="deleteElement" Id="{b56a2b36-9e03-436d-ad14-7fe6b7d0d404}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'deleteElement'}
+METHOD deleteElement : BOOL
+VAR_INPUT
+	uliBarcodeOfElement: ULINT;
+	bolSendToSaber: BOOL;
+END_VAR
+VAR
+	pDeleteElement: POINTER TO T_Element;
+	pData: POINTER TO T_Data;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[pDeleteElement := fbList.searchElement(In_uliKey:=uliBarcodeOfElement);
+
+IF (pDeleteElement <> 0) THEN
+	
+	deleteElement := TRUE;
+	pData := fbList.deleteElement(pDeleteElement);
+
+	IF bolSendToSaber THEN
+		sendData(pData);
+	END_IF
+
+	__DELETE(pData);
+ELSE
+	deleteElement := FALSE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="numberOfElements" Id="{ce6a1b72-5b90-44e2-bf7a-6a2875d4c130}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'numberOfElements'}
+METHOD numberOfElements : UINT
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[numberOfElements := fbList.numberOfElements();]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="deleteAll" Id="{f3385cc1-664d-4a82-944b-7bdeaee59d7e}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'deleteAll'}
+METHOD deleteAll
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[fbList.deleteAll();]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

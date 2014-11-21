@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_PTB_ID" Id="{b6b64924-2b7f-4a75-b49c-31a7e637c20c}">
+    <Declaration><![CDATA[TYPE T_PTB_ID :
+STRUCT
+	Ptb: INT;
+	Ptb_Umc: INT;
+	Ptb_Vpc: INT;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Data" Id="{f62c5f74-b049-4b44-a986-c74c61704aa9}">
+    <Declaration><![CDATA[{attribute 'enable_dynamic_creation' := ''}
+TYPE T_Data :
+STRUCT
+	uliBarcode: ULINT;
+	bTrash: BOOL;
+	diDistance_um: DINT;
+	diSumTemp_mc: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
+	diCyclesInModule: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
+	bBarcodeMissed: BOOL;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

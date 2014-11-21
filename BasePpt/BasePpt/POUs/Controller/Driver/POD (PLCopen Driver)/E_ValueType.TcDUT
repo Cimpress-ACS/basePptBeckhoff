@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="E_ValueType" Id="{9db550c9-6d64-4366-9604-6e11beeaedee}">
+    <Declaration><![CDATA[TYPE E_ValueType :
+(
+	TYPE_NOT_SPECIFIED := 0,
+	TYPE_SINT := 1,
+	TYPE_INT := 2,
+	TYPE_DINT := 3,
+	TYPE_USINT := 4,
+	TYPE_UINT := 5,
+	TYPE_UDINT := 6,
+	TYPE_STRING := 7
+) USINT;
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

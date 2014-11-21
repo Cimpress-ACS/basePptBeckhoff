@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="E_ALM_PTS" Id="{054d011f-4a84-48e4-ba08-1819064b2746}">
+    <Declaration><![CDATA[TYPE E_ALM_PTS :
+(
+	PaperTransport 				:= 1,
+	ModeParameter 				:= 2,
+	TurnTableConfigMissmatch	:= 3,
+	MAX_E_ALM_PTS
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

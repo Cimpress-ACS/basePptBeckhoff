@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="Constants" Id="{702b885f-7a13-4f8b-b0c2-feb32d1fdd73}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	cNUM_OF_MODULES: INT := 1;
+	cREDUCED_VERSION: BOOL := FALSE;
+
+	MAX_INT: INT := 32767;
+	MIN_INT: INT := -32768;
+	MAX_NUMBER_OF_OVEN_MODULES: UINT := 8;
+	/// Write data byte length 
+	WRITE_BUFFER_LENGTH: UDINT := 98;
+	/// Read buffer byte length 
+	READ_BUFFER_LENGTH: UDINT := 103;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

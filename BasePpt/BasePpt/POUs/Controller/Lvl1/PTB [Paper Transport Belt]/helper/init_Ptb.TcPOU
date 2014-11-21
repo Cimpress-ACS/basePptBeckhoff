@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="init_Ptb" Id="{8ebadddd-333a-46ba-82c7-eb285cfb0a6a}">
+    <Declaration><![CDATA[FUNCTION init_Ptb : BOOL
+VAR_INPUT
+	pPtb			: POINTER TO T_PTB;
+	/// instance array of all controller instances
+	pCtrlInst		: POINTER TO fb_CtrlBase;
+	/// common interface array of all controllers (main use for PLC)
+	pCtrlCIf		: POINTER TO T_Ctrl_CIf;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[pPtb^.ctrl.fbPtb_Vpc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPtb^.id.Ptb_Vpc);
+pPtb^.ctrl.fbPtb_Umc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPtb^.id.Ptb_Umc);
+pPtb^.ctrl.fbPtb.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPtb^.id.Ptb);
+pPtb^.ctrl.fbPtb.Drive := ADR(pPtb^.ctrl.fbPtb_Umc); // g_a_pCtrlInst[pPtb^.id.Ptb_Umc];
+pPtb^.ctrl.fbPtb.VacuumPump := ADR(pPtb^.ctrl.fbPtb_Vpc); // g_a_pCtrlInst[pPtb^.id.Ptb_Vpc];]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

@@ -1,9 +1,10 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_PCE_Cur" Id="{2ba8f497-961d-4d35-9e44-823067ec94e1}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_PCE_Cur" Id="{ffeb56dd-85a2-4f3a-8090-d4d72ad72f39}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PCE_Cur :
-STRUCT	
+STRUCT
 	/// [mm/s] Belt speed
-	uinBeltSpeed					: UINT;
+	uinBeltSpeed: UINT;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

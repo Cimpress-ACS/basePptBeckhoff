@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_PTA_ID" Id="{cec582b0-1df7-40b8-8c89-848144478305}">
+    <Declaration><![CDATA[TYPE T_PTA_ID :
+STRUCT
+	Pta: INT;
+	Pta_Umc: INT;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

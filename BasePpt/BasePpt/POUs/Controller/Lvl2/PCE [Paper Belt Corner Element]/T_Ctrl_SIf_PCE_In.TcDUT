@@ -1,9 +1,10 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_PCE_In" Id="{f972faf2-fcc8-4d66-9fa7-d61b7e17cad8}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_PCE_In" Id="{3f7e443f-fe1a-49ef-a7c2-1378ec4f91df}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PCE_In :
 STRUCT
 	/// 0 = Paper not here; 1 = Paper detected
-	bolPaperAvailable				: BASE_PLC.T_Ctrl_IoBool;
+	bolPaperAvailable: BASE_PLC.T_Ctrl_IoBool;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

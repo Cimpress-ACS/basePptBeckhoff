@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_OVN_Out" Id="{43b0d37f-f93b-4271-b079-fc0585919514}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_OVN_Out :
+STRUCT
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_BCH_Cfg" Id="{1bba7bfe-ca55-4b76-b7ae-11483683f40a}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCH_Cfg :
+STRUCT
+	/// TRUE = Enable Data Channel; False = Disable DataChannel
+	bolEnableDataChannel: BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

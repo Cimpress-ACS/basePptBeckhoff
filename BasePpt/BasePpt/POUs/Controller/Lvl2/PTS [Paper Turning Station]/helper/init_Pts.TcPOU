@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="init_Pts" Id="{c68d0e3f-cd89-413c-85c0-14d5f7780b58}">
+    <Declaration><![CDATA[FUNCTION init_Pts : BOOL
+VAR_INPUT
+	pPts			: POINTER TO T_PTS;
+	/// instance array of all controller instances
+	pCtrlInst		: POINTER TO fb_CtrlBase;
+	/// common interface array of all controllers (main use for PLC)
+	pCtrlCIf		: POINTER TO T_Ctrl_CIf;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[pPts^.ctrl.fbPts_Ptb_Vpc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPts^.id.Pts_Ptb_Vpc);
+pPts^.ctrl.fbPts_Ptb_Umc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPts^.id.Pts_Ptb_Umc);
+pPts^.ctrl.fbPts_Ptb.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPts^.id.Pts_Ptb);
+pPts^.ctrl.fbPts_Ptb.Drive := ADR(pPts^.ctrl.fbPts_Ptb_Umc);
+pPts^.ctrl.fbPts_Ptb.VacuumPump := ADR(pPts^.ctrl.fbPts_Ptb_Vpc);
+
+pPts^.ctrl.fbPts_Mdc_Umc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPts^.id.Pts_Mdc_Umc);
+pPts^.ctrl.fbPts_Mdc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPts^.id.Pts_Mdc);
+pPts^.ctrl.fbPts_Mdc.Drive := ADR(pPts^.ctrl.fbPts_Mdc_Umc);
+
+pPts^.ctrl.fbPts_RAX.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPts^.id.Pts_RAX);
+pPts^.ctrl.fbPts_RAX.In_pAD_SIf:= pPts^.ctrl.fbPts_RAX_POD.AD_SIf;	
+
+pPts^.ctrl.fbPts.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPts^.id.Pts);
+pPts^.ctrl.fbPts.Belt := ADR(pPts^.ctrl.fbPts_Ptb);
+pPts^.ctrl.fbPts.Malteser := ADR(pPts^.ctrl.fbPts_Mdc);
+pPts^.ctrl.fbPts.Servo := ADR(pPts^.ctrl.fbPts_RAX);]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

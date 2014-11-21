@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="TCP_CmdState" Id="{8afbc55b-bf15-45f2-8b15-4e84b54a42ee}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	/// ctrl commands definitions
+	/// specific commands >200 - every command has to be a even number
+	cCMD_Close: INT := 202;
+	cCMD_Connect: INT := 204;
+	/// ctrl specific states definitions
+	cSTA_CloseBusy: INT := 201;
+	cSTA_Close: INT := 202;
+	cSTA_ConnectBusy: INT := 203;
+	cSTA_Connect: INT := 204;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

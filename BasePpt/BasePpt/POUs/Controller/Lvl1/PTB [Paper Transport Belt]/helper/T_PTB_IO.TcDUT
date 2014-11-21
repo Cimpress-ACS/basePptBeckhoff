@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_PTB_IO" Id="{e18177eb-a229-4348-81bc-3ab051c328a0}">
+    <Declaration><![CDATA[TYPE T_PTB_IO :
+STRUCT
+	In_bolInputSensor: REFERENCE TO BOOL;
+	In_bolOutputSensor: REFERENCE TO BOOL;
+	
+	In_bolVpc_VacuumSensor: REFERENCE TO BOOL;
+	In_bolVpc_PumpOk: REFERENCE TO BOOL;
+	Out_bolVpc_PumpOn: REFERENCE TO BOOL;	
+
+	In_bolUmc_EmoOk: REFERENCE TO BOOL;
+	In_uinUmc_Status: REFERENCE TO UINT;
+	In_uinUmc_ActualSpeed: REFERENCE TO UINT;
+	In_uinUmc_SetSpeed: REFERENCE TO UINT;
+	In_uinUmc_ECatState: REFERENCE TO UINT;
+	In_strUmc_ECatNetId: REFERENCE TO AMSNETID;
+	In_uinUmc_ECatPort: REFERENCE TO WORD;
+	Out_uinUmc_Control: REFERENCE TO UINT;
+	Out_uinUmc_SetSpeed: REFERENCE TO UINT;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

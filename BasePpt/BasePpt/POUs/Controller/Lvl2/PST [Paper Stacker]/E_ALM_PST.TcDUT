@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="E_ALM_PST" Id="{fb8f115b-73dc-4c4d-9e3b-d73e166ea250}">
+    <Declaration><![CDATA[TYPE E_ALM_PST :
+(
+	StackIncomplete := 1,
+	NeedsEjectCommand := 2,
+	StackOkButLastCodeNotRight := 3,
+	StackNotOkButLastCodeRight := 4,
+	ReadingBarcodeFailedAfterXRetries := 5,
+	NewPaperDetectedDuringEjecting := 6,
+	NewPaperDetectedWhileBarcodeReading := 7,
+	MAX_E_ALM_PST
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

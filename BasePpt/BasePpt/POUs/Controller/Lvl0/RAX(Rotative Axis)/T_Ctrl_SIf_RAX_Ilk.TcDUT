@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_RAX_Ilk" Id="{8ccfee73-1986-406a-8dee-758faea7be09}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_RAX_Ilk :
+STRUCT
+	/// interlock movment in positive direction
+	bolMovePos: BOOL;
+	/// interlock movment in negative direction
+	bolMoveNeg: BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

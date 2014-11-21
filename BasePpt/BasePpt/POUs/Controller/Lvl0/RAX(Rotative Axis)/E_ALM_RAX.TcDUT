@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="E_ALM_RAX" Id="{f14ae739-688e-446b-85ca-a0d9f68ab153}">
+    <Declaration><![CDATA[{attribute 'qualified_only' := ''}
+TYPE E_ALM_RAX :
+(
+	GeneralDrive := 1,
+	GeneralNc,
+	SwLimit,
+	NegHwLimit,
+	PosHwLimit,
+	InterlockNegMove,
+	InterlockPosMove,
+	GeneralMCFUB,
+	MAX_E_ALM
+) UINT;
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

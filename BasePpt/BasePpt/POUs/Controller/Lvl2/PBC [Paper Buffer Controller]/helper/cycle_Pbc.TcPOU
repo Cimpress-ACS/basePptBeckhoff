@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="cycle_Pbc" Id="{40eb6057-71a1-4129-a42e-beb56b151a69}">
+    <Declaration><![CDATA[FUNCTION cycle_Pbc : BOOL
+VAR_INPUT
+	pPbc: POINTER TO T_PBC;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_bolEmoOk 				:= pPbc^.io.In_bolPtbDeStacker_Umc_EmoOk;
+pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_uinStatus 				:= pPbc^.io.In_uinPtbDeStacker_Umc_Status;
+pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_intMotorActualSpeed 	:= pPbc^.io.In_uinPtbDeStacker_Umc_ActualSpeed;
+pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_uinMotorSetSpeed 		:= pPbc^.io.In_uinPtbDeStacker_Umc_SetSpeed;
+pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_uinECATState 			:= pPbc^.io.In_uinPtbDeStacker_Umc_ECatState;
+pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_strNetId 				:= pPbc^.io.In_strPtbDeStacker_Umc_ECatNetId;
+pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_uintPort 				:= pPbc^.io.In_uinPtbDeStacker_Umc_ECatPort;
+pPbc^.ctrl.fbPbc_PtbDeStacker_Umc();
+pPbc^.io.Out_uinPtbDeStacker_Umc_SetSpeed	 				:= pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.Out_uinSpeedSetpoint;
+pPbc^.io.Out_uinPtbDeStacker_Umc_Control 					:= pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.Out_uinControl;
+
+pPbc^.ctrl.fbPbc_PtbDeStacker();
+
+pPbc^.ctrl.fbPbc_PtbBelt_Umc.In_bolEmoOk 					:= pPbc^.io.In_bolPtbBelt_Umc_EmoOk;
+pPbc^.ctrl.fbPbc_PtbBelt_Umc.In_uinStatus 					:= pPbc^.io.In_uinPtbBelt_Umc_Status;
+pPbc^.ctrl.fbPbc_PtbBelt_Umc.In_intMotorActualSpeed 		:= pPbc^.io.In_uinPtbBelt_Umc_ActualSpeed;
+pPbc^.ctrl.fbPbc_PtbBelt_Umc.In_uinMotorSetSpeed 			:= pPbc^.io.In_uinPtbBelt_Umc_SetSpeed;
+pPbc^.ctrl.fbPbc_PtbBelt_Umc.In_uinECATState 				:= pPbc^.io.In_uinPtbBelt_Umc_ECatState;
+pPbc^.ctrl.fbPbc_PtbBelt_Umc.In_strNetId 					:= pPbc^.io.In_strPtbBelt_Umc_ECatNetId;
+pPbc^.ctrl.fbPbc_PtbBelt_Umc.In_uintPort 					:= pPbc^.io.In_uinPtbBelt_Umc_ECatPort;
+pPbc^.ctrl.fbPbc_PtbBelt_Umc();
+pPbc^.io.Out_uinPtbBelt_Umc_SetSpeed 						:= pPbc^.ctrl.fbPbc_PtbBelt_Umc.Out_uinSpeedSetpoint;
+pPbc^.io.Out_uinPtbBelt_Umc_Control 						:= pPbc^.ctrl.fbPbc_PtbBelt_Umc.Out_uinControl;
+
+pPbc^.ctrl.fbPbc_PtbBelt_Vpc.In_bolPumpOk 					:= pPbc^.io.In_bolPtbBelt_Vpc_PumpOk;
+pPbc^.ctrl.fbPbc_PtbBelt_Vpc.In_bolVacuumOk 				:= pPbc^.io.In_bolPtbBelt_Vpc_VacuumSensor;
+pPbc^.ctrl.fbPbc_PtbBelt_Vpc();
+pPbc^.io.Out_bolPtbBelt_Vpc_PumpOn 							:= pPbc^.ctrl.fbPbc_PtbBelt_Vpc.Out_bolVaccumPumpOn;
+
+pPbc^.ctrl.fbPbc_PtbBelt();
+
+pPbc^.ctrl.fbPbc.In_bolCapacityReached 						:= pPbc^.io.In_bolInputSensor;
+pPbc^.ctrl.fbPbc.In_bolPaperAvailableEntry 					:= pPbc^.io.In_bolCapacitySensor;
+pPbc^.ctrl.fbPbc.In_bolPaperAvailableExit 					:= pPbc^.io.In_bolOutputSensor;
+pPbc^.ctrl.fbPbc.In_bolDoublePaperDetection 				:= pPbc^.io.In_bolDoublePaperSensor;
+pPbc^.ctrl.fbPbc.In_bolTurnTableMiddleSensor 				:= pPbc^.io.In_bolPts_PaperSensor;
+pPbc^.ctrl.fbPbc.In_bolAirPressorOk 						:= pPbc^.io.In_bolAirPressureOk;
+pPbc^.ctrl.fbPbc();
+pPbc^.io.Out_bolAirPressureOn 								:= pPbc^.ctrl.fbPbc.Out_bolAirOn;]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

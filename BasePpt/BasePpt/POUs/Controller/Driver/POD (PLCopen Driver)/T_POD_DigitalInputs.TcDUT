@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_POD_DigitalInputs" Id="{7bcbbfd1-81f0-4ff4-aa2d-09f1fdef954e}">
+    <Declaration><![CDATA[TYPE T_POD_DigitalInputs :
+STRUCT
+	///0 N-OT: 	Negative limit switch 	0: Switched off, 1: Switched on
+	bol_N_OT: BOOL;
+	///1 P-OT: 	Positive limit switch 	0: Switched off, 1: Switched on
+	bol_P_OT: BOOL;
+	///2 Home switch 					0: Switched off, 1: Switched on
+	bol_HomeSwitch: BOOL;
+	///16 SI0:	CN1-13pin 				0: Switched off (Open),1: Switched on (Close)
+	bol_SI0: BOOL;
+	///17 SI1:	CN1-7pin 				0: Switched off (Open),1: Switched on (Close)
+	bol_SI1: BOOL;
+	///18 SI2:	CN1-8pin 				0: Switched off (Open),1: Switched on (Close)
+	bol_SI2: BOOL;
+	///19 SI3:	CN1-9pin 				0: Switched off (Open),1: Switched on (Close)
+	bol_SI3: BOOL;
+	///20 SI4:	CN1-10pin 				0: Switched off (Open),1: Switched on (Close)
+	bol_SI4: BOOL;
+	///21 SI5:	CN1-11pin 				0: Switched off (Open),1: Switched on (Close)
+	bol_SI5: BOOL;
+	///22 SI6:	CN1-12pin 				0: Switched off (Open),1: Switched on (Close)
+	bol_SI6: BOOL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

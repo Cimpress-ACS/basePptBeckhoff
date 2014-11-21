@@ -1,19 +1,24 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_PBC_Cur" Id="{886957c4-40e8-4ad2-b741-1c7085414586}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_PBC_Cur" Id="{4ea3c9d5-d3fc-4366-a40a-ee21b7378c6a}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PBC_Cur :
-STRUCT	
+STRUCT
 	/// How many papers are in the buffer. -1 = Paper count unknown
-	uinPaperInBufferCount			: UINT;
+	uinPaperInBufferCount: UINT;
 	/// Last Paper to eject count parameter
-	uinPaperToEjectParameter		: UINT;
+	uinPaperToEjectParameter: UINT;
 	/// Actual count of the paper ejected 
-	uinPaperToEjectCount			: UINT;
+	uinPaperToEjectCount: UINT;
 	/// [ms] Time from sheet to sheet ejection in multi eject mode.
-	uinSheetToSheetTime				: UINT;
-	// Was paper before Eject available
-	bolPaperBeforeEjectAvailable	: BOOL;
-	// Paper to paper Timeout
-	uinPaperToPaperTime_ms			: UINT;
+	uinSheetToSheetTime: UINT;
+	/// Was paper before Eject available
+	bolPaperBeforeEjectAvailable: BOOL;
+	/// Paper to paper Timeout
+	uinPaperToPaperTime_ms: UINT;
+	/// Last Read Barcode			
+	udiLastBarcode: UDINT;
+	/// Total Paper Counter / Also used to signal a new Barcode read.			
+	udiBarcodeChanged: UDINT;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

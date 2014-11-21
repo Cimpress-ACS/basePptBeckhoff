@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="BCH_CmdState" Id="{7c623b26-af34-47c1-8196-0eed7ce96c55}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	cCMD_READ: INT := 200;
+	cSUB_WAITPAPER: INT := 300;
+	cSUB_BARCODEREADstart: INT := 310;
+	cSUB_BARCODREREADbusy: INT := 311;
+	cSUB_BARCODREREAD: INT := 312;
+	cSUB_WAITPAPERGONE: INT := 313;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

@@ -1,0 +1,1275 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_RAX" Id="{1ba66dca-9f6b-4b33-9c14-53cbd4cf9f57}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_RAX EXTENDS FB_CtrlBase
+VAR_INPUT
+	In_pAD_SIf: POINTER TO T_POD;
+END_VAR
+VAR
+	/// Specific interface struct for public access
+	SIf: T_Ctrl_SIf_RAX;
+	/// internal variables
+	ii: UINT;
+END_VAR
+VAR CONSTANT
+	/// ctrl specific substates definitions
+	cSUB_INITIALIZED: INT := 500;
+	cSUB_WriteSW: INT := 501;
+	cSUB_Home: INT := 502;
+	cSUB_MoveToInitPos: INT := 503;
+	cSUB_Finished: INT := 504;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+Rotary axis controller based on Deg unit system.
+
+- position POS moved with absolute positioning
+- nc settings base unit in Degree!!
+- REL_POS -> relative positioning for single command
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		12.09.2014		AVME/KVO	Start history
+0.00.2		22.09.2014		AVME/MRU	Copy of LAX, renamed to RAX, changed mm to Degree,
+										Added Turn
+
+_______________________________________________________________________________________________*)
+
+IF (me.bolActivate) AND (In_pAD_SIf<>0) THEN // cyclic call enabled
+	
+	IF (CIf.Info.bolInitDone=FALSE) THEN // first cycle -> init
+		CtrlInit();
+		CIf.Info.bolInitDone := TRUE;
+	ELSE
+		CycleStartDuty();
+	
+		Always();
+		
+		StateMachine();
+		
+		CycleEndDuty();
+	END_IF
+END_IF;
+]]></ST>
+    </Implementation>
+    <Method Name="sta_REL_POSBusy" Id="{0377a83a-c4f6-40aa-bdd4-82ca60c1426a}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_REL_POSBusy'}
+METHOD PROTECTED sta_REL_POSBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		In_pAD_SIf^.stMove.lreSetPos := DINT_TO_LREAL(SIf.Par.dinRelDist_0_1deg)/10.0; // for rel movement used also SetPos
+		In_pAD_SIf^.intCmd := cPOD_CMD_REL_MOVE;	// start move with absolute target position 
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		
+		// State Change Condition
+		IF (In_pAD_SIf^.intCmd=cPOD_CMD_DONE) AND (In_pAD_SIf^.stStatus.bolInPos) THEN
+			me.StateMachine.intStateNext := RAX_CmdState.cSTA_REL_POS;
+		ELSIF (me.Alarm.eActivAlmClass=E_AlmClass.STOP) OR ((me.intCmd<>RAX_CmdState.cCMD_REL_POS) AND (me.intCmd<>cCMD_DONE)) THEN 
+			me.StateMachine.intStateNext := cSTA_STOPBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_STOPBusy" Id="{0a4c90f8-4580-4d2a-8683-1d4842c61e7c}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_STOPBusy'}
+METHOD PROTECTED sta_STOPBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		In_pAD_SIf^.intCmd := cPOD_CMD_STOP;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		
+		
+		// State Change Condition
+		IF (In_pAD_SIf^.intCmd=cPOD_CMD_DONE) THEN
+			me.StateMachine.intStateNext := cSTA_STOP;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_POSBusy" Id="{0e46b232-13b9-44cb-a548-d646006dff62}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_POSBusy'}
+METHOD PROTECTED sta_POSBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		In_pAD_SIf^.stMove.lreSetPos := DINT_TO_LREAL(SIf.Par.dinPos_0_1Deg)/10.0;
+		In_pAD_SIf^.intCmd := cPOD_CMD_ABS_MOVE;	// start move with absolute target position 
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		
+		// State Change Condition
+		IF (In_pAD_SIf^.intCmd=cPOD_CMD_DONE) AND (In_pAD_SIf^.stStatus.bolInPos) THEN
+			me.StateMachine.intStateNext := RAX_CmdState.cSTA_POS;
+		ELSIF (me.Alarm.eActivAlmClass=E_AlmClass.STOP) OR ((me.intCmd<>RAX_CmdState.cCMD_POS) AND (me.intCmd<>cCMD_DONE)) THEN 
+			me.StateMachine.intStateNext := cSTA_STOPBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{0e65f7e0-c59f-42a6-bb29-bc8457ae1567}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'FB_init'}
+METHOD FB_init : BOOL
+VAR_INPUT
+	///if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	///if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
+END_VAR
+VAR
+	udiTaskCnt: UDINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
+// to manually change in new FUB implementation!!!
+// define valid commands for this controller
+FOR ii:= 0 TO (SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0])-1) BY 1 DO
+	IF (CIf.Job.aCmdList[ii].intCmd=cCMD_INITIALIZED) THEN
+		// found first empty array element
+		EXIT;
+	END_IF
+END_FOR
+CIf.Job.aCmdList[ii].intCmd := cCMD_INIT;
+CIf.Job.aCmdList[ii].strName := 'Init'; 
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+ii := ii +1;
+CIf.Job.aCmdList[ii].intCmd := RAX_CmdState.cCMD_POS;
+CIf.Job.aCmdList[ii].strName := 'Position absolute';
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+ii := ii +1;
+CIf.Job.aCmdList[ii].intCmd := RAX_CmdState.cCMD_JOG_NEG;
+CIf.Job.aCmdList[ii].strName := 'jogging negativ direction';
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+ii := ii +1;
+CIf.Job.aCmdList[ii].intCmd := RAX_CmdState.cCMD_JOG_POS;
+CIf.Job.aCmdList[ii].strName := 'jogging positive direction';
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+ii := ii +1;
+CIf.Job.aCmdList[ii].intCmd := RAX_CmdState.cCMD_HOME;
+CIf.Job.aCmdList[ii].strName := 'Home';
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+ii := ii +1;
+CIf.Job.aCmdList[ii].intCmd := RAX_CmdState.cCMD_REL_POS;
+CIf.Job.aCmdList[ii].strName := 'Relative move';
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+ii := ii +1;
+CIf.Job.aCmdList[ii].intCmd := RAX_CmdState.cCMD_TURN;
+CIf.Job.aCmdList[ii].strName := 'Turn';
+CIf.Job.aCmdList[ii].bolAvailable := TRUE;
+ii := ii +1;
+
+// set name of class/typ
+CIf.Info.strType := 'FB_RAX'; 
+
+// set alarm class
+SIf.Alm[E_ALM_RAX.GeneralDrive].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[E_ALM_RAX.GeneralDrive].strText := 'general drive failure -> info number'; 
+SIf.Alm[E_ALM_RAX.GeneralNc].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[E_ALM_RAX.GeneralNc].strText := 'general nc failure -> info number';
+SIf.Alm[E_ALM_RAX.SwLimit].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[E_ALM_RAX.SwLimit].strText := 'software limit reached';
+SIf.Alm[E_ALM_RAX.NegHwLimit].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[E_ALM_RAX.NegHwLimit].strText := 'neg. hardware switch detected';
+SIf.Alm[E_ALM_RAX.PosHwLimit].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[E_ALM_RAX.PosHwLimit].strText := 'pos. hardware switch detected';
+SIf.Alm[E_ALM_RAX.InterlockNegMove].eAlmClass := E_AlmClass.EOFF;
+SIf.Alm[E_ALM_RAX.InterlockNegMove].strText := 'interlock neg. movement - movement stopped';
+SIf.Alm[E_ALM_RAX.InterlockPosMove].eAlmClass := E_AlmClass.EOFF;
+SIf.Alm[E_ALM_RAX.InterlockPosMove].strText := 'interlock pos. movement  - movement stopped';
+SIf.Alm[E_ALM_RAX.GeneralMCFUB].eAlmClass := E_AlmClass.STOP;
+SIf.Alm[E_ALM_RAX.GeneralMCFUB].strText := 'MC fub error -> info number';
+
+//*******************************************************************************
+// initial values
+//*******************************************************************************
+
+// software configuration
+CIf.SwCfg.bolExist := TRUE;
+CIf.SwCfg.bolSimulation := FALSE;
+
+// cfg
+//SIf.Cfg.eHomingMode := MC_HomingMode.MC_Direct;
+SIf.Cfg.eHomingMode := MC_HomingMode.MC_DefaultHoming;
+SIf.Cfg.lreShortestWayWindow_deg := 20.0; //20.0°
+
+// parmeter
+SIf.Par.dinHomeOffset_0_1deg := -900;
+SIf.Par.dinPos_0_1deg := 0;
+SIf.Par.dinRelDist_0_1deg := 10;
+SIf.Par.dinPositionInit_0_1deg := 0;
+SIf.Par.dintAccDec_0_1deg_s2 := 4000;
+SIf.Par.dinAcc_per := 100;
+SIf.Par.dinDec_per := 100;
+SIf.Par.dinSetDecFast_0_1deg_s2 := 4000;
+SIf.Par.dinSpeed_0_1deg_s := 200;
+SIf.Par.dinSpeed_per := 200;
+SIf.Par.dinSWLimitNeg_0_1deg := 0;
+SIf.Par.dinSWLimitPos_0_1deg := 360;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_EOFF" Id="{107e77c3-5d0b-4cc9-985d-dcf2cda06cf7}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_EOFF'}
+METHOD PROTECTED sta_EOFF : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// State Change Condition
+		IF (me.intCmd<>cCMD_EOFF) AND (me.intCmd<>cCMD_DONE)  AND (me.Alarm.eActivAlmClass<>E_AlmClass.EOFF) THEN
+			me.StateMachine.intStateNext := cSTA_OFFBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IoOutBridge" Id="{1cb9b272-f8b8-4e66-ae2d-f3347c3e1236}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'IoOutBridge'}
+METHOD PROTECTED IoOutBridge : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	// check interlocks to prevent damages
+	IF (CIf.Job.bolIlkOverwrite=FALSE) THEN
+		IF (SIf.Ilk.bolMovePos) AND (In_pAD_SIf^.stStatus.bolCtrlOn)  AND ((In_pAD_SIf^.intCmd=cPOD_CMD_POS_JOG) OR (In_pAD_SIf^.intCmd=cPOD_CMD_POS_MOVE) OR
+			((In_pAD_SIf^.stMove.lreSetPos > In_pAD_SIf^.stMove.lreActPos) AND (In_pAD_SIf^.intCmd=cPOD_CMD_ABS_MOVE)) OR
+			((In_pAD_SIf^.intCmd=cPOD_CMD_REL_MOVE) AND (In_pAD_SIf^.stMove.lreSetPos>0)) OR (SIf.Cur.dinSpeed_0_1deg_s>5)  )THEN	
+			// SIf.Alm[8].strText := 'interlock pos. movement  - movement stopped';
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_RAX.InterlockPosMove,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			In_pAD_SIf^.intCmd:=cPOD_CMD_EMCY_STOP_CTRL_OFF;
+		END_IF
+		IF (SIf.Ilk.bolMoveNeg) AND (In_pAD_SIf^.stStatus.bolCtrlOn)  AND ((In_pAD_SIf^.intCmd=cPOD_CMD_NEG_JOG) OR (In_pAD_SIf^.intCmd=cPOD_CMD_NEG_MOVE) OR
+		 	(In_pAD_SIf^.intCmd=cPOD_CMD_HOME) OR
+			((In_pAD_SIf^.stMove.lreSetPos < In_pAD_SIf^.stMove.lreActPos) AND (In_pAD_SIf^.intCmd=cPOD_CMD_ABS_MOVE)) OR
+			((In_pAD_SIf^.intCmd=cPOD_CMD_REL_MOVE) AND (In_pAD_SIf^.stMove.lreSetPos<0)) OR (SIf.Cur.dinSpeed_0_1deg_s<-5)  )THEN		
+			// 'interlock neg. movement - movement stopped';
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_RAX.InterlockNegMove,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			In_pAD_SIf^.intCmd:=cPOD_CMD_EMCY_STOP_CTRL_OFF;
+		END_IF	
+	END_IF
+
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StateMachine" Id="{2c8b1cd8-aeca-423d-b68f-e9b5d4bc3f75}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
+METHOD PROTECTED StateMachine : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.StateMachine();
+
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+	cSTA_INITBusy: 
+        THIS^.sta_INITBusy();
+    cSTA_INIT: 
+        THIS^.sta_INIT();
+    RAX_CmdState.cSTA_JOG_NEG: 
+        THIS^.sta_JOG_NEG();
+    RAX_CmdState.cSTA_JOG_POS: 
+        THIS^.sta_JOG_POS();
+    RAX_CmdState.cSTA_POSBusy: 
+        THIS^.sta_POSBusy();
+    RAX_CmdState.cSTA_POS: 
+        THIS^.sta_POS();
+	RAX_CmdState.cSTA_REL_POSBusy: 
+        THIS^.sta_REL_POSBusy();
+    RAX_CmdState.cSTA_REL_POS: 
+        THIS^.sta_REL_POS();
+    RAX_CmdState.cSTA_TURNBusy: 
+        THIS^.sta_TurnBusy();
+    RAX_CmdState.cSTA_TURN: 
+        THIS^.sta_Turn();
+	cSTA_STOPBusy: 
+        THIS^.sta_STOPBusy();
+    cSTA_STOP: 
+        THIS^.sta_STOP();
+END_CASE;]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="CtrlSIf" Id="{2db2a783-c62d-4fdd-b68b-65450c8c6487}">
+      <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIf_RAX
+]]></Declaration>
+      <Get Name="Get" Id="{7cade0fd-3910-4b22-9909-04bc58f55f99}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="sta_OFF" Id="{35756167-7bf1-4a34-b1ec-d2ee8c95bfa6}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFF'}
+METHOD PROTECTED sta_OFF : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		// State Change Condition
+		// check if no important alarm activ
+		IF (me.Alarm.eActivAlmClass<>E_AlmClass.OFF) THEN
+			IF ((me.intCmd<>cCMD_OFF) AND (me.intCmd<>cCMD_DONE)) THEN 
+				me.StateMachine.intStateNext := cSTA_INITBusy;
+			END_IF
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_INIT" Id="{3da47070-75d7-4ab8-83f6-9bce02760ef2}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_INIT'}
+METHOD PROTECTED sta_INIT : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		// State Change Condition
+		// check if no important alarm activ
+		IF (me.intCmd=RAX_CmdState.cCMD_POS) THEN 
+			me.StateMachine.intStateNext := RAX_CmdState.cSTA_POSBusy;
+		ELSIF(me.intCmd=RAX_CmdState.cCMD_REL_POS) THEN
+				me.StateMachine.intStateNext := RAX_CmdState.cSTA_REL_POSBusy;
+		ELSIF(me.intCmd=RAX_CmdState.cCMD_JOG_NEG) THEN
+			me.StateMachine.intStateNext := RAX_CmdState.cSTA_JOG_NEG;
+		ELSIF(me.intCmd=RAX_CmdState.cCMD_JOG_POS) THEN
+			me.StateMachine.intStateNext := RAX_CmdState.cSTA_JOG_POS;
+		ELSIF (me.intCmd=RAX_CmdState.cCMD_TURN) THEN 
+			me.StateMachine.intStateNext := RAX_CmdState.cSTA_TURNBusy;
+		ELSIF (me.intCmd=cCMD_STOP) THEN 
+			me.StateMachine.intStateNext := cSTA_STOPBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_POS" Id="{3ee8fe20-6b49-472c-a2fc-6ad001bad3fc}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_POS'}
+METHOD PROTECTED sta_POS : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		// State Change Condition
+		IF (me.Alarm.eActivAlmClass=E_AlmClass.STOP) OR	((me.intCmd<>RAX_CmdState.cCMD_POS) AND (me.intCmd<>cCMD_DONE)) THEN 
+			me.StateMachine.intStateNext := cSTA_STOPBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="Always" Id="{47c447e4-43f3-4434-8ed1-0a3e80ab5fb3}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Always'}
+METHOD PROTECTED Always : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.Always();
+
+// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	
+	// always
+	SIf.Cur.dinPosition_0_1deg := LREAL_TO_DINT(In_pAD_SIf^.stMove.lreActPos)*10;
+	SIf.Cur.dinModPosition_0_1deg := LREAL_TO_DINT(In_pAD_SIf^.stMove.lreActModPos)*10;
+	SIf.Cur.dinSpeed_0_1deg_s := LREAL_TO_DINT(In_pAD_SIf^.stMove.lreActVel)*10;
+	SIf.Cur.dinTorque_0_1Nm := LREAL_TO_DINT(In_pAD_SIf^.stMove.lreActTorque)*10;
+	SIf.Cur.bol_di1 := In_pAD_SIf^.stStatus.stDigIn.bol_SI0;
+	SIf.Cur.bol_di2 := In_pAD_SIf^.stStatus.stDigIn.bol_SI1;
+	SIf.Cur.bol_di3 := In_pAD_SIf^.stStatus.stDigIn.bol_SI2;
+	SIf.Cur.bol_di4 := In_pAD_SIf^.stStatus.stDigIn.bol_SI3; // used for homing.....
+
+	// info message 'software limit reached'
+	IF ((In_pAD_SIf^.stStatus.bolNegSWSwitch) OR (In_pAD_SIf^.stStatus.bolPosSWSwitch)) THEN 
+		IF (SIf.Alm[E_ALM_RAX.SwLimit].bol=FALSE)THEN
+			// 'software limit reached';
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_RAX.SwLimit,0,ADR(SIf.Alm),E_AlmState.SET,CIf.Job.eMe_ActivAlmClass);
+			SIf.Alm[E_ALM_RAX.SwLimit].bol:= TRUE;
+		END_IF;
+	ELSE
+		IF (SIf.Alm[E_ALM_RAX.SwLimit].bol) THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,4,0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
+			SIf.Alm[E_ALM_RAX.SwLimit].bol:= FALSE;
+		END_IF
+	END_IF
+	
+	//------------------------------------------------------------------------------------------------------------------------------------
+	// set parameter
+	// in Manual set % speed to 100% for single cmd's
+	IF (CIf.Job.eMode=E_Mode.MANU) THEN
+		SIf.Par.dinSpeed_per := 100;
+		SIf.Par.dinAcc_per := 100;
+		SIf.Par.dinDec_per := 100;
+	END_IF	
+	
+	In_pAD_SIf^.stMove.lreSetSpeed := fSetPar(SIf.Par.dinSpeed_0_1deg_s,SIf.Par.dinSpeed_per);
+	In_pAD_SIf^.stMove.lreSetAcc := fSetPar(SIf.Par.dintAccDec_0_1deg_s2,SIf.Par.dinAcc_per);
+	In_pAD_SIf^.stMove.lreSetDec := fSetPar(SIf.Par.dintAccDec_0_1deg_s2,SIf.Par.dinDec_per);
+	IF (SIf.Par.dinSetDecFast_0_1deg_s2>0) THEN
+		In_pAD_SIf^.stMove.lreSetDecFast := DINT_TO_LREAL(SIf.Par.dinSetDecFast_0_1deg_s2)/10.0;
+	ELSE
+		In_pAD_SIf^.stMove.lreSetDecFast := In_pAD_SIf^.stMove.lreSetDec;
+	END_IF
+	In_pAD_SIf^.stCfg.bolSimulation := CIf.SwCfg.bolSimulation;
+	
+	// ----------------------------------------------------------------------------------
+	// Conditions Always
+	IF (me.StateMachine.intState>cSTA_PON) THEN	
+		IF ((In_pAD_SIf^.stErr.bolErrorActive) AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)) THEN
+			// detect drive error
+			me.StateMachine.intStateNext := cSTA_ERROR;
+		END_IF
+	END_IF
+END_IF
+
+
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ERRORQuit" Id="{57274842-7936-4cc4-968f-82a39c04981d}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERRORQuit'}
+METHOD PROTECTED sta_ERRORQuit : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		// evtl. wait time if reset of device is necessary and then decide to go to states or ERROR state
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			In_pAD_SIf^.stErr.bolErrAck := TRUE; // reset drive error
+			CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
+			CIf.Job.bolAlmReset := FALSE;
+		END_IF
+		
+		// State Change Condition
+		IF (In_pAD_SIf^.stErr.bolErrAck = FALSE) THEN // reset done on drive
+			IF (me.StateMachine.intStateHistory<=cSTA_PON) THEN
+				me.StateMachine.intStateNext := cSTA_PONBusy;
+			ELSE
+				me.StateMachine.intStateNext := cSTA_OFFBusy;
+			END_IF
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_EOFFBusy" Id="{59914de7-a7a1-4b41-8a57-f23c67be8e13}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_EOFFBusy'}
+METHOD PROTECTED sta_EOFFBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+				
+		In_pAD_SIf^.intCmd := cPOD_CMD_EMCY_STOP_CTRL_OFF;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+	
+		// no change action
+	
+		// State Change Condition
+		IF (In_pAD_SIf^.intCmd=cPOD_CMD_DONE) AND (In_pAD_SIf^.stStatus.bolCtrlOn=FALSE) THEN
+			me.StateMachine.intStateNext := cSTA_EOFF;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFFBusy" Id="{84353448-f703-49d7-807c-2a68756144ab}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFFBusy'}
+METHOD PROTECTED sta_OFFBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+				
+		In_pAD_SIf^.intCmd := cPOD_CMD_CTRL_OFF;	//1004;		// Switch controller off 
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+	
+		// no change action
+	
+		// State Change Condition
+		IF (In_pAD_SIf^.intCmd=cPOD_CMD_DONE) AND (In_pAD_SIf^.stStatus.bolCtrlOn=FALSE) THEN
+			me.StateMachine.intStateNext := cSTA_OFF;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCmdState" Id="{a31f3e24-3d7b-421c-b031-ea538afe6281}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
+METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime
+	IF (bolState=FALSE) THEN
+		// cmd's
+		CASE intCmdState OF
+			RAX_CmdState.cCMD_HOME: 
+				getCmdState := 'cCMD_HOME';
+			RAX_CmdState.cCMD_POS: 
+				getCmdState := 'cCMD_POS';
+			RAX_CmdState.cCMD_JOG_NEG: 
+				getCmdState := 'cCMD_JOG_NEG';
+			RAX_CmdState.cCMD_JOG_POS: 
+				getCmdState := 'cCMD_JOG_POS';
+			RAX_CmdState.cCMD_REL_POS: 
+				getCmdState := 'cCMD_REL_POS';
+			RAX_CmdState.cCMD_TURN: 
+				getCmdState := 'cCMD_TURN';
+		ELSE
+				getCmdState := 'not defined';
+		END_CASE;
+	ELSE
+	
+	// cmd's
+		CASE intCmdState OF
+			RAX_CmdState.cSTA_POSBusy: 
+				getCmdState := 'cSTA_POSBusy';
+			RAX_CmdState.cSTA_POS: 
+				getCmdState := 'cSTA_POS';
+			RAX_CmdState.cSTA_JOG_NEG: 
+				getCmdState := 'cSTA_JOG_NEG';
+			RAX_CmdState.cSTA_JOG_POS: 
+				getCmdState := 'cSTA_JOG_POS';
+			RAX_CmdState.cSTA_REL_POSBusy: 
+				getCmdState := 'cSTA_REL_POSBusy';
+			RAX_CmdState.cSTA_REL_POS: 
+				getCmdState := 'cSTA_REL_POS';
+			RAX_CmdState.cSTA_TURNBusy: 
+				getCmdState := 'cSTA_TURNBusy';
+			RAX_CmdState.cSTA_TURN: 
+				getCmdState := 'cSTA_TURN';			
+			cSUB_WriteSW: 
+				getCmdState := 'cSUB_WriteSW';
+			cSUB_Home: 
+				getCmdState := 'cSUB_Home';
+			cSUB_MoveToInitPos: 
+				getCmdState := 'cSUB_MoveToInitPos';
+			cSUB_Finished: 
+				getCmdState := 'cSUB_Finished';
+			cSUB_INITIALIZED:
+				getCmdState := 'cSUB_INITIALIZED';
+		ELSE
+				getCmdState := 'not defined';
+		END_CASE;
+	END_IF
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_INITBusy" Id="{a52477a7-05e3-4787-9f30-7673c625fce7}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_INITBusy'}
+METHOD PROTECTED sta_INITBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+		me.SubStateMachine.intState := cSUB_INITIALIZED; // reset sub statemachine
+		me.SubStateMachine.intStateLastCycle := me.SubStateMachine.intState-1;
+		me.SubStateMachine.intStateNext := me.SubStateMachine.intState;	
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+	
+		// no change action
+		// ---------------------------------------------------------------------------------------------------------------------------
+		// sub state machine for sequence
+		CASE me.SubStateMachine.intState OF
+			//--------------------------------------------------------------------------------------
+			cSUB_INITIALIZED:
+				// Entry action
+				IF (me.SubStateMachine.intState<>me.SubStateMachine.intStateLastCycle) THEN
+					me.SubStateMachine.intStateLastCycle := me.SubStateMachine.intState;
+				END_IF	
+				
+				// -------------------------------- State Change Condition
+				IF(TRUE) THEN
+					me.SubStateMachine.intStateNext := cSUB_WriteSW;
+				END_IF
+					
+			//--------------------------------------------------------------------------------------
+			cSUB_WriteSW:
+				// Entry action
+				IF (me.SubStateMachine.intState<>me.SubStateMachine.intStateLastCycle) THEN
+					me.SubStateMachine.intStateLastCycle := me.SubStateMachine.intState;
+				END_IF	
+				
+				(*
+				// write sw offset to nc system offset to real axis system/encoder!!!!!!!!
+				IF ((SIf.Par.lreHomeOffset_mm<>In_pAD_SIf^.stcfg.lreHomePosition) AND (In_pAD_SIf^.intServiceCmd=cPOD_CMD_DONE)) THEN
+					In_pAD_SIf^.stService.eNC_ParNumber := MC_AxisParameter.AxisEncoderOffset;
+					In_pAD_SIf^.stService.strValue := LREAL_TO_STRING(SIf.Par.lreHomeOffset_mm);
+					In_pAD_SIf^.intServiceCmd := cPOD_SCMD_WRITE_PARA_NC;
+					In_pAD_SIf^.stcfg.lreHomePosition := SIf.Par.lreHomeOffset_mm;
+				END_IF
+				
+				// write sw-limits to nc system
+				IF ((SIf.Par.lreSWLimitNeg_mm<>In_pAD_SIf^.stMove.lreSWLimitNeg_mm) AND (In_pAD_SIf^.intServiceCmd=cPOD_CMD_DONE)) THEN
+					In_pAD_SIf^.stService.eNC_ParNumber := MC_AxisParameter.SWLimitNeg;
+					In_pAD_SIf^.stService.strValue := LREAL_TO_STRING(SIf.Par.lreSWLimitNeg_mm);
+					In_pAD_SIf^.intServiceCmd := cPOD_SCMD_WRITE_PARA_NC;
+					In_pAD_SIf^.stMove.lreSWLimitNeg_mm := SIf.Par.lreSWLimitNeg_mm;
+				END_IF
+				
+				IF ((SIf.Par.lreSWLimitPos_mm<>In_pAD_SIf^.stMove.lreSWLimitPos_mm) AND (In_pAD_SIf^.intServiceCmd=cPOD_CMD_DONE)) THEN
+					In_pAD_SIf^.stService.eNC_ParNumber := MC_AxisParameter.SWLimitPos;
+					In_pAD_SIf^.stService.strValue := LREAL_TO_STRING(SIf.Par.lreSWLimitPos_mm);
+					In_pAD_SIf^.intServiceCmd := cPOD_SCMD_WRITE_PARA_NC;
+					In_pAD_SIf^.stMove.lreSWLimitPos_mm := SIf.Par.lreSWLimitPos_mm;
+				END_IF
+*)
+				// -------------------------------- State Change Condition
+				IF (In_pAD_SIf^.intServiceCmd=cPOD_CMD_DONE) THEN
+					IF ((me.intCmd=RAX_CmdState.cCMD_HOME) OR (In_pAD_SIf^.stStatus.bolHomeOk=FALSE)) THEN
+						me.SubStateMachine.intStateNext := cSUB_Home;
+					ELSIF (me.intCmd=cCMD_INIT) THEN
+						me.SubStateMachine.intStateNext := cSUB_MoveToInitPos;
+					ELSE
+						me.SubStateMachine.intStateNext := cSUB_Finished; // no movement to init position no cmd INIT or HOME
+					END_IF;
+				END_IF
+					
+			//--------------------------------------------------------------------------------------
+			cSUB_Home:
+				// Entry action
+				IF (me.SubStateMachine.intState<>me.SubStateMachine.intStateLastCycle) THEN
+					me.SubStateMachine.intStateLastCycle := me.SubStateMachine.intState;
+		
+					In_pAD_SIf^.stCfg.eHomingMode := SIf.Cfg.eHomingMode;
+					In_pAD_SIf^.stCfg.lreHomePosition := DINT_TO_LREAL(SIf.Par.dinHomeOffset_0_1deg)/10.0;
+					In_pAD_SIf^.intCmd := cPOD_CMD_HOME;	// start homing
+	
+				END_IF
+					
+				// State Change Condition
+				IF (In_pAD_SIf^.stStatus.bolHomeOk) AND (In_pAD_SIf^.intCmd=cPOD_CMD_DONE) THEN
+					me.SubStateMachine.intStateNext := cSUB_MoveToInitPos;
+				END_IF
+				
+			//--------------------------------------------------------------------------------------
+			cSUB_MoveToInitPos:
+				// Entry action
+				IF (me.SubStateMachine.intState<>me.SubStateMachine.intStateLastCycle) THEN
+					me.SubStateMachine.intStateLastCycle := me.SubStateMachine.intState;
+				
+					In_pAD_SIf^.stMove.lreSetPos := DINT_TO_LREAL(SIf.Par.dinPositionInit_0_1deg)/10.0;
+					In_pAD_SIf^.stMove.eDirection := getDirection(dinActualPosition:=SIf.Cur.dinModPosition_0_1deg,lreSetPosition:=In_pAD_SIf^.stMove.lreSetPos);
+					//In_pAD_SIf^.intCmd := cPOD_CMD_MOD_MOVE;	// absolute position
+					In_pAD_SIf^.intCmd := cPOD_CMD_ABS_MOVE;	// absolute position
+				END_IF
+						
+				// State Change Condition
+				IF (In_pAD_SIf^.stStatus.bolInPos) AND (In_pAD_SIf^.intCmd=cPOD_CMD_DONE) THEN
+					me.SubStateMachine.intStateNext := cSUB_Finished;
+				END_IF
+				
+			//--------------------------------------------------------------------------------------
+			cSUB_Finished:
+				// Entry action
+				IF (me.SubStateMachine.intState<>me.SubStateMachine.intStateLastCycle) THEN
+					me.SubStateMachine.intStateLastCycle := me.SubStateMachine.intState;
+				END_IF
+		END_CASE
+		
+		// State Change Condition
+		IF (me.SubStateMachine.intState =cSUB_Finished) THEN
+			me.StateMachine.intStateNext := cSTA_INIT;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		CIf.Job.strSubState := '';
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_JOG_POS" Id="{ac865721-f27f-4cb4-919c-6530bb58d836}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_JOG_POS'}
+METHOD PROTECTED sta_JOG_POS : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		//no change action
+		In_pAD_SIf^.intCmd := cPOD_CMD_POS_JOG;
+		
+		// State Change Condition
+		IF (me.intCmd=RAX_CmdState.cCMD_JOG_NEG) THEN
+			me.StateMachine.intStateNext := RAX_CmdState.cSTA_JOG_NEG;
+		ELSIF (me.intCmd<>RAX_CmdState.cCMD_JOG_POS) AND (me.intCmd<>cCMD_DONE) THEN
+			me.StateMachine.intStateNext := cSTA_STOPBusy;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_JOG_NEG" Id="{b3f7d9ff-43aa-42d4-b54c-191b40af9261}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_JOG_NEG'}
+METHOD PROTECTED sta_JOG_NEG : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		In_pAD_SIf^.intCmd := cPOD_CMD_NEG_JOG;
+		
+		// State Change Condition
+		IF (me.intCmd=RAX_CmdState.cCMD_JOG_POS) THEN
+			me.StateMachine.intStateNext := RAX_CmdState.cSTA_JOG_POS;
+		ELSIF (me.intCmd<>RAX_CmdState.cCMD_JOG_NEG) AND (me.intCmd<>cCMD_DONE) THEN
+			me.StateMachine.intStateNext := cSTA_STOPBusy;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ERROR" Id="{c0533c34-4a67-42ac-a5d0-b8a72b291177}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
+METHOD PROTECTED sta_ERROR : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		
+		IF (In_pAD_SIf^.stErr.bolNCError) THEN
+			// := 'general nc failure -> info number';
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_RAX.GeneralNc,DWORD_TO_DINT(In_pAD_SIf^.stErr.dwoErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		ELSIF (In_pAD_SIf^.stErr.bolMCError) THEN // to define
+			//'MC fub error -> info number';
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_RAX.GeneralMCFUB,DWORD_TO_DINT(In_pAD_SIf^.stErr.dwoErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		ELSIF(In_pAD_SIf^.stErr.dwoErrorID=32000) THEN // Limit switch during movement
+			IF (In_pAD_SIf^.stStatus.bolNegHWSwitch) THEN
+				// 'neg. hardware switch detected';
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_RAX.NegHwLimit,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			ELSE
+				// 'pos. hardware switch detected';
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_RAX.PosHwLimit,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			END_IF
+		ELSE
+			// 'general drive failure -> info number'; 
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_RAX.GeneralDrive,DWORD_TO_DINT(In_pAD_SIf^.stErr.dwoErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		END_IF
+			
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			me.StateMachine.intStateNext := cSTA_ERRORQuit;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_STOP" Id="{c17e605b-93ab-4039-9cff-7fc4026629eb}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_STOP'}
+METHOD PROTECTED sta_STOP : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		;
+		
+		
+		// State Change Condition
+		IF (me.Alarm.eActivAlmClass<>E_AlmClass.STOP) THEN
+			IF ((me.intCmd=RAX_CmdState.cCMD_HOME) OR (me.intCmd=cCMD_INIT)) THEN
+				me.StateMachine.intStateNext := cSTA_INITBusy;
+			ELSIF (me.intCmd=RAX_CmdState.cCMD_POS) THEN 
+				me.StateMachine.intStateNext := RAX_CmdState.cSTA_POSBusy;
+			ELSIF(me.intCmd=RAX_CmdState.cCMD_REL_POS) THEN
+				me.StateMachine.intStateNext := RAX_CmdState.cSTA_REL_POSBusy;
+			ELSIF(me.intCmd=RAX_CmdState.cCMD_JOG_NEG) THEN
+				me.StateMachine.intStateNext := RAX_CmdState.cSTA_JOG_NEG;
+			ELSIF(me.intCmd=RAX_CmdState.cCMD_JOG_POS) THEN
+				me.StateMachine.intStateNext := RAX_CmdState.cSTA_JOG_POS;
+			ELSIF(me.intCmd=RAX_CmdState.cCMD_TURN) THEN
+				me.StateMachine.intStateNext := RAX_CmdState.cSTA_TURNBusy;
+			END_IF
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getDirection" Id="{c85ee9df-cc93-49af-8e72-744de0bff247}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getDirection'}
+METHOD PROTECTED getDirection : MC_Direction
+VAR_INPUT
+	dinActualPosition: DINT;
+	lreSetPosition: LREAL;
+END_VAR
+VAR
+	Direction: MC_Direction;
+	lreActualPosition: LREAL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Direction := MC_Positive_Direction;	// MC_Shortest_Way, MC_Negative_Direction, 
+lreActualPosition := DINT_TO_LREAL(dinActualPosition)/10.0;
+IF (ABS(ABS(lreActualPosition) - ABS(lreSetPosition)) <= SIf.Cfg.lreShortestWayWindow_deg) THEN
+	Direction := MC_Shortest_Way;
+ELSIF (lreActualPosition < 0) THEN
+	Direction := MC_Negative_Direction;
+END_IF;
+
+getDirection := Direction;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_REL_POS" Id="{d435c19e-9fe7-47a6-ad92-e438bae89375}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_REL_POS'}
+METHOD PROTECTED sta_REL_POS : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		// State Change Condition
+		IF (me.Alarm.eActivAlmClass=E_AlmClass.STOP) OR	((me.intCmd<>RAX_CmdState.cCMD_REL_POS) AND (me.intCmd<>cCMD_DONE)) THEN 
+			me.StateMachine.intStateNext := cSTA_STOPBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_Turn" Id="{db4ccf37-ea3d-42c3-b3a3-3db100d2d4ee}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_Turn'}
+METHOD PROTECTED sta_Turn : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+		
+		// State Change Condition
+		IF (me.Alarm.eActivAlmClass=E_AlmClass.STOP) OR	((me.intCmd<>RAX_CmdState.cCMD_POS) AND (me.intCmd<>cCMD_DONE)) THEN 
+			me.StateMachine.intStateNext := cSTA_STOPBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_TurnBusy" Id="{fe6b38c5-6ec5-47f1-b4de-d9a0669e7a42}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_TurnBusy'}
+METHOD PROTECTED sta_TurnBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		In_pAD_SIf^.stMove.lreSetPos := ABS(DINT_TO_LREAL(SIf.Par.dinPos_0_1deg)/10.0); // sign only for direction!!!!
+		In_pAD_SIf^.stMove.eDirection := getDirection(dinActualPosition:=SIf.Cur.dinModPosition_0_1deg,lreSetPosition:=In_pAD_SIf^.stMove.lreSetPos);
+//		In_pAD_SIf^.intCmd := cPOD_CMD_MOD_MOVE;	// start move with absolute target position 
+		In_pAD_SIf^.intCmd := cPOD_CMD_ABS_MOVE;	// start move with absolute target position 
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (CIf.SwCfg.bolSimulation) THEN
+			;
+		END_IF
+	
+		// State Change Condition
+		IF (In_pAD_SIf^.intCmd=cPOD_CMD_DONE) AND (In_pAD_SIf^.stStatus.bolInPos) THEN
+			me.StateMachine.intStateNext := RAX_CmdState.cSTA_TURN;
+		ELSIF (me.Alarm.eActivAlmClass=E_AlmClass.STOP) OR ((me.intCmd<>RAX_CmdState.cCMD_TURN) AND (me.intCmd<>cCMD_DONE)) THEN 
+			me.StateMachine.intStateNext := cSTA_STOPBusy;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

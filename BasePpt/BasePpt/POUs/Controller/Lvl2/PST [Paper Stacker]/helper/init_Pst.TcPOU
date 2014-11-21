@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="init_Pst" Id="{557e8472-4797-4608-acef-2cc63da5260f}">
+    <Declaration><![CDATA[FUNCTION init_Pst : BOOL
+VAR_INPUT
+	pPst			: POINTER TO T_PST;
+	/// instance array of all controller instances
+	pCtrlInst		: POINTER TO fb_CtrlBase;
+	/// common interface array of all controllers (main use for PLC)
+	pCtrlCIf		: POINTER TO T_Ctrl_CIf;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[pPst^.ctrl.fbPst_Ptb_Vpc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPst^.id.Pst_Ptb_Vpc);
+pPst^.ctrl.fbPst_Ptb_Umc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPst^.id.Pst_Ptb_Umc);
+pPst^.ctrl.fbPst_Ptb.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPst^.id.Pst_Ptb);
+pPst^.ctrl.fbPst_Ptb.Drive := ADR(pPst^.ctrl.fbPst_Ptb_Umc); // g_a_pCtrlInst[pPst^.id.Pst_Ptb_Umc];
+pPst^.ctrl.fbPst_Ptb.VacuumPump := ADR(pPst^.ctrl.fbPst_Ptb_Vpc); // g_a_pCtrlInst[pPst^.id.Pst_Ptb_Vpc];
+
+pPst^.ctrl.fbPst.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPst^.id.Pst);
+pPst^.ctrl.fbPst.Belt := ADR(pPst^.ctrl.fbPst_Ptb);; // g_a_pCtrlInst[pPst^.id.Pst_Ptb];]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

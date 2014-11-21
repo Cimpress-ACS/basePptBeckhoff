@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="PST_CmdState" Id="{05beb03a-4925-449e-af03-b1583d0d4fe6}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	/// specific commands >200 - every command has to be a even number
+	/// ctrl commands definitions
+	cCMD_EJECT: INT := 202;
+	/// main states
+	cSTA_EJECTbusy: INT := 201;
+	/// sub states
+	cSUB_WAITNEWPAPERDETECTED: INT := 300;
+	cSUB_DELAYREADBARCODEBusy: INT := 301;
+	cSUB_RETRYREADBARCODE: INT := 302;
+	cSUB_READBARCODEbusy: INT := 303;
+	cSUB_CHECKEJECTCONDITIONS: INT := 304;
+	cSUB_DELAYSTACKEJECTBusy: INT := 305;
+	cSUB_MOVEBELTEJECTDIRECTIONBusy: INT := 306;
+	cSUB_STOPBELTBusy: INT := 307;
+	cSUB_WAITBEFOREMOVINGREVERSE: INT := 308;
+	cSUB_MOVEBELTREVERSEBusy: INT := 309;
+	cSUB_DONE: INT := 999;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

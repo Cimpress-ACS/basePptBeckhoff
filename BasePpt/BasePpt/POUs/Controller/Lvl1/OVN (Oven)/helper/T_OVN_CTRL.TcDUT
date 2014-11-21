@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_OVN_CTRL" Id="{9ee4547e-ada7-4d19-afdd-b747fbc3fca5}">
+    <Declaration><![CDATA[TYPE T_OVN_CTRL :
+STRUCT
+	fbOvn: FB_OVN;
+	fbOvn_Ibh: FB_IBH;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

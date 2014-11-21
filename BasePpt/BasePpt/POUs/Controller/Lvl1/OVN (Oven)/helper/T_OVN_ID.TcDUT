@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_OVN_ID" Id="{ad6af004-2ef8-4e5f-b2a2-2050ad62b949}">
+    <Declaration><![CDATA[TYPE T_OVN_ID :
+STRUCT
+	Ovn: INT;
+	Ovn_Ibh: INT;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="RAX_CmdState" Id="{bef9e753-3e0a-4663-94bb-e25ce40d1284}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	///ctrl commands definitions
+	///specific commands >200 - every command has to be a even number
+	cCMD_HOME: INT := 202;
+	cCMD_POS: INT := 204;
+	cCMD_JOG_NEG: INT := 210;
+	cCMD_JOG_POS: INT := 212;
+	cCMD_REL_POS: INT := 214;
+	cCMD_TURN: INT := 216;
+	///ctrl specific states definitions
+	cSTA_POSBusy: INT := 203;
+	cSTA_POS: INT := RAX_CmdState.cCMD_POS;
+	cSTA_REL_POSBusy: INT := 213;
+	cSTA_REL_POS: INT := RAX_CmdState.cCMD_REL_POS;
+	cSTA_JOG_NEG: INT := RAX_CmdState.cCMD_JOG_NEG;
+	cSTA_JOG_POS: INT := RAX_CmdState.cCMD_JOG_POS;
+	cSTA_TURNBusy: INT := 215;
+	cSTA_TURN: INT := RAX_CmdState.cCMD_TURN;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

@@ -1,11 +1,12 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="T_Ctrl_SIf_PCE_Out" Id="{2cccd77f-0d85-4d6f-a3bd-33c95e014d71}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_PCE_Out" Id="{c46c4003-67b0-4ecd-a6ee-be311bc3de12}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PCE_Out :
 STRUCT
 	/// Paper Incoming Belt - 0 = Vacuum Valve Closed;  1 = Vacuum valve open
-	bolVacuumValveIn 			: BASE_PLC.T_Ctrl_IoBool;
+	bolVacuumValveIn: BASE_PLC.T_Ctrl_IoBool;
 	/// Paper Outgoing Belt - 0 = Vacuum Valve Closed;  1 = Vacuum valve open
-	bolVacuumValveOut 			: BASE_PLC.T_Ctrl_IoBool;
+	bolVacuumValveOut: BASE_PLC.T_Ctrl_IoBool;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

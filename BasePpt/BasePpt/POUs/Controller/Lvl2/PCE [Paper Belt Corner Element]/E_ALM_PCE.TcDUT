@@ -1,9 +1,10 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
-  <DUT Name="E_ALM_PCE" Id="{9cd96cfd-f02e-4846-a087-67b5ac43d0ad}">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="E_ALM_PCE" Id="{5ddaf1ba-728a-4f0a-889a-3ef0d5ba47f0}">
     <Declaration><![CDATA[TYPE E_ALM_PCE :
 (
 	PaperSensorError := 1,
-	MAX_E_ALM_PCE 
+	MAX_E_ALM_PCE
 );
 END_TYPE
 ]]></Declaration>

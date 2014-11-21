@@ -1,0 +1,78 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="E_ALM_OVN" Id="{3b539a88-dc59-486c-9a4f-d59657f9b921}">
+    <Declaration><![CDATA[TYPE E_ALM_OVN :
+(
+	NONE := 0,
+	TempError := 1,
+	AirError := 2,
+	SpeedError := 3,
+	TimeoutError := 4,
+	ParameterWarning := 5,
+	ConnectionError := 6,
+	WrongMode := 7,
+	/// OvertemperaturePowerSection						- software reset	- operating mode must be reelected
+	Tesoma10000 := 8,
+	/// FailureOfActiveCoolingUnit
+	Tesoma10002 := 9,
+	/// ActiveCoolingUnitNotRunning
+	Tesoma10003 := 10,
+	/// FailureFuseGeneral													- transport starts immediately when sensor is free
+	Tesoma10006 := 11,
+	/// BeltPositionControlSensorError					- software reset
+	Tesoma10010 := 12,
+	/// BeltEdgeShutOff									- software reset
+	Tesoma10011 := 13,
+	/// FaultBeltSpeed									- software reset
+	Tesoma10012 := 14,
+	/// TransportOverload
+	Tesoma10013 := 15,
+	/// BeltControlDeviceFault							- software reset	- reset FC
+	Tesoma10014 := 16,
+	/// EmergencyStop														- would be resettable, but since power is gone, the acknowledge does not arrive
+	Tesoma10016 := 17,
+	/// BeltWearMonitor
+	Tesoma10023 := 18,
+	/// ControlCabinetFan
+	Tesoma10024 := 19,
+	/// ControlCabinetTemperatureTooHigh
+	Tesoma10025 := 20,
+	/// PowerSupplyFailure
+	Tesoma10026 := 21,
+	/// IntakeHoodTemperatureExceeded
+	Tesoma10027 := 22,
+	/// AirPressureTooLow
+	Tesoma10030 := 23,
+	/// BeltPositionControlNotWorking
+	Tesoma10031 := 24,
+	/// ErrorCoolingDeviceControlCabinet
+	Tesoma10032 := 25,
+	/// ControlCabinetCoolerAndSmallDrivesFuseFailure
+	Tesoma10034 := 26,
+	/// LimitSwitchingOff								- software reset	- after elimination, reactivates according zone
+	Tesoma10x00 := 27,
+	/// OvertemperatureStl								- software reset	- after elimination AND reset, the STL reactivates the accordant zone
+	Tesoma10x01 := 28,
+	/// FuseTriggered									- software reset	- after elimination, reactivates the accordant zone
+	Tesoma10x02 := 29,
+	/// FailureExhaustAirDps								- software reset	- after elimination, reactivates the accordant zone
+	Tesoma10x03 := 30,
+	/// ErrorFrequencyConverter							- software reset	- after elimination AND reset, the FC reactivates the accordant zone
+	Tesoma10x07 := 31,
+	/// TemperatureSensorIrDefective
+	Tesoma10x13 := 32,
+	/// FaultFrameCoolingSystemDps
+	Tesoma10x14 := 33,
+	/// FaultExhaustAirDps
+	Tesoma10x15 := 34,
+	/// TemperatureFault									- software reset
+	Tesoma13x00 := 35,
+	TesomaUnknown := 36,
+	HostConnectionLost,
+	MAX_E_ALM_OVN
+);
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

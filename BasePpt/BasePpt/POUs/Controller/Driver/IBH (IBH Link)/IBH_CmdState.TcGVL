@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <GVL Name="IBH_CmdState" Id="{bd8a19b0-2aaf-4639-abbe-0b0f638bef82}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	///ctrl commands definitions
+	///specific commands >200 - every command has to be a even number
+	cCMD_CONNECT: INT := 202;
+	cCMD_WRITE: INT := 204;
+	cCMD_READ: INT := 206;
+	cCMD_DISCONNECT: INT := 208;
+	///ctrl specific states definitions
+	cSTA_CONNECTBusy: INT := 201;
+	cSTA_CONNECT: INT := 202;
+	cSTA_WRITEBusy: INT := 203;
+	cSTA_WRITE: INT := 204;
+	cSTA_READBusy: INT := 205;
+	cSTA_READ: INT := 206;
+	cSTA_DISCONNECTBusy: INT := 207;
+	cSTA_DISCONNECT: INT := 208;
+	cSTA_SUB_1: INT := 301;
+	cSTA_SUB_2: INT := 302;
+	cSTA_SUB_3: INT := 303;
+	cSTA_SUB_4: INT := 304;
+	cSTA_SUB_5: INT := 305;
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

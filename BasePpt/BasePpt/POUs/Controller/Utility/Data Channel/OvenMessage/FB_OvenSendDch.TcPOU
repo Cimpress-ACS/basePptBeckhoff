@@ -1,0 +1,58 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_OvenSendDch" Id="{f407cdf0-70d7-483e-bcc5-d160524f1ab6}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_OvenSendDch EXTENDS FB_DataChannelSendBase IMPLEMENTS I_DataChannelSend
+VAR
+	/// Saber Inteface Variables
+	/// -----------------------------------------------------------------
+	m_pOutputData: POINTER TO T_Oven_DCH;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[SUPER^();]]></ST>
+    </Implementation>
+    <Method Name="SendData" Id="{8f2f36b4-17d9-4d54-812a-f7b5ad3dc012}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'SendData'}
+METHOD SendData : BOOL
+VAR_INPUT
+	udiDataSize: UDINT;
+	pData: POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SendData := FALSE;
+
+IF m_eState = E_PlcSaberDHCState.WaitForJob THEN
+	IF (udiDataSize > 0 ) AND (pData <> TC3_MEMMAN.NULL) THEN
+		TC2_SYSTEM.MEMCPY(destAddr := m_pOutputData, srcAddr := pData, n := udiDataSize);
+		m_eState := E_PlcSaberDHCState.SendData;	
+		SendData := TRUE;
+	END_IF	
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="InitChannel" Id="{e7571f08-9c15-46a6-8563-24c0d0c5e721}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'InitChannel'}
+METHOD InitChannel : BOOL
+VAR_INPUT
+	udiDataSize: UDINT;
+	pOutputData: POINTER TO BYTE;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[InitChannel := FALSE;
+
+IF udiDataSize > 0 THEN
+	IF pOutputData <> TC3_MEMMAN.NULL THEN
+		m_uinDataSize := udiDataSize;
+		m_pOutputData := pOutputData;
+		m_eState := E_PlcSaberDHCState.Init;
+		InitChannel := TRUE;
+	END_IF
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

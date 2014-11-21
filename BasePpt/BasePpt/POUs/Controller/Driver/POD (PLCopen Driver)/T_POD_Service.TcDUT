@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_POD_Service" Id="{88eb688c-fc87-473c-af5b-06a5bd139bf7}">
+    <Declaration><![CDATA[TYPE T_POD_Service :
+STRUCT
+	/// Index of the object that should be written to.
+	worIndex: WORD;
+	/// Sub-index of the object that should be written to.
+	bytSubIndex: BYTE;
+	/// Address (pointer) of the send buffer.
+	dwo_pSrcBuf: DWORD;
+	/// Number (in bytes) of data to be sent.
+	udi_cbBufLen: UDINT;
+	/// value type
+	eValueType: E_ValueType;
+	/// parameter number of read/write NC parameters
+	eNC_ParNumber: MC_AxisParameter;
+	/// write/read value if dwo_pSrcBuf = 0
+	strValue: STRING;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

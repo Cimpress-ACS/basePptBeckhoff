@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_GRN_ID" Id="{f60abe5f-2361-4659-9b25-9a6949e9a3f5}">
+    <Declaration><![CDATA[TYPE T_GRN_ID :
+STRUCT
+	Grn: INT;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

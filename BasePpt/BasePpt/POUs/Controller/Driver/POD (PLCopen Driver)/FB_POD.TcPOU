@@ -1,0 +1,1836 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_POD" Id="{48ed7df6-9b05-464b-ba09-66aaed082b6c}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_POD
+VAR_INPUT
+	/// home switch - only active if configured
+	In_bolHomeSwitch: BOOL;
+END_VAR
+VAR
+	bolInitDone: BOOL;
+	bolActivate: BOOL := TRUE;
+	/// driver specific interface
+	SIf: T_POD;
+	///complete parameter set of the axis
+	stAxisParameter: ST_AxisParameterSet;
+	/// axis reference (process data plc/nc)
+	fbAxis: AXIS_REF;
+	///	/// get direct drive state of yaskawa
+	///	/// access over mapping!! {attribute 'TcLinkTo':='TIID^Device 1 (EtherCAT)^Box 1 (SGDV-E1 CoE Drive)^2nd Transmit PDO mapping^Status word'}
+	///	In_worPOD_DriveState AT %I*: WORD;
+	///	/// get direct drive inputs of yaskawa
+	///	/// access over mapping!! {attribute 'TcLinkTo':='TIID^Device 1 (EtherCAT)^Box 1 (SGDV-E1 CoE Drive)^2nd Transmit PDO mapping^Status word'}
+	///	In_udiPOD_DriveInputs AT %I*: UDINT;
+	stStateMachine: T_POD_StateMachine;
+	///case variable
+	usiCase: USINT;
+	///case variable for service cmd's
+	usiCaseScmd: USINT;
+	/// PlcOpen standard FUB's 
+	/// enable and override
+	fbMcPower: MC_Power;
+	fbMcReset: MC_Reset;
+	fbMcHalt: MC_Halt;
+	fbMcAbsMove: MC_MoveAbsolute;
+	fbMcModMove: MC_MoveModulo;
+	fbMcRelMove: MC_MoveRelative;
+	fbMcMoveVelocity: MC_MoveVelocity;
+	fbMcJog: MC_Jog;
+	fbMCStop: MC_Stop;
+	fbMcHome: MC_Home;
+	///The complete parameter set of an axis can be read with the function block MC_ReadParameterSet.
+	fbMCReadParameterSet: MC_ReadParameterSet;
+	/// MC_ReadDriveAddress reads the ADS information that is required to access a drive device connected to an axis.
+	fbMCReadDriveAdress: MC_ReadDriveAddress;
+	fbMCWriteParameter: MC_WriteParameter;
+	fbMCWriteBoolParameter: MC_WriteBoolParameter;
+	fbMCReadParameter: MC_ReadParameter;
+	fbMCReadBoolParameter: MC_ReadBoolParameter;
+	fbMCReadAxisError: MC_ReadAxisError;
+	/// Ethercat standard FUB'
+	fbEcCoeSdoWrite: FB_EcCoeSdoWrite;
+	fbEcCoeSdoRead: FB_EcCoeSdoRead;
+	/// set ethercat mode preop/op
+	fbEcSetSlaveState: FB_EcSetSlaveState;
+	/// help values for parameter handling
+	sinValue: SINT;
+	intValue: INT;
+	dinValue: DINT;
+	usiValue: USINT;
+	uinValue: UINT;
+	udiValue: UDINT;
+	/// help value for FUB handling
+	bolfpFirstCycleDone: BOOL;
+	fbSimTON: TC2_STANDARD.TON;
+	udiSimPosTime_ms: UDINT;
+	lreSimJogSpeed: LREAL;
+	lreActPos_old: LREAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+PLC open driver for servo drives.
+
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		18.06.2013		AVME/KVO	Start history
+0.00.2		22.09.2014		AVME/MRU	Rework for Beckhoff Servo Drives
+
+___________________________________________________________________________________________________*)
+
+
+IF (bolActivate) THEN // cyclic call enabled
+	
+	IF (bolInitDone=FALSE) THEN // first cycle -> init
+		CtrlInit();
+		bolInitDone := TRUE;
+	ELSE
+		CycleStartDuty();
+		
+		StateMachine_Service(); // handles asynchron service commands
+		
+		StateMachine();
+		
+		CycleEndDuty();
+	END_IF
+	
+END_IF;]]></ST>
+    </Implementation>
+    <Property Name="AD_SIf" Id="{0107c89c-0665-4da6-ab1e-8a8e22425ce4}">
+      <Declaration><![CDATA[PROPERTY AD_SIf : POINTER TO T_POD
+]]></Declaration>
+      <Get Name="Get" Id="{1bc17439-4a8b-40f6-9c54-65e990717c4e}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[AD_SIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="sta_PowerOnBusy" Id="{011f25cd-140c-4193-a2ba-9505be63b74e}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_PowerOnBusy'}
+METHOD PROTECTED sta_PowerOnBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+
+		fbMcPower.Enable := TRUE;
+		
+		// State Change Condition
+		IF (fbMcPower.Error) THEN
+			SIf.stErr.dwoErrorID := fbMcPower.ErrorID;
+			stStateMachine.intStateNext := cPOD_STA_Error;
+		ELSIF (SIf.stStatus.bolCtrlOn=TRUE) THEN
+			stStateMachine.intStateNext := cPOD_STA_WaitForJob;
+		END_IF
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sJobReadParameter" Id="{1c10f95a-852f-431a-85f7-e253bdbff567}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sJobReadParameter'}
+METHOD PROTECTED sJobReadParameter
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*
+The FB_EcCoeSdoRead function block allows data to be read from an EtherCAT slave through an SDO (Service Data Object) access. 
+This requires the slave to have a mailbox and to support the "CANopen over EtherCAT" (CoE) protocol. 
+The nSubIndex and nIndex parameters select the object that is to be read.*)
+
+	fbEcCoeSdoRead.sNetId := fbMCReadDriveAdress.DriveAddress.NetID; // This is a string that contains the AMS network identifier of the EtherCAT master device.
+	fbEcCoeSdoRead.nSlaveAddr := fbMCReadDriveAdress.DriveAddress.SlaveAddress; //  Fixed address of the EtherCAT slave to which the SDO download command should be sent.
+	fbEcCoeSdoRead.nSubIndex  := SIf.stService.bytSubIndex;// Sub-index of the object that should be written to.
+	fbEcCoeSdoRead.nIndex  := SIf.stService.worIndex; //  Index of the object that should be written to.
+	fbEcCoeSdoRead.tTimeout := DEFAULT_ADS_TIMEOUT;
+	
+	IF (SIf.stService.dwo_pSrcBuf<>0) THEN // adress from value -> use the external value
+		fbEcCoeSdoRead.pDstBuf  := SIf.stService.dwo_pSrcBuf; // Address (pointer) of the send buffer.
+		fbEcCoeSdoRead.cbBufLen  := SIf.stService.udi_cbBufLen; // Number (in bytes) of data to be sent.
+	ELSE
+		// use internal value - strValue from interface
+		CASE SIf.stService.eValueType OF
+			TYPE_SINT:
+				fbEcCoeSdoRead.pDstBuf:= ADR(sinValue);
+				fbEcCoeSdoRead.cbBufLen	:= SIZEOF(sinValue);
+			TYPE_INT:
+				fbEcCoeSdoRead.pDstBuf:= ADR(intValue);
+				fbEcCoeSdoRead.cbBufLen	:= SIZEOF(intValue);
+			TYPE_DINT:
+				fbEcCoeSdoRead.pDstBuf:= ADR(dinValue);
+				fbEcCoeSdoRead.cbBufLen	:= SIZEOF(dinValue);
+			TYPE_USINT:
+				fbEcCoeSdoRead.pDstBuf:= ADR(usiValue);
+				fbEcCoeSdoRead.cbBufLen	:= SIZEOF(usiValue);
+			TYPE_UINT:
+				fbEcCoeSdoRead.pDstBuf:= ADR(uinValue);
+				fbEcCoeSdoRead.cbBufLen	:= SIZEOF(uinValue);
+			TYPE_UDINT:
+				fbEcCoeSdoRead.pDstBuf:= ADR(udiValue);
+				fbEcCoeSdoRead.cbBufLen	:= SIZEOF(udiValue);
+			TYPE_STRING:
+				fbEcCoeSdoRead.pDstBuf:= ADR(SIf.stService.strValue);
+				fbEcCoeSdoRead.cbBufLen	:= SIZEOF(SIf.stService.strValue);
+			ELSE
+				fbEcCoeSdoRead.pDstBuf:= ADR(SIf.stService.strValue);
+				fbEcCoeSdoRead.cbBufLen	:= SIZEOF(SIf.stService.strValue); // type not supported until now!!!!
+			END_CASE
+	END_IF;	
+		
+	// write bool value
+	fbEcCoeSdoRead.bExecute := TRUE;
+	fbEcCoeSdoRead();
+	
+	IF (fbEcCoeSdoRead.bBusy=FALSE) THEN
+		IF (SIf.stService.dwo_pSrcBuf=0) THEN // adress from value -> use the external value
+			// use internal value - strValue from interface
+			CASE SIf.stService.eValueType OF
+			TYPE_SINT:
+				SIf.stService.strValue	:= SINT_TO_STRING(sinValue);
+			TYPE_INT:
+				SIf.stService.strValue	:= INT_TO_STRING(intValue);
+			TYPE_DINT:
+				SIf.stService.strValue	:= DINT_TO_STRING(dinValue);
+			TYPE_USINT:
+				SIf.stService.strValue	:= USINT_TO_STRING(usiValue);
+			TYPE_UINT:
+				SIf.stService.strValue	:= UINT_TO_STRING(uinValue);
+			TYPE_UDINT:
+				SIf.stService.strValue	:= UDINT_TO_STRING(udiValue);
+			TYPE_STRING:
+				;
+			ELSE
+				; // type not supported until now!!!!
+			END_CASE
+		END_IF;
+		SIf.intServiceCmd := cPOD_CMD_DONE;
+	ELSIF (fbEcCoeSdoRead.bError)	THEN
+		SIf.intServiceCmd := cPOD_CMD_DONE;
+		SIf.stErr.dwoErrorID := fbEcCoeSdoRead.nErrId;
+		stStateMachine.intStateNext := cPOD_STA_Error;
+	END_IF
+
+
+
+
+
+
+(*
+This read command is only allowed with predefined values.....
+IF (SIf.stService.bolHandleBoolValue) THEN
+	// Read bool value
+	fbMCReadBoolParameter.ParameterNumber := SIf.stService.intParameterNumber;
+	fbMCReadBoolParameter.ReadMode := E_ReadMode.READMODE_ONCE;
+	fbMCReadBoolParameter.Enable := TRUE;
+	fbMCReadBoolParameter(Axis := fbAxis);
+	
+	IF (fbMCReadBoolParameter.Busy=FALSE) THEN
+		SIf.stService.bolValue := fbMCReadBoolParameter.Value;
+		SIf.intServiceCmd := cPOD_CMD_DONE;
+	ELSIF (fbMCReadBoolParameter.Error)	THEN
+		SIf.intServiceCmd := cPOD_CMD_DONE;
+		SIf.stErr.dwoErrorID := fbMCReadBoolParameter.ErrorID;
+		stStateMachine.intStateNext := cPOD_STA_Error;
+	END_IF
+else
+	// Read real value
+	fbMCReadParameter.ParameterNumber := SIf.stService.intParameterNumber;
+	fbMCReadParameter.ReadMode := E_ReadMode.READMODE_ONCE;
+	fbMCReadParameter.Enable := TRUE;
+	fbMCReadParameter(Axis := fbAxis);
+	
+	IF (fbMCReadParameter.Busy=FALSE) THEN
+		SIf.stService.relValue := fbMCReadParameter.Value;
+		SIf.intServiceCmd := cPOD_CMD_DONE;
+	ELSIF (fbMCReadParameter.Error)	THEN
+		SIf.intServiceCmd := cPOD_CMD_DONE;
+		SIf.stErr.dwoErrorID := fbMCReadParameter.ErrorID;
+		stStateMachine.intStateNext := cPOD_STA_Error;
+	END_IF
+END_IF
+
+*)
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_WaitForJob" Id="{1fce520a-3e05-4c62-b860-025b0942b262}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_WaitForJob'}
+METHOD PROTECTED sta_WaitForJob : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+
+		// State Change Condition
+		IF (SIf.intCmd=cPOD_CMD_CTRL_OFF) THEN
+			stStateMachine.intStateNext := cPOD_STA_PowerOff;
+		ELSIF (SIf.intCmd=cPOD_CMD_CTRL_ON) THEN
+			SIf.intCmd := cPOD_CMD_DONE;
+		ELSIF (SIf.intCmd=cPOD_CMD_HOME) THEN
+			stStateMachine.intStateNext := cPOD_STA_HomeBusy;
+		ELSIF (SIf.intCmd=cPOD_CMD_REL_MOVE) THEN
+			stStateMachine.intStateNext := cPOD_STA_RelMoveBusy;
+		ELSIF (SIf.intCmd=cPOD_CMD_ABS_MOVE) THEN
+			stStateMachine.intStateNext := cPOD_STA_AbsMoveBusy;
+		ELSIF (SIf.intCmd=cPOD_CMD_MOD_MOVE) THEN
+			stStateMachine.intStateNext := cPOD_STA_ModMoveBusy;
+		ELSIF (SIf.intCmd=cPOD_CMD_POS_MOVE) THEN
+			stStateMachine.intStateNext := cPOD_STA_PosMoveBusy;
+		ELSIF (SIf.intCmd=cPOD_CMD_NEG_MOVE) THEN
+			stStateMachine.intStateNext := cPOD_STA_NegMoveBusy;
+		ELSIF (SIf.intCmd=cPOD_CMD_POS_JOG) THEN
+			stStateMachine.intStateNext := cPOD_STA_PosJogBusy;
+		ELSIF (SIf.intCmd=cPOD_CMD_NEG_JOG) THEN
+			stStateMachine.intStateNext := cPOD_STA_NegJogBusy;
+		ELSIF (SIf.intCmd=cPOD_CMD_STOP) THEN
+			stStateMachine.intStateNext := cPOD_STA_StopBusy;
+		ELSIF (SIf.intCmd=cPOD_CMD_EMCY_STOP_CTRL_OFF) THEN
+			stStateMachine.intStateNext := cPOD_STA_QStopBusy;	
+		END_IF
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_ModMoveBusy" Id="{21a7c9be-5961-4f35-969e-689970790486}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ModMoveBusy'}
+METHOD PROTECTED sta_ModMoveBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		bolfpFirstCycleDone := FALSE;
+		
+		IF (SIf.stCfg.bolSimulation) THEN
+			SIf.stStatus.bolInPos := FALSE;
+			fbMcModMove.Position := SIf.stMove.lreSetPos;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (SIf.stCfg.bolSimulation) AND (fbSimTON.Q) THEN
+			IF (ABS(SIf.stMove.lreActModPos-fbMcModMove.Position)>((fbMcModMove.Velocity*udiSimPosTime_ms)/1000)) THEN
+				IF ((fbMcModMove.Position<SIf.stMove.lreSWLimitPos_mm) OR (SIf.stMove.lreSWLimitPos_mm=0)) AND (SIf.stMove.lreActModPos<fbMcModMove.Position) THEN
+					SIf.stMove.lreActModPos := SIf.stMove.lreActModPos + (fbMcModMove.Velocity*udiSimPosTime_ms)/1000.0;
+					SIf.stMove.lreActVel := fbMcModMove.Velocity;
+					SIf.stStatus.bolInPos := FALSE;
+				ELSIF ((fbMcModMove.Position>SIf.stMove.lreSWLimitNeg_mm) OR (SIf.stMove.lreSWLimitPos_mm=0)) AND (SIf.stMove.lreActModPos>fbMcModMove.Position) THEN
+					SIf.stMove.lreActModPos := SIf.stMove.lreActModPos - (fbMcModMove.Velocity*udiSimPosTime_ms)/1000.0;
+					SIf.stMove.lreActVel := fbMcModMove.Velocity;
+					SIf.stStatus.bolInPos := FALSE;
+				ELSE
+					SIf.stMove.lreActModPos := fbMcModMove.Position;
+					SIf.stMove.lreActVel := 0;
+					SIf.stStatus.bolInPos := TRUE;
+				END_IF
+			ELSE
+				SIf.stMove.lreActModPos := fbMcModMove.Position;
+				SIf.stMove.lreActVel := 0;
+				SIf.stStatus.bolInPos := TRUE;
+			END_IF
+		END_IF
+
+		// No change action
+		//MC_MoveVelocity starts a continuous movement with specified velocity and direction. The movement can be stopped through a Stop command.
+		IF (SIf.stMove.lreSetSpeed>0) THEN
+			fbMcModMove.Velocity := SIf.stMove.lreSetSpeed;
+		ELSE
+			fbMcModMove.Velocity := stAxisParameter.fVeloMaximum/10; // standard max / 10 Maximum travel velocity (>0).
+		END_IF
+		
+		fbMcModMove.Deceleration := SIf.stMove.lreSetDec; //  	Acceleration (≥0). If the value is 0, the standard acceleration from the axis configuration in the System Manager is used.
+		fbMcModMove.Acceleration := SIf.stMove.lreSetAcc; //  	Deceleration (≥0). If the value is 0, the standard deceleration from the axis configuration in the System Manager is used.
+		fbMcModMove.Jerk := SIf.stMove.lreSetJerk;
+		fbMcModMove.Direction := SIf.stMove.eDirection;
+		fbMcModMove.BufferMode := MC_BufferMode.MC_Aborting;
+		fbMcModMove.Position := SIf.stMove.lreSetPos;
+		fbMcModMove.Execute := TRUE;
+		
+		// State Change Condition
+		IF (fbMcModMove.Error) AND (bolfpFirstCycleDone) THEN
+			SIf.stErr.dwoErrorID := fbMcModMove.ErrorID;
+			stStateMachine.intStateNext := cPOD_STA_Error;
+		ELSIF (SIf.intCmd=cPOD_CMD_STOP) THEN
+			stStateMachine.intStateNext := cPOD_STA_StopBusy;
+		ELSIF (SIf.intCmd<>cPOD_CMD_MOD_MOVE) THEN
+			stStateMachine.intStateNext := cPOD_STA_QStopBusy;
+		ELSIF ((SIf.stCfg.bolSimulation AND SIf.stStatus.bolInPos) OR (fbMcModMove.Done)) AND (bolfpFirstCycleDone) THEN
+			IF (SIf.intCmd=cPOD_CMD_MOD_MOVE) THEN
+				SIf.intCmd := cPOD_CMD_DONE;
+			END_IF;
+			stStateMachine.intStateNext := cPOD_STA_WaitForJob;
+		END_IF
+		
+		bolfpFirstCycleDone := TRUE; //at least one call at the end of the FUB needed!
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		fbMcModMove.Execute := FALSE;
+		IF (SIf.stCfg.bolSimulation) THEN
+			SIf.stMove.lreActVel := 0;
+		END_IF
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PowerOff" Id="{237a76e0-1899-4f79-9270-ebe551dd3a3b}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_PowerOff'}
+METHOD PROTECTED sta_PowerOff : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		IF (SIf.stStatus.bolInitOk=FALSE) THEN
+			fbMCReadParameterSet.Execute := TRUE;
+		END_IF;
+
+		
+		fbMcPower.Enable := FALSE;
+		SIf.intCmd := cPOD_CMD_DONE;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+
+		// init parameter set
+		IF (SIf.stStatus.bolInitOk=FALSE)  THEN
+			IF (fbMCReadParameterSet.Done=TRUE) THEN
+				SIf.strAxisName := stAxisParameter.sAxisName;
+				// init ads settings
+				fbMCReadParameterSet.Execute := FALSE; // read parameter set done
+				fbMCReadDriveAdress.Execute := TRUE;
+			END_IF
+			IF (fbMCReadDriveAdress.Done=TRUE) THEN
+				SIf.stStatus.bolInitOk := TRUE; // read ads parameter set done
+			END_IF;
+		END_IF;
+		
+		// switch off of controller allready done!!
+		IF (SIf.intCmd=cPOD_CMD_CTRL_OFF) OR (SIf.intCmd=cPOD_CMD_EMCY_STOP_CTRL_OFF) THEN
+			SIf.intCmd:=cPOD_CMD_DONE;
+		END_IF
+
+		// State Change Condition
+		IF (fbMcPower.Error) THEN
+			SIf.stErr.dwoErrorID := fbMcPower.ErrorID;
+			stStateMachine.intStateNext := cPOD_STA_Error;
+		ELSIF (fbMCReadParameterSet.Error) THEN
+			SIf.stErr.dwoErrorID := fbMCReadParameterSet.ErrorID;
+			stStateMachine.intStateNext := cPOD_STA_Error;
+		ELSIF (fbMCReadDriveAdress.Error) THEN
+			SIf.stErr.dwoErrorID := fbMCReadDriveAdress.ErrorID;
+			stStateMachine.intStateNext := cPOD_STA_Error;
+		ELSIF  (SIf.intCmd=cPOD_CMD_STORE_PARAMETER) THEN
+			stStateMachine.intStateNext := cPOD_STA_StorePara;
+		ELSIF (SIf.intCmd=cPOD_CMD_WRITE_PARAMETER) THEN
+			stStateMachine.intStateNext := cPOD_STA_WritePara;	
+		ELSIF(SIf.intCmd<>cPOD_CMD_DONE) THEN
+			stStateMachine.intStateNext := cPOD_STA_PowerOnBusy;
+		END_IF
+		
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		fbMCReadParameterSet.Execute := FALSE;
+		fbMCReadDriveAdress.Execute := FALSE;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCmdState" Id="{313d5554-e956-47e2-8d43-c84d698c05d2}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
+METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// get string cmd/state string information in runtime
+IF (bolState=FALSE) THEN
+	// cmd's
+	CASE intCmdState OF
+		cPOD_CMD_DONE: 
+			getCmdState := 'cPOD_CMD_DONE';
+		cPOD_CMD_CTRL_ON: 
+			getCmdState := 'cPOD_CMD_CTRL_ON';
+		cPOD_CMD_CTRL_OFF: 
+			getCmdState := 'cPOD_CMD_CTRL_OFF';
+		cPOD_CMD_HOME: 
+			getCmdState := 'cPOD_CMD_HOME';
+		cPOD_CMD_REL_MOVE: 
+			getCmdState := 'cPOD_CMD_REL_MOVE';
+		cPOD_CMD_ABS_MOVE: 
+			getCmdState := 'cPOD_CMD_ABS_MOVE';
+		cPOD_CMD_MOD_MOVE: 
+			getCmdState := 'cPOD_CMD_MOD_MOVE';
+		cPOD_CMD_POS_MOVE: 
+			getCmdState := 'cPOD_CMD_POS_MOVE';
+		cPOD_CMD_NEG_MOVE: 
+			getCmdState := 'cPOD_CMD_NEG_MOVE';
+		cPOD_CMD_STOP: 
+			getCmdState := 'cPOD_CMD_STOP';
+		cPOD_CMD_EMCY_STOP_CTRL_OFF: 
+			getCmdState := 'cPOD_CMD_EMCY_STOP_CTRL_OFF';
+		cPOD_CMD_POS_JOG: 
+			getCmdState := 'cPOD_CMD_POS_JOG';
+		cPOD_CMD_NEG_JOG: 
+			getCmdState := 'cPOD_CMD_NEG_JOG';
+	END_CASE;
+ELSE
+
+// cmd's
+	CASE intCmdState OF
+		cPOD_STA_PowerOff: 
+			getCmdState := 'cPOD_STA_PowerOff';
+		cPOD_STA_Error: 
+			getCmdState := 'cPOD_STA_Error';
+		cPOD_STA_WaitForJob: 
+			getCmdState := 'cPOD_STA_WaitForJob';
+		cPOD_STA_PowerOnBusy: 
+			getCmdState := 'cPOD_STA_PowerOnBusy';
+		cPOD_STA_HomeBusy: 
+			getCmdState := 'cPOD_STA_HomeBusy';
+		cPOD_STA_RelMoveBusy: 
+			getCmdState := 'cPOD_STA_RelMoveBusy';
+		cPOD_STA_AbsMoveBusy: 
+			getCmdState := 'cPOD_STA_AbsMoveBusy';
+		cPOD_STA_PosMoveBusy: 
+			getCmdState := 'cPOD_STA_PosMoveBusy';
+		cPOD_STA_ModMoveBusy: 
+			getCmdState := 'cPOD_STA_ModMoveBusy';
+		cPOD_STA_NegJogBusy: 
+			getCmdState := 'cPOD_STA_NegJogBusy';
+		cPOD_STA_NegMoveBusy: 
+			getCmdState := 'cPOD_STA_NegMoveBusy';
+		cPOD_STA_PosJogBusy: 
+			getCmdState := 'cPOD_STA_PosJogBusy';
+		cPOD_STA_StopBusy: 
+			getCmdState := 'cPOD_STA_StopBusy';
+		cPOD_STA_QStopBusy: 
+			getCmdState := 'cPOD_STA_QStopBusy';
+		cPOD_STA_StorePara: 
+			getCmdState := 'cPOD_STA_StorePara';
+		cPOD_STA_WritePara: 
+			getCmdState := 'cPOD_STA_WritePara';
+	END_CASE;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sJobReadParameterNC" Id="{37aeaf75-c9ba-47db-8e5b-1a766ffdc49a}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sJobReadParameterNC'}
+METHOD PROTECTED sJobReadParameterNC
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*The function block MC_ReadParameter is used to read an axis parameter.*)
+IF ((fbMCReadParameter.ParameterNumber = MC_AxisParameter.EnableLimitPos) OR
+	(fbMCReadParameter.ParameterNumber = MC_AxisParameter.EnableLimitNeg) OR
+	(fbMCReadParameter.ParameterNumber = MC_AxisParameter.EnablePosLagMonitoring) OR
+	(fbMCReadParameter.ParameterNumber = MC_AxisParameter.AxisEnMinSoftPosLimit) OR
+	(fbMCReadParameter.ParameterNumber = MC_AxisParameter.AxisEnMaxSoftPosLimit) OR
+	(fbMCReadParameter.ParameterNumber = MC_AxisParameter.AxisEnPositionLagMonitoring) OR
+	(fbMCReadParameter.ParameterNumber = MC_AxisParameter.AxisEnPositionRangeMonitoring) OR
+	(fbMCReadParameter.ParameterNumber = MC_AxisParameter.AxisEnTargetPositionMonitoring) OR
+	(fbMCReadParameter.ParameterNumber = MC_AxisParameter.AxisEnInTargetTimeout) OR
+	(fbMCReadParameter.ParameterNumber = MC_AxisParameter.AxisEnMotionMonitoring) OR
+	(fbMCReadParameter.ParameterNumber = MC_AxisParameter.AxisEnLoopingDistance) OR
+	(fbMCReadParameter.ParameterNumber = MC_AxisParameter.AxisEnBacklashCompensation) OR
+	(fbMCReadParameter.ParameterNumber = MC_AxisParameter.AxisEnDataPersistence) OR
+	(fbMCReadParameter.ParameterNumber = MC_AxisParameter.AxisEncoderDirectionInverse) OR
+	(fbMCReadParameter.ParameterNumber = MC_AxisParameter.AxisEnablePosCorrection) OR
+	(fbMCReadParameter.ParameterNumber = MC_AxisParameter.AxisMotorDirectionInverse)) THEN
+	// Bool Parameter
+	fbMCReadBoolParameter.ParameterNumber := SIf.stService.eNC_ParNumber;
+	fbMCReadBoolParameter.ReadMode := E_ReadMode.READMODE_ONCE;
+	fbMCReadBoolParameter.Enable := TRUE;
+	fbMCReadBoolParameter(Axis := fbAxis);
+ELSE
+	fbMCReadParameter.ParameterNumber := SIf.stService.eNC_ParNumber;
+	fbMCReadParameter.ReadMode := E_ReadMode.READMODE_ONCE;
+	fbMCReadParameter.Enable := TRUE;
+	fbMCReadParameter(Axis := fbAxis);
+END_IF
+
+
+IF (fbMCReadParameter.Busy=FALSE) AND (fbMCReadParameter.Enable) THEN
+	IF (fbMCReadParameter.Valid) THEN
+		SIf.stService.strValue	:= LREAL_TO_STRING(fbMCReadParameter.Value);
+	ELSE
+		SIf.stService.strValue := 'not valid value';
+	END_IF;
+	SIf.intServiceCmd := cPOD_CMD_DONE;
+ELSIF (fbMCReadBoolParameter.Busy=FALSE) AND (fbMCReadBoolParameter.Enable) THEN
+	IF (fbMCReadBoolParameter.Valid) THEN
+		SIf.stService.strValue	:= BOOL_TO_STRING(fbMCReadBoolParameter.Value);
+	ELSE
+		SIf.stService.strValue := 'not valid value';
+	END_IF;
+	SIf.intServiceCmd := cPOD_CMD_DONE;
+ELSIF (fbMCReadParameter.Error)	THEN
+	SIf.intServiceCmd := cPOD_CMD_DONE;
+	SIf.stErr.dwoErrorID := fbMCReadParameter.ErrorID;
+	stStateMachine.intStateNext := cPOD_STA_Error;
+ELSIF (fbMCReadBoolParameter.Error)	THEN
+	SIf.intServiceCmd := cPOD_CMD_DONE;
+	SIf.stErr.dwoErrorID := fbMCReadBoolParameter.ErrorID;
+	stStateMachine.intStateNext := cPOD_STA_Error;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_QStopBusy" Id="{5614d7b2-f83a-4c60-93dc-62f8eba14680}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_QStopBusy'}
+METHOD PROTECTED sta_QStopBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		
+		SIf.intCmd := cPOD_CMD_DONE;
+		bolfpFirstCycleDone := FALSE;
+		
+		IF (SIf.stCfg.bolSimulation) THEN
+			SIf.stMove.lreActVel := 0;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+
+		//MC_Stop stops an axis with a defined braking ramp and blocks the axis for any motion commands. This behavior qualifies the block for stops under special circumstances where the axis must be prevented from further motion.
+		fbMCStop.Deceleration := SIf.stMove.lreSetDecFast;
+		fbMCStop.Jerk := SIf.stMove.lreSetDecFast*10; //Jerk (≥0). If the value is 0, the jerk parameterised with the last Move command is used.
+		fbMCStop.Execute := TRUE;
+	
+		// State Change Condition
+		IF (fbMCStop.Error) THEN
+			SIf.stErr.dwoErrorID := fbMCStop.ErrorID;
+			stStateMachine.intStateNext := cPOD_STA_Error;
+		ELSIF (fbMCStop.Done) OR (SIf.stCfg.bolSimulation) THEN
+			IF (SIf.stStatus.bolNegHWSwitch) OR (SIf.stStatus.bolPosHWSwitch)THEN
+				stStateMachine.intStateNext := cPOD_STA_Error;
+			ELSE
+				stStateMachine.intStateNext := cPOD_STA_PowerOff;
+			END_IF
+			
+		END_IF
+		bolfpFirstCycleDone := TRUE; //at least one call at the end of the FUB needed!
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		fbMCStop.Execute := FALSE;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_NegMoveBusy" Id="{76c867bf-c27c-4cfb-9b40-249ef6609504}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_NegMoveBusy'}
+METHOD PROTECTED sta_NegMoveBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+		// Simulation
+		IF (SIf.stCfg.bolSimulation) AND (fbSimTON.Q) THEN
+			// JOG negative
+			IF (SIf.stMove.lreActPos>SIf.stMove.lreSWLimitNeg_mm) THEN
+				SIf.stMove.lreActPos := SIf.stMove.lreActPos - (fbMcMoveVelocity.Velocity*udiSimPosTime_ms)/1000;
+				SIf.stMove.lreActVel := fbMcMoveVelocity.Velocity;
+			ELSE
+				SIf.stMove.lreActVel := 0;
+			END_IF
+		END_IF
+
+		// No change action
+		//MC_MoveVelocity starts a continuous movement with specified velocity and direction. The movement can be stopped through a Stop command.
+		IF (SIf.stMove.lreSetSpeed>0) THEN
+			fbMcMoveVelocity.Velocity := SIf.stMove.lreSetSpeed;
+		ELSE
+			fbMcMoveVelocity.Velocity := stAxisParameter.fVeloMaximum/10; // standard max / 10 Maximum travel velocity (>0).
+		END_IF
+		fbMcMoveVelocity.Deceleration := SIf.stMove.lreSetDec;
+		fbMcMoveVelocity.Acceleration := SIf.stMove.lreSetAcc;
+		fbMcMoveVelocity.Jerk := SIf.stMove.lreSetJerk;
+		fbMcMoveVelocity.Direction := TC2_MC2.MC_Direction.MC_Negative_Direction;
+		fbMcMoveVelocity.Execute := TRUE;
+		
+		// State Change Condition
+		IF (fbMcMoveVelocity.Error) THEN
+			SIf.stErr.dwoErrorID := fbMcMoveVelocity.ErrorID;
+			stStateMachine.intStateNext := cPOD_STA_Error;
+		ELSIF (SIf.intCmd=cPOD_CMD_STOP) THEN
+			stStateMachine.intStateNext := cPOD_STA_StopBusy;
+		ELSIF (SIf.intCmd=cPOD_CMD_POS_MOVE) THEN
+			stStateMachine.intStateNext := cPOD_STA_PosMoveBusy;
+		ELSIF (SIf.intCmd<>cPOD_CMD_NEG_MOVE) THEN
+			stStateMachine.intStateNext := cPOD_STA_QStopBusy;
+		END_IF
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		fbMcMoveVelocity.Execute := FALSE;
+		IF (SIf.stCfg.bolSimulation) THEN
+			SIf.stMove.lreActVel := 0;
+		END_IF
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CycleEndDuty" Id="{a5717383-8102-439e-9a85-e1b67dbdcf82}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'CycleEndDuty'}
+METHOD PROTECTED CycleEndDuty : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SIf.strState := THIS^.getCmdState(intCmdState:=stStateMachine.intState,bolState:=TRUE);
+
+IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+	stStateMachine.intState := stStateMachine.intStateNext;  // set next state for next cycle
+END_IF
+
+(***************************************************************
+        Function Block Calls
+***************************************************************)
+
+// Simulation active
+IF (SIf.stCfg.bolSimulation) THEN
+	udiSimPosTime_ms := 50;
+	lreSimJogSpeed := 500.0;
+	
+	IF (fbSimTON.Q) THEN
+		fbSimTON.IN := FALSE;
+		fbSimTON(); // reset!!!
+		fbSimTON.IN := TRUE;
+	ELSE
+		fbSimTON.IN := TRUE;
+	END_IF
+	fbSimTON.PT := UDINT_TO_TIME(udiSimPosTime_ms);
+	fbSimTON();
+	
+	SIf.stStatus.bolCtrlOn := fbMcPower.Enable;
+	
+	SIf.stStatus.bolPosSWSwitch := FALSE;
+	SIf.stStatus.bolNegSWSwitch := FALSE;	
+	IF (SIf.stMove.lreActPos>SIf.stMove.lreSWLimitPos_mm) THEN
+		SIf.stStatus.bolPosSWSwitch := TRUE;
+	ELSIF (SIf.stMove.lreActPos<SIf.stMove.lreSWLimitNeg_mm) THEN
+		SIf.stStatus.bolNegSWSwitch := TRUE;
+	END_IF
+ELSE
+
+	(************************** MC_POWER ****************************)
+	(* enable and override *)
+	fbMCPower.Enable_Positive :=fbMCPower.Enable;
+	fbMCPower.Enable_Negative :=fbMCPower.Enable; 
+	fbMCPower(Axis := fbAxis);
+	(************************** MC_RESET ****************************)
+	fbMcReset(Axis := fbAxis);
+	(************************** MC_Halt ****************************)
+	fbMcHalt(Axis := fbAxis);
+	(************************** MC_Home ****************************)
+	fbMcHome(Axis := fbAxis);
+	(************************** MC_MoveAbsolute ****************************)
+	fbMcAbsMove(Axis := fbAxis);
+	(************************** MC_MoveModulo ****************************)
+	fbMcModMove(Axis := fbAxis);
+	(************************** MC_MoveRelative ****************************)
+	fbMcRelMove(Axis := fbAxis);
+	(************************** MC_MoveVelocity ****************************)
+	fbMcMoveVelocity(Axis := fbAxis);
+	(************************** MC_Jog ****************************)
+	fbMcJog(Axis := fbAxis);
+	(************************** MC_Stop ****************************)
+	fbMCStop(Axis := fbAxis);
+	(************************** MC_ReadParameterSet ****************************)
+	fbMCReadParameterSet(Axis := fbAxis, Parameter:= stAxisParameter);
+	(************************** MC_ReadDriveAdress ****************************)
+	fbMCReadDriveAdress(Axis := fbAxis);
+
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PosJogBusy" Id="{b04edc0b-7649-4df7-ae8d-fd4c1dff9711}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_PosJogBusy'}
+METHOD PROTECTED sta_PosJogBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (SIf.stCfg.bolSimulation) AND (fbSimTON.Q) THEN
+			// JOG positive
+			IF (SIf.stMove.lreActPos<SIf.stMove.lreSWLimitPos_mm) THEN
+				SIf.stMove.lreActPos := SIf.stMove.lreActPos + (lreSimJogSpeed*udiSimPosTime_ms)/1000;
+				SIf.stMove.lreActVel := lreSimJogSpeed;
+			ELSE
+				SIf.stMove.lreActVel := 0;
+			END_IF
+		END_IF
+
+		// No change action
+		// MC_JOGMODE_STANDARD_SLOW
+		//The axis moves as long as the signal at one of the jog inputs is TRUE. The low velocity for manual functions specified in the TwinCAT System Manager and standard dynamics are used. In this mode the position, velocity and dynamics data specified in the function block have no effect.
+		fbMcJog.Velocity := SIf.stMove.lreSetSpeed;
+		fbMcJog.Deceleration := SIf.stMove.lreSetDec;
+		fbMcJog.Acceleration := SIf.stMove.lreSetAcc;
+		fbMcJog.Jerk := SIf.stMove.lreSetJerk;
+		fbMcJog.Mode := TC2_MC2.E_JogMode.MC_JOGMODE_STANDARD_SLOW; //MC_JOGMODE_STANDARD_SLOW jog speed and dynamic settings from twinCat system manager!!!
+		fbMcJog.JogForward := TRUE;
+		fbMcJog.JogBackwards := FALSE;
+
+		// State Change Condition
+		IF (fbMcJog.Error) THEN
+			SIf.stErr.dwoErrorID := fbMcJog.ErrorID;
+			stStateMachine.intStateNext := cPOD_STA_Error;
+		ELSIF (SIf.intCmd=cPOD_CMD_STOP) THEN
+			stStateMachine.intStateNext := cPOD_STA_StopBusy;
+		ELSIF (SIf.intCmd=cPOD_CMD_NEG_JOG) THEN
+			stStateMachine.intStateNext := cPOD_STA_NegJogBusy;
+		ELSIF (SIf.intCmd<>cPOD_CMD_POS_JOG) THEN
+			stStateMachine.intStateNext := cPOD_STA_QStopBusy;
+		END_IF
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		fbMcJog.JogForward := FALSE;
+		fbMcJog.JogBackwards := FALSE;
+		IF (SIf.stCfg.bolSimulation) THEN
+			SIf.stMove.lreActVel := 0;
+		END_IF
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_PosMoveBusy" Id="{b0c35e41-2d9a-4508-b394-f51655701e1d}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_PosMoveBusy'}
+METHOD PROTECTED sta_PosMoveBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (SIf.stCfg.bolSimulation) AND (fbSimTON.Q) THEN
+			// Move positive
+			IF (SIf.stMove.lreActPos<SIf.stMove.lreSWLimitPos_mm) THEN
+				SIf.stMove.lreActPos := SIf.stMove.lreActPos + (fbMcMoveVelocity.Velocity*udiSimPosTime_ms)/1000;
+				SIf.stMove.lreActVel := fbMcMoveVelocity.Velocity;
+			ELSE
+				SIf.stMove.lreActVel := 0;
+			END_IF
+		END_IF
+
+		// No change action
+		//MC_MoveVelocity starts a continuous movement with specified velocity and direction. The movement can be stopped through a Stop command.
+		IF (SIf.stMove.lreSetSpeed>0) THEN
+			fbMcMoveVelocity.Velocity := SIf.stMove.lreSetSpeed;
+		ELSE
+			fbMcMoveVelocity.Velocity := stAxisParameter.fVeloMaximum/10; // standard max / 10 Maximum travel velocity (>0).
+		END_IF
+		fbMcMoveVelocity.Deceleration := SIf.stMove.lreSetDec;
+		fbMcMoveVelocity.Acceleration := SIf.stMove.lreSetAcc;
+		fbMcMoveVelocity.Jerk := SIf.stMove.lreSetJerk;
+		fbMcMoveVelocity.Direction := TC2_MC2.MC_Direction.MC_Positive_Direction;
+		fbMcMoveVelocity.Execute := TRUE;
+		
+		// State Change Condition
+		IF (fbMcMoveVelocity.Error) THEN
+			SIf.stErr.dwoErrorID := fbMcMoveVelocity.ErrorID;
+			stStateMachine.intStateNext := cPOD_STA_Error;
+		ELSIF (SIf.intCmd=cPOD_CMD_STOP) THEN
+			stStateMachine.intStateNext := cPOD_STA_StopBusy;
+		ELSIF (SIf.intCmd=cPOD_CMD_NEG_MOVE) THEN
+			stStateMachine.intStateNext := cPOD_STA_PosMoveBusy;
+		ELSIF (SIf.intCmd<>cPOD_CMD_POS_MOVE) THEN
+			stStateMachine.intStateNext := cPOD_STA_QStopBusy;
+		END_IF
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		fbMcMoveVelocity.Execute := FALSE;
+		IF (SIf.stCfg.bolSimulation) THEN
+			SIf.stMove.lreActVel := 0;
+		END_IF
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_HomeBusy" Id="{bbfad2b9-4d4c-4ad0-9062-e5fc555070b3}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_HomeBusy'}
+METHOD PROTECTED sta_HomeBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		bolfpFirstCycleDone := FALSE;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+		// Simulation
+		IF (SIf.stCfg.bolSimulation) AND (fbSimTON.Q) THEN
+			SIf.stStatus.bolHomeOk := TRUE;
+		END_IF
+		
+		// MC_Home
+		// Position when the reference cam is reached. 
+		// The constant DEFAULT_HOME_POSITION can be used to make use of the Calibration Value which is defined in the TwinCAT SystemManger.
+		fbMcHome.HomingMode := SIf.stCfg.eHomingMode;
+		// based on config use home switch
+		CASE SIf.stCfg.eUseHomeSwitch OF
+			E_POD_UseHomeSwitch.HomeSwitch:
+				fbMcHome.bCalibrationCam := SIf.stStatus.stDigin.bol_HomeSwitch;
+			E_POD_UseHomeSwitch.SI0:
+				fbMcHome.bCalibrationCam := SIf.stStatus.stDigin.bol_SI0;
+			E_POD_UseHomeSwitch.SI1:
+				fbMcHome.bCalibrationCam := SIf.stStatus.stDigin.bol_SI1;
+			E_POD_UseHomeSwitch.SI2:
+				fbMcHome.bCalibrationCam := SIf.stStatus.stDigin.bol_SI2;
+			E_POD_UseHomeSwitch.SI3:
+				fbMcHome.bCalibrationCam := SIf.stStatus.stDigin.bol_SI3;
+			E_POD_UseHomeSwitch.SI4:
+				fbMcHome.bCalibrationCam := SIf.stStatus.stDigin.bol_SI4;
+			E_POD_UseHomeSwitch.SI5:
+				fbMcHome.bCalibrationCam := SIf.stStatus.stDigin.bol_SI5;
+			E_POD_UseHomeSwitch.SI6:
+				fbMcHome.bCalibrationCam := SIf.stStatus.stDigin.bol_SI6;
+		ELSE
+			fbMcHome.bCalibrationCam := In_bolHomeSwitch;
+		END_CASE
+			
+		fbMcHome.Position := SIf.stCfg.lreHomePosition;
+		fbMcHome.Execute := TRUE;
+		
+		// State Change Condition
+		IF (fbMcHome.Error) THEN
+			SIf.stErr.dwoErrorID := fbMcHome.ErrorID;
+			stStateMachine.intStateNext := cPOD_STA_Error;
+		ELSIF (fbMcHome.Done) AND (bolfpFirstCycleDone) THEN
+			IF (SIf.intCmd=cPOD_CMD_HOME) THEN
+				SIf.intCmd := cPOD_CMD_DONE;
+			END_IF;
+			stStateMachine.intStateNext := cPOD_STA_WaitForJob;
+		ELSIF (SIf.intCmd=cPOD_CMD_STOP) THEN
+			stStateMachine.intStateNext := cPOD_STA_StopBusy;
+		ELSIF (SIf.stCfg.bolSimulation AND SIf.stStatus.bolHomeOk) THEN
+			IF (SIf.intCmd=cPOD_CMD_HOME) THEN
+				SIf.intCmd := cPOD_CMD_DONE;
+			END_IF;
+			stStateMachine.intStateNext := cPOD_STA_WaitForJob;	
+		END_IF
+		bolfpFirstCycleDone := TRUE; //at least one call at the end of the FUB needed!
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		fbMcHome.Execute := FALSE;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CycleStartDuty" Id="{cd6138c7-9e91-443a-8acf-b6aa59300a45}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'CycleStartDuty'}
+METHOD PROTECTED CycleStartDuty : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+
+
+// Simulation active
+IF (SIf.stCfg.bolSimulation) THEN
+	
+	SIF.stErr.bolNCError := FALSE;
+	SIF.stErr.bolDriveError := FALSE;
+	SIf.stStatus.bolHomeOk := TRUE; //Axis has been referenced/ homed ("Axis calibrated")
+	SIf.stStatus.bolNetwOk := TRUE;
+	
+	SIf.stStatus.bolEnable := TRUE;
+	SIf.stStatus.bolReady := TRUE;
+	SIf.stStatus.bolNegHWSwitch := FALSE;
+	SIf.stStatus.bolPosHWSwitch := FALSE;
+	SIf.stStatus.bolNegSWSwitch := FALSE;
+	SIf.stStatus.bolPosSWSwitch := FALSE;
+ELSE
+
+	(* program code at the beginning of each PLC cycle *)
+	fbAxis.ReadStatus();
+	SIf.stMove.lreActPos := fbAxis.NcToPlc.ActPos;
+	SIf.stMove.lreActModPos := fbAxis.NcToPlc.ModuloActPos;
+	SIf.stMove.lreActVel := fbAxis.NcToPlc.ActVelo;
+	// [Nm] actual torque The torque actual value corresponds to the instantaneous torque in the drive motor. The value is given in units of per thousand of rated torque.
+	SIf.stMove.lreActTorque := fbAxis.NcToPlc.ActTorque/1000;
+	
+	// ----------------------------------------------------------------------------------
+	// Error FB's???
+	SIF.stErr.bolNCError := F_AxisInErrorState(fbAxis.NcToPlc.StateDWord) OR (fbAxis.NcToPlc.ErrorCode <> 0);
+	SIF.stErr.bolDriveError := fbAxis.NcToPlc.StateDWord.28;
+	SIf.stStatus.bolInPos := fbAxis.NcToPlc.StateDWord.3; //Axis is in position window (physical feedback)
+	SIf.stStatus.bolHomeOk := fbAxis.NcToPlc.StateDWord.1; //Axis has been referenced/ homed ("Axis calibrated")
+	SIf.stStatus.bolCtrlOn := fbMCPower.Status; // fbAxis.NcToPlc.StateDWord.0 ;// Status=TRUE indicates that the axis is ready for operation. 	Axis is ready for operation - switched on
+	SIf.stStatus.bolNetwOk := NOT (fbAxis.NcToPlc.StateDWord.30); //  	IO data invalid (e.g. 'WcState' or 'CdlState')
+	
+(*	(* additionalinformation to NC axis for Yaskawa drives
+	Status word (6041h) when mode = 1 position profil
+	0	Ready to Switch on =1
+	1	Switched on =1
+	2	Operation enabeld =1
+	3	Fault/Fault Reaction
+	4	MainPower on =1
+	5	Quickstop inaktive =1
+	6	Switch on disabled =1
+	7	Warning is occurred =1
+	8	
+	9	Controlword is processed
+	10	Target Reached
+	11	
+	12
+	13	
+	14	
+	15	
+	*)
+	// funktioniert nicht....TC2_SYSTEM.MEMCPY(ADR(stStatusWord),ADR(In_worPOD_DriveState), SIZEOF(stStatusWord));
+	stStatusWord.bolReadyToSwitchOn := In_worPOD_DriveState.0;
+	stStatusWord.bolSwitchedOn := In_worPOD_DriveState.1;
+	stStatusWord.bolOperationEnabled := In_worPOD_DriveState.2;
+	stStatusWord.bolFault := In_worPOD_DriveState.3;
+	stStatusWord.bolMainPowerOn := In_worPOD_DriveState.4;
+	stStatusWord.bolQuickStopInactive := In_worPOD_DriveState.5;
+	stStatusWord.bolSwitchOnDisabled := In_worPOD_DriveState.6;
+	stStatusWord.bolWarning := In_worPOD_DriveState.7;
+	stStatusWord.bolBit08 := In_worPOD_DriveState.8;
+	// not used stStatusWord.bolControlwIsProcesssed := In_worPOD_DriveState.9;
+	stStatusWord.bolTargetReached := In_worPOD_DriveState.10;
+	stStatusWord.bolInternLimit := In_worPOD_DriveState.11;
+	// not used stStatusWord.bolInterpolMode := In_worPOD_DriveState.12;
+	// not used stStatusWord.bolBit13 := In_worPOD_DriveState.13;
+	// not used stStatusWord.bolTorqueLim := In_worPOD_DriveState.14;
+	// not used stStatusWord.bolEnableNotOk := In_worPOD_DriveState.15;
+	
+	// mpaaing digital input word to struct
+	SIf.stStatus.stDigIn.bol_N_OT := In_udiPOD_DriveInputs.0;
+	SIf.stStatus.stDigIn.bol_P_OT := In_udiPOD_DriveInputs.1;
+	SIf.stStatus.stDigIn.bol_HomeSwitch := In_udiPOD_DriveInputs.2;
+	SIf.stStatus.stDigIn.bol_SI0 := In_udiPOD_DriveInputs.16;
+	SIf.stStatus.stDigIn.bol_SI1 := In_udiPOD_DriveInputs.17;
+	SIf.stStatus.stDigIn.bol_SI2 := In_udiPOD_DriveInputs.18;
+	SIf.stStatus.stDigIn.bol_SI3 := In_udiPOD_DriveInputs.19;
+	SIf.stStatus.stDigIn.bol_SI4 := In_udiPOD_DriveInputs.20;
+	SIf.stStatus.stDigIn.bol_SI5 := In_udiPOD_DriveInputs.21;
+	SIf.stStatus.stDigIn.bol_SI6 := In_udiPOD_DriveInputs.22;
+	// not used SIf.stStatus.stDigIn.bol_HWBB1 := In_udiPOD_DriveInputs.24;
+	// not used SIf.stStatus.stDigIn.bol_HWBB2 := In_udiPOD_DriveInputs.25;
+*)	
+	// special state map direct from drive state
+	// not used SIf.stStatus.bolEnable := NOT (stStatusWord.bolEnableNotOk) ;
+	SIf.stStatus.bolReady:= fbAxis.NcToPlc.StateDWord.0; // Operational 
+	SIf.stStatus.bolNegSWSwitch := fbAxis.Status.SoftLimitMinExceeded;
+	SIf.stStatus.bolPosSWSwitch := fbAxis.Status.SoftLimitMaxExceeded;
+	SIf.stStatus.bolEnable:= NOT (fbAxis.Status.Disabled);
+	SIf.stStatus.bolMoving:= fbAxis.Status.Moving;
+	
+	// switch off movement to avoid following error on nc layer
+	IF (fbAxis.Status.Moving) AND (fbAxis.Status.NegativeDirection=TRUE) AND (SIf.stStatus.bolNegHWSwitch) AND (stStateMachine.intState<>cPOD_STA_QStopBusy) THEN
+		SIf.stErr.dwoErrorID := 32000; // Limit active during movement
+		stStateMachine.intStateNext := cPOD_STA_QStopBusy;
+	END_IF
+	
+	IF (fbAxis.Status.Moving) AND (fbAxis.Status.PositiveDirection=TRUE) AND (SIf.stStatus.bolPosHWSwitch) AND (stStateMachine.intState<>cPOD_STA_QStopBusy) THEN
+		SIf.stErr.dwoErrorID := 32000; // Limit active during movement
+		stStateMachine.intStateNext := cPOD_STA_QStopBusy;
+	END_IF
+
+END_IF
+
+
+
+
+
+// always go to Error 
+IF ((SIF.stErr.bolNCError) OR (SIF.stErr.bolDriveError)) AND 
+	(stStateMachine.intState<>cPOD_STA_Error)  THEN
+	stStateMachine.intStateNext := cPOD_STA_Error;
+// always go to PowerOff 
+ELSIF ((SIf.stStatus.bolCtrlOn=FALSE) OR (SIf.intCmd=cPOD_CMD_EMCY_STOP_CTRL_OFF)) AND 
+	(stStateMachine.intState<>cPOD_STA_PowerOff) AND (stStateMachine.intState<>cPOD_STA_PowerOnBusy)  AND 
+	(stStateMachine.intState<>cPOD_STA_WritePara) AND (stStateMachine.intState<>cPOD_STA_StorePara) AND 
+	(stStateMachine.intState<>cPOD_STA_Error) THEN
+	IF (SIf.stStatus.bolCtrlOn=FALSE) THEN
+		stStateMachine.intStateNext := cPOD_STA_PowerOff;
+	ELSE
+		IF (stStateMachine.intState<>cPOD_STA_QStopBusy) THEN
+			stStateMachine.intStateNext := cPOD_STA_QStopBusy;
+		END_IF
+	END_IF
+END_IF
+
+IF (stStateMachine.intState<>cPOD_STA_Error) THEN // positive edge in error requested
+	SIf.stErr.bolErrAck := FALSE;
+END_IF
+
+SIf.strCmd := THIS^.getCmdState(intCmdState:=SIf.intCmd,bolState:=FALSE);
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sJobWriteParameterNC" Id="{d42fbcb8-87b3-42e8-84a0-6913380bc306}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sJobWriteParameterNC'}
+METHOD PROTECTED sJobWriteParameterNC
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[(*The function block MC_WriteParameter is used to Write an axis parameter.*)
+IF ((fbMCWriteParameter.ParameterNumber = MC_AxisParameter.EnableLimitPos) OR
+	(fbMCWriteParameter.ParameterNumber = MC_AxisParameter.EnableLimitNeg) OR
+	(fbMCWriteParameter.ParameterNumber = MC_AxisParameter.EnablePosLagMonitoring) OR
+	(fbMCWriteParameter.ParameterNumber = MC_AxisParameter.AxisEnMinSoftPosLimit) OR
+	(fbMCWriteParameter.ParameterNumber = MC_AxisParameter.AxisEnMaxSoftPosLimit) OR
+	(fbMCWriteParameter.ParameterNumber = MC_AxisParameter.AxisEnPositionLagMonitoring) OR
+	(fbMCWriteParameter.ParameterNumber = MC_AxisParameter.AxisEnPositionRangeMonitoring) OR
+	(fbMCWriteParameter.ParameterNumber = MC_AxisParameter.AxisEnTargetPositionMonitoring) OR
+	(fbMCWriteParameter.ParameterNumber = MC_AxisParameter.AxisEnInTargetTimeout) OR
+	(fbMCWriteParameter.ParameterNumber = MC_AxisParameter.AxisEnMotionMonitoring) OR
+	(fbMCWriteParameter.ParameterNumber = MC_AxisParameter.AxisEnLoopingDistance) OR
+	(fbMCWriteParameter.ParameterNumber = MC_AxisParameter.AxisEnBacklashCompensation) OR
+	(fbMCWriteParameter.ParameterNumber = MC_AxisParameter.AxisEnDataPersistence) OR
+	(fbMCWriteParameter.ParameterNumber = MC_AxisParameter.AxisEncoderDirectionInverse) OR
+	(fbMCWriteParameter.ParameterNumber = MC_AxisParameter.AxisEnablePosCorrection) OR
+	(fbMCWriteParameter.ParameterNumber = MC_AxisParameter.AxisMotorDirectionInverse)) THEN
+	// Bool Parameter
+	fbMCWriteBoolParameter.Value :=  STRING_TO_BOOL(SIf.stService.strValue);
+	fbMCWriteBoolParameter.ParameterNumber := SIf.stService.eNC_ParNumber;
+	fbMCWriteBoolParameter.Execute := TRUE;
+	fbMCWriteBoolParameter(Axis := fbAxis);
+ELSE
+	fbMCWriteParameter.Value :=  STRING_TO_LREAL(SIf.stService.strValue);
+	fbMCWriteParameter.ParameterNumber := SIf.stService.eNC_ParNumber;
+	fbMCWriteParameter.Execute := TRUE;
+	fbMCWriteParameter(Axis := fbAxis);
+END_IF
+
+
+IF (fbMCWriteParameter.Busy=FALSE) AND (fbMCWriteParameter.Execute) THEN
+	SIf.intServiceCmd := cPOD_CMD_DONE;
+ELSIF (fbMCWriteBoolParameter.Busy=FALSE) AND (fbMCWriteBoolParameter.Execute) THEN;
+	SIf.intServiceCmd := cPOD_CMD_DONE;
+ELSIF (fbMCWriteParameter.Error)	THEN
+	SIf.intServiceCmd := cPOD_CMD_DONE;
+	SIf.stErr.dwoErrorID := fbMCWriteParameter.ErrorID;
+	stStateMachine.intStateNext := cPOD_STA_Error;
+ELSIF (fbMCWriteBoolParameter.Error)	THEN
+	SIf.intServiceCmd := cPOD_CMD_DONE;
+	SIf.stErr.dwoErrorID := fbMCWriteBoolParameter.ErrorID;
+	stStateMachine.intStateNext := cPOD_STA_Error;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StateMachine_Service" Id="{ddf9d3ac-80a2-4ce9-8b91-c70ff780f3bd}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine_Service'}
+METHOD PROTECTED StateMachine_Service : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+IF (SIf.stCfg.bolSimulation) THEN
+	SIf.stService.strValue := 'not available in simulation';
+	SIf.intServiceCmd := cPOD_CMD_DONE;
+ELSE
+
+	// main statemachine of base controller
+	CASE SIf.intServiceCmd OF
+		cPOD_SCMD_WRITE_PARA: 
+			THIS^.sJobWriteParameter();
+		cPOD_SCMD_READ_PARA: 
+			THIS^.sJobReadParameter();
+		cPOD_SCMD_READ_PARA_NC: 
+			THIS^.sJobReadParameterNC();
+		cPOD_SCMD_WRITE_PARA_NC: 
+			THIS^.sJobWriteParameterNC();
+	ELSE
+		SIf.intServiceCmd := POD_Cmd.cPOD_CMD_DONE;	
+	END_CASE;
+	
+	// reset fb in same cycle as reset job -> done -> next job 
+	IF (SIf.intServiceCmd = POD_Cmd.cPOD_CMD_DONE) THEN
+		
+		usiCaseScmd := 0;
+		
+		// reset FB calls - no cyclic calls!
+		IF (fbEcCoeSdoWrite.bExecute) THEN
+			fbEcCoeSdoWrite.bExecute := FALSE;
+			fbEcCoeSdoWrite();
+		END_IF
+		IF (fbEcCoeSdoRead.bExecute) THEN
+			fbEcCoeSdoRead.bExecute := FALSE;
+			fbEcCoeSdoRead();
+		END_IF
+		IF (fbMCReadParameter.Enable) THEN
+			fbMCReadParameter.Enable := FALSE;
+			fbMCReadParameter(Axis := fbAxis);
+		END_IF
+		IF (fbMCReadBoolParameter.Enable) THEN
+			fbMCReadBoolParameter.Enable := FALSE;
+			fbMCReadBoolParameter(Axis := fbAxis);
+		END_IF
+		IF (fbMCWriteParameter.Execute) THEN
+			fbMCWriteParameter.Execute := FALSE;
+			fbMCWriteParameter(Axis := fbAxis);
+		END_IF
+		IF (fbMCWriteBoolParameter.Execute) THEN
+			fbMCWriteBoolParameter.Execute := FALSE;
+			fbMCWriteBoolParameter(Axis := fbAxis);
+		END_IF
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_RelMoveBusy" Id="{e1fa452e-4c76-4d9d-93ff-507d9e297524}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_RelMoveBusy'}
+METHOD PROTECTED sta_RelMoveBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		bolfpFirstCycleDone := FALSE;
+		lreActPos_old := SIf.stMove.lreActPos;
+		
+		IF (SIf.stCfg.bolSimulation) THEN
+			SIf.stStatus.bolInPos := FALSE;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+		// Simulation
+		IF (SIf.stCfg.bolSimulation) THEN
+			IF (((SIf.stMove.lreActPos+fbMcRelMove.Distance)<SIf.stMove.lreSWLimitPos_mm) AND (fbMcRelMove.Distance>0)AND (SIf.stMove.lreActPos<(lreActPos_old+fbMcRelMove.Distance))) THEN
+				SIf.stMove.lreActPos := SIf.stMove.lreActPos + (fbMcRelMove.Velocity*udiSimPosTime_ms)/1000;
+				SIf.stMove.lreActVel := fbMcRelMove.Velocity;
+				SIf.stStatus.bolInPos := FALSE;
+			ELSIF (((SIf.stMove.lreActPos+fbMcRelMove.Distance)>SIf.stMove.lreSWLimitNeg_mm) AND (fbMcRelMove.Distance<0)AND (SIf.stMove.lreActPos>(lreActPos_old+fbMcRelMove.Distance))) THEN
+				SIf.stMove.lreActPos := SIf.stMove.lreActPos - (fbMcRelMove.Velocity*udiSimPosTime_ms)/1000;
+				SIf.stMove.lreActVel := fbMcRelMove.Velocity;
+				SIf.stStatus.bolInPos := FALSE;
+			ELSE
+				SIf.stMove.lreSetSpeed := 0;
+				SIf.stStatus.bolInPos := TRUE;
+			END_IF
+		END_IF
+
+		// No change action
+		//MC_MoveRelative starts a relative positioning procedure based on the current set position and monitors the axis movement over the whole travel path.
+		fbMcRelMove.Velocity := SIf.stMove.lreSetSpeed;
+		fbMcRelMove.Deceleration := SIf.stMove.lreSetDec;
+		fbMcRelMove.Acceleration := SIf.stMove.lreSetAcc;
+		fbMcRelMove.Jerk := SIf.stMove.lreSetJerk;
+		fbMcRelMove.Distance := SIf.stMove.lreSetPos;
+		fbMcRelMove.Execute := TRUE;
+		
+		// State Change Condition
+		IF (fbMcRelMove.Error) AND (bolfpFirstCycleDone) THEN
+			SIf.stErr.dwoErrorID := fbMcRelMove.ErrorID;
+			stStateMachine.intStateNext := cPOD_STA_Error;
+		ELSIF (SIf.intCmd=cPOD_CMD_STOP) THEN
+			stStateMachine.intStateNext := cPOD_STA_StopBusy;
+		ELSIF (SIf.intCmd<>cPOD_CMD_REL_MOVE) THEN
+			stStateMachine.intStateNext := cPOD_STA_QStopBusy;
+		ELSIF ((SIf.stCfg.bolSimulation AND SIf.stStatus.bolInPos) OR (fbMcRelMove.Done))  AND (bolfpFirstCycleDone) THEN
+			IF (SIf.intCmd=cPOD_CMD_REL_MOVE) THEN
+				SIf.intCmd := cPOD_CMD_DONE;
+			END_IF;
+			stStateMachine.intStateNext := cPOD_STA_WaitForJob;
+		END_IF
+		bolfpFirstCycleDone := TRUE; //at least one call at the end of the FUB needed!
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		fbMcRelMove.Execute := FALSE;
+		IF (SIf.stCfg.bolSimulation) THEN
+			SIf.stMove.lreActVel := 0;
+		END_IF
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_StopBusy" Id="{e5a8ae44-5543-4998-8aa2-e795cb4cd3b6}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_StopBusy'}
+METHOD PROTECTED sta_StopBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		
+		bolfpFirstCycleDone := FALSE;
+		
+		IF (SIf.stCfg.bolSimulation) THEN
+			SIf.stMove.lreActVel := 0;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+
+		//MC_Stop stops an axis with a defined braking ramp and blocks the axis for any motion commands. This behavior qualifies the block for stops under special circumstances where the axis must be prevented from further motion.
+		fbMcHalt.Deceleration := SIf.stMove.lreSetDec;
+		fbMcHalt.Jerk := 0; //Jerk (≥0). If the value is 0, the jerk parameterised with the last Move command is used.
+		fbMcHalt.Execute := TRUE;
+	
+		// State Change Condition
+		IF (fbMcHalt.Error) THEN
+			SIf.stErr.dwoErrorID := fbMcHalt.ErrorID;
+			stStateMachine.intStateNext := cPOD_STA_Error;
+		ELSIF (fbMcHalt.Done) OR (SIf.stCfg.bolSimulation) THEN
+			IF (SIf.intCmd=cPOD_CMD_STOP) THEN
+				SIf.intCmd := cPOD_CMD_DONE;
+			END_IF;
+			stStateMachine.intStateNext := cPOD_STA_WaitForJob;
+		ELSIF (SIf.intCmd=cPOD_CMD_CTRL_OFF) THEN
+			stStateMachine.intStateNext := cPOD_STA_QStopBusy;
+		END_IF
+		bolfpFirstCycleDone := TRUE; //at least one call at the end of the FUB needed!
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		fbMcHalt.Execute := FALSE;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="StateMachine" Id="{e994bd16-0a6d-4cba-9c38-86d8f9df6463}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
+METHOD PROTECTED StateMachine : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+// main statemachine of base controller
+CASE stStateMachine.intState OF
+	cPOD_STA_PowerOff: 
+        THIS^.sta_PowerOff();
+    cPOD_STA_PowerOnBusy: 
+        THIS^.sta_PowerOnBusy();
+	cPOD_STA_WaitForJob: 
+        THIS^.sta_WaitForJob();
+    cPOD_STA_HomeBusy: 
+        THIS^.sta_HomeBusy();
+	cPOD_STA_RelMoveBusy: 
+        THIS^.sta_RelMoveBusy();
+    cPOD_STA_AbsMoveBusy: 
+        THIS^.sta_AbsMoveBusy();
+	cPOD_STA_ModMoveBusy: 
+        THIS^.sta_ModMoveBusy();
+	cPOD_STA_PosMoveBusy: 
+        THIS^.sta_PosMoveBusy();
+	cPOD_STA_PosJogBusy: 
+        THIS^.sta_PosJogBusy();
+	cPOD_STA_NegMoveBusy: 
+        THIS^.sta_NegMoveBusy();
+	cPOD_STA_NegJogBusy: 
+        THIS^.sta_NegJogBusy();
+	cPOD_STA_QStopBusy: 
+        THIS^.sta_QStopBusy();
+	cPOD_STA_StopBusy: 
+        THIS^.sta_StopBusy();
+    cPOD_STA_Error: 
+        THIS^.sta_Error();
+END_CASE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_NegJogBusy" Id="{eba8d1a6-2945-4039-beef-958d84c8e2b3}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_NegJogBusy'}
+METHOD PROTECTED sta_NegJogBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (SIf.stCfg.bolSimulation) AND (fbSimTON.Q) THEN
+			// JOG negative
+			IF (SIf.stMove.lreActPos>SIf.stMove.lreSWLimitNeg_mm) THEN
+				SIf.stMove.lreActPos := SIf.stMove.lreActPos - (lreSimJogSpeed*udiSimPosTime_ms)/1000;
+				SIf.stMove.lreActVel := lreSimJogSpeed;
+			ELSE
+				SIf.stMove.lreActVel := 0;
+			END_IF
+		END_IF
+
+		// No change action
+		// MC_JOGMODE_STANDARD_SLOW
+		//The axis moves as long as the signal at one of the jog inputs is TRUE. The low velocity for manual functions specified in the TwinCAT System Manager and standard dynamics are used. In this mode the position, velocity and dynamics data specified in the function block have no effect.
+		fbMcJog.Velocity := SIf.stMove.lreSetSpeed;
+		fbMcJog.Deceleration := SIf.stMove.lreSetDec;
+		fbMcJog.Acceleration := SIf.stMove.lreSetAcc;
+		fbMcJog.Jerk := SIf.stMove.lreSetJerk;
+		fbMcJog.Mode := TC2_MC2.E_JogMode.MC_JOGMODE_STANDARD_SLOW;
+		fbMcJog.JogForward := FALSE;
+		fbMcJog.JogBackwards := TRUE;
+		
+		// State Change Condition
+		IF (fbMcJog.Error) THEN
+			SIf.stErr.dwoErrorID := fbMcJog.ErrorID;
+			stStateMachine.intStateNext := cPOD_STA_Error;
+		ELSIF (SIf.intCmd=cPOD_CMD_STOP) THEN
+			stStateMachine.intStateNext := cPOD_STA_StopBusy;
+		ELSIF (SIf.intCmd=cPOD_CMD_POS_JOG) THEN
+			stStateMachine.intStateNext := cPOD_STA_PosJogBusy;
+		ELSIF (SIf.intCmd<>cPOD_CMD_NEG_JOG) THEN
+			stStateMachine.intStateNext := cPOD_STA_QStopBusy;
+		END_IF
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		fbMcJog.JogForward := FALSE;
+		fbMcJog.JogBackwards := FALSE;
+		IF (SIf.stCfg.bolSimulation) THEN
+			SIf.stMove.lreActVel := 0;
+		END_IF
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sJobWriteParameter" Id="{ef9e92ba-f74c-4dbe-a182-01fc5f754d41}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sJobWriteParameter'}
+METHOD PROTECTED sJobWriteParameter
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[
+(*
+The FB_EcCoeSdoWrite FUNCTION block permits an object FROM the object directory OF an EtherCAT slave TO be written BY means OF an SDO download. 
+THIS requires the slave TO have a mailbox AND TO support the "CANopen over EtherCAT" (CoE) protocol. 
+The nSubIndex AND nIndex parameters select the object the data should be written TO. 
+Via bCompleteAccess := TRUE the parameter is being written with all SUB indexes.
+*)
+	fbEcCoeSdoWrite.sNetId := fbMCReadDriveAdress.DriveAddress.NetID; // This is a string that contains the AMS network identifier of the EtherCAT master device.
+	fbEcCoeSdoWrite.nSlaveAddr := fbMCReadDriveAdress.DriveAddress.SlaveAddress; //  Fixed address of the EtherCAT slave to which the SDO download command should be sent.
+	fbEcCoeSdoWrite.nSubIndex  := SIf.stService.bytSubIndex;// Sub-index of the object that should be written to.
+	fbEcCoeSdoWrite.nIndex  := SIf.stService.worIndex; //  Index of the object that should be written to.
+	fbEcCoeSdoWrite.tTimeout := DEFAULT_ADS_TIMEOUT;
+	
+	IF (SIf.stService.dwo_pSrcBuf<>0) THEN // adress from value -> use the external value
+		fbEcCoeSdoWrite.pSrcBuf  := SIf.stService.dwo_pSrcBuf; // Address (pointer) of the send buffer.
+		fbEcCoeSdoWrite.cbBufLen  := SIf.stService.udi_cbBufLen; // Number (in bytes) of data to be sent.
+	ELSE
+		// use internal value - strValue from interface
+		CASE SIf.stService.eValueType OF
+		TYPE_SINT:
+			sinValue := STRING_TO_SINT(SIf.stService.strValue);
+			fbEcCoeSdoWrite.pSrcBuf		:= ADR(sinValue);
+			fbEcCoeSdoWrite.cbBufLen	:= SIZEOF(sinValue);
+		TYPE_INT:
+			intValue := STRING_TO_INT(SIf.stService.strValue);
+			fbEcCoeSdoWrite.pSrcBuf		:= ADR(intValue);
+			fbEcCoeSdoWrite.cbBufLen	:= SIZEOF(intValue);
+		TYPE_DINT:
+			dinValue := STRING_TO_DINT(SIf.stService.strValue);
+			fbEcCoeSdoWrite.pSrcBuf		:= ADR(dinValue);
+			fbEcCoeSdoWrite.cbBufLen	:= SIZEOF(dinValue);
+		TYPE_USINT:
+			usiValue := STRING_TO_USINT(SIf.stService.strValue);
+			fbEcCoeSdoWrite.pSrcBuf		:= ADR(usiValue);
+			fbEcCoeSdoWrite.cbBufLen	:= SIZEOF(usiValue);
+		TYPE_UINT:
+			uinValue := STRING_TO_UINT(SIf.stService.strValue);
+			fbEcCoeSdoWrite.pSrcBuf		:= ADR(uinValue);
+			fbEcCoeSdoWrite.cbBufLen	:= SIZEOF(uinValue);
+		TYPE_UDINT:
+			udiValue := STRING_TO_UDINT(SIf.stService.strValue);
+			fbEcCoeSdoWrite.pSrcBuf		:= ADR(udiValue);
+			fbEcCoeSdoWrite.cbBufLen	:= SIZEOF(udiValue);
+		TYPE_STRING:
+			fbEcCoeSdoWrite.pSrcBuf		:= ADR(SIf.stService.strValue);
+			fbEcCoeSdoWrite.cbBufLen	:= SIZEOF(SIf.stService.strValue);
+		ELSE
+			SIf.stErr.dwoErrorID:=4104; // type not supported until now!!!!
+		END_CASE
+	END_IF;
+
+	// write value
+	fbEcCoeSdoWrite.bExecute := TRUE;
+	fbEcCoeSdoWrite();
+	
+	IF (fbEcCoeSdoWrite.bBusy=FALSE) THEN
+		SIf.intServiceCmd := cPOD_CMD_DONE;
+	ELSIF (fbEcCoeSdoWrite.bError)	THEN
+		SIf.intServiceCmd := cPOD_CMD_DONE;
+		SIf.stErr.dwoErrorID := fbEcCoeSdoWrite.nErrId;
+		stStateMachine.intStateNext := cPOD_STA_Error;
+	ELSIF (SIf.stErr.dwoErrorID=4104)	THEN// type not supported until now!!!!
+		SIf.intServiceCmd := cPOD_CMD_DONE;
+		stStateMachine.intStateNext := cPOD_STA_Error;
+	END_IF
+
+
+(*
+This write command is only allowed with predefined values.....
+IF (SIf.stService.bolHandleBoolValue) THEN
+	// write bool value
+	fbMCWriteBoolParameter.ParameterNumber := SIf.stService.intParameterNumber;
+	fbMCWriteBoolParameter.Value := SIf.stService.bolValue;
+	fbMCWriteBoolParameter.Execute := TRUE;
+	fbMCWriteBoolParameter(Axis := fbAxis);
+	
+	IF (fbMCWriteBoolParameter.Done) THEN
+		SIf.intServiceCmd := cPOD_CMD_DONE;
+	ELSIF (fbMCWriteBoolParameter.Error)	THEN
+		SIf.intServiceCmd := cPOD_CMD_DONE;
+		SIf.stErr.dwoErrorID := fbMCWriteBoolParameter.ErrorID;
+		stStateMachine.intStateNext := cPOD_STA_Error;
+	END_IF
+else
+	// write real value
+	fbMCWriteParameter.ParameterNumber := SIf.stService.intParameterNumber;
+	fbMCWriteParameter.Value := SIf.stService.relValue;
+	fbMCWriteParameter.Execute := TRUE;
+	fbMCWriteParameter(Axis := fbAxis);
+	
+	IF (fbMCWriteParameter.Done) THEN
+		SIf.intServiceCmd := cPOD_CMD_DONE;
+	ELSIF (fbMCWriteParameter.Error)	THEN
+		SIf.intServiceCmd := cPOD_CMD_DONE;
+		SIf.stErr.dwoErrorID := fbMCWriteParameter.ErrorID;
+		stStateMachine.intStateNext := cPOD_STA_Error;
+	END_IF
+END_IF
+*)
+
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_AbsMoveBusy" Id="{f338cde0-b095-43a7-b964-e6cdf75f5843}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_AbsMoveBusy'}
+METHOD PROTECTED sta_AbsMoveBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		bolfpFirstCycleDone := FALSE;
+		
+		IF (SIf.stCfg.bolSimulation) THEN
+			SIf.stStatus.bolInPos := FALSE;
+			fbMcAbsMove.Position := SIf.stMove.lreSetPos;
+		END_IF
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+
+		// Simulation
+		IF (SIf.stCfg.bolSimulation) AND (fbSimTON.Q) THEN
+			IF (ABS(SIf.stMove.lreActPos-fbMcAbsMove.Position)>((fbMcAbsMove.Velocity*udiSimPosTime_ms)/1000)) THEN
+				IF (fbMcAbsMove.Position<SIf.stMove.lreSWLimitPos_mm) AND (SIf.stMove.lreActPos<fbMcAbsMove.Position) THEN
+					SIf.stMove.lreActPos := SIf.stMove.lreActPos + (fbMcAbsMove.Velocity*udiSimPosTime_ms)/1000;
+					SIf.stMove.lreActVel := fbMcAbsMove.Velocity;
+					SIf.stStatus.bolInPos := FALSE;
+				ELSIF (fbMcAbsMove.Position>SIf.stMove.lreSWLimitNeg_mm) AND (SIf.stMove.lreActPos>fbMcAbsMove.Position) THEN
+					SIf.stMove.lreActPos := SIf.stMove.lreActPos - (fbMcAbsMove.Velocity*udiSimPosTime_ms)/1000;
+					SIf.stMove.lreActVel := fbMcAbsMove.Velocity;
+					SIf.stStatus.bolInPos := FALSE;
+				ELSE
+					SIf.stMove.lreActPos := fbMcAbsMove.Position;
+					SIf.stMove.lreActVel := 0;
+					SIf.stStatus.bolInPos := TRUE;
+				END_IF
+			ELSE
+				SIf.stMove.lreActPos := fbMcAbsMove.Position;
+				SIf.stMove.lreActVel := 0;
+				SIf.stStatus.bolInPos := TRUE;
+			END_IF
+		END_IF
+
+		// No change action
+		//MC_MoveVelocity starts a continuous movement with specified velocity and direction. The movement can be stopped through a Stop command.
+		IF (SIf.stMove.lreSetSpeed>0) THEN
+			fbMcAbsMove.Velocity := SIf.stMove.lreSetSpeed;
+		ELSE
+			fbMcAbsMove.Velocity := stAxisParameter.fVeloMaximum/10; // standard max / 10 Maximum travel velocity (>0).
+		END_IF
+		fbMcAbsMove.Deceleration := SIf.stMove.lreSetDec; //  	Acceleration (≥0). If the value is 0, the standard acceleration from the axis configuration in the System Manager is used.
+		fbMcAbsMove.Acceleration := SIf.stMove.lreSetAcc; //  	Deceleration (≥0). If the value is 0, the standard deceleration from the axis configuration in the System Manager is used.
+		fbMcAbsMove.Jerk := SIf.stMove.lreSetJerk;
+		fbMcAbsMove.Position := SIf.stMove.lreSetPos;
+		fbMcAbsMove.Execute := TRUE;
+		
+		// State Change Condition
+		IF (fbMcAbsMove.Error) AND (bolfpFirstCycleDone) THEN
+			SIf.stErr.dwoErrorID := fbMcAbsMove.ErrorID;
+			stStateMachine.intStateNext := cPOD_STA_Error;
+		ELSIF (SIf.intCmd=cPOD_CMD_STOP) THEN
+			stStateMachine.intStateNext := cPOD_STA_StopBusy;
+		ELSIF (SIf.intCmd<>cPOD_CMD_ABS_MOVE) THEN
+			stStateMachine.intStateNext := cPOD_STA_QStopBusy;
+		ELSIF ((SIf.stCfg.bolSimulation AND SIf.stStatus.bolInPos) OR (fbMcAbsMove.Done)) AND (bolfpFirstCycleDone) THEN
+			IF (SIf.intCmd=cPOD_CMD_ABS_MOVE) THEN
+				SIf.intCmd := cPOD_CMD_DONE;
+			END_IF;
+			stStateMachine.intStateNext := cPOD_STA_WaitForJob;
+		END_IF
+		
+		bolfpFirstCycleDone := TRUE; //at least one call at the end of the FUB needed!
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		fbMcAbsMove.Execute := FALSE;
+		IF (SIf.stCfg.bolSimulation) THEN
+			SIf.stMove.lreActVel := 0;
+		END_IF
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CtrlInit" Id="{fd31d9c7-1fa0-425c-92a3-57a49423f194}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'CtrlInit'}
+METHOD PROTECTED CtrlInit : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SIf.intCmd := cPOD_CMD_DONE;
+SIf.intServiceCmd := cPOD_CMD_DONE; // not used at the moment
+stStateMachine.intStateLastCycle  := cPOD_CMD_DONE; //EntryStop of power BasePLC.OFF enable
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_Error" Id="{ff8a2d7e-acb2-4511-a798-0dc3f4301ae1}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_Error'}
+METHOD PROTECTED sta_Error : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (stStateMachine.intState<>stStateMachine.intStateLastCycle) THEN
+		stStateMachine.intStateHistory := stStateMachine.intStateLastCycle;
+		stStateMachine.intStateLastCycle := stStateMachine.intState;
+		
+		IF (SIf.stErr.bolDriveError) THEN
+			fbEcCoeSdoRead.bExecute := TRUE;
+		ELSIF(SIf.stErr.bolNCError) THEN
+			;
+		ELSE
+			IF (SIf.stErr.dwoErrorID<>0) AND (SIf.stErr.dwoErrorID<>32000) THEN // not hw limit switches!
+				SIf.stErr.bolMCError := TRUE; // error from FUB
+			END_IF
+		END_IF
+		SIf.stErr.bolErrorActive := TRUE;
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (stStateMachine.intState=stStateMachine.intStateLastCycle) THEN
+		
+		// if axis error read out number
+		(* for yaskawa drive no error number get
+			fbMCReadAxisError(Axis := fbAxis);
+		IF (fbMCReadAxisError.Valid=TRUE) AND (fbMCReadAxisError.Enable) THEN
+			fbMCReadAxisError.Enable := FALSE;
+			IF (fbMCReadAxisError.Error) THEN
+				SIf.stErr.dwoErrorID := fbMCReadAxisError.ErrorID;
+			ELSE
+				SIf.stErr.dwoErrorID := fbMCReadAxisError.AxisErrorID;	
+			END_IF
+		END_IF*)
+		
+
+		IF (SIf.stErr.bolDriveError) THEN
+			//fbMCReadAxisError.Enable := TRUE;
+			IF (SIf.stStatus.bolInitOk=FALSE)  THEN
+					fbMCReadDriveAdress.Execute := TRUE;
+				IF (fbMCReadDriveAdress.Done=TRUE) THEN
+					SIf.stStatus.bolInitOk := TRUE; // read ads parameter set done
+				END_IF;
+			ELSE
+				//Error Code (603Fh) - This provides the SGDV SERVOPACK’s alarm/warning code of the last error which occurred in device
+				fbEcCoeSdoRead.sNetId := fbMCReadDriveAdress.DriveAddress.NetID; // This is a string that contains the AMS network identifier of the EtherCAT master device.
+				fbEcCoeSdoRead.nSlaveAddr := fbMCReadDriveAdress.DriveAddress.SlaveAddress; //  Fixed address of the EtherCAT slave to which the SDO download command should be sent.
+				fbEcCoeSdoRead.nSubIndex  := 0;// Sub-index of the object that should be written to.
+				fbEcCoeSdoRead.nIndex  := 16#603F; //UINT Error Code (603Fh) - This provides the SGDV SERVOPACK’s alarm/warning code of the last error which occurred in device
+				fbEcCoeSdoRead.tTimeout := DEFAULT_ADS_TIMEOUT;
+				fbEcCoeSdoRead.pDstBuf:= ADR(uinValue);
+				fbEcCoeSdoRead.cbBufLen	:= SIZEOF(uinValue);
+				
+				fbEcCoeSdoRead();
+				IF (fbEcCoeSdoRead.bBusy=FALSE) THEN
+					fbEcCoeSdoRead.bExecute := FALSE;
+					IF (fbEcCoeSdoRead.bError) THEN
+						SIf.stErr.dwoErrorID := fbEcCoeSdoRead.nErrId;
+					ELSE
+						SIf.stErr.dwoErrorID := UINT_TO_DWORD(uinValue);	
+					END_IF
+				END_IF
+			END_IF;
+		ELSIF(SIf.stErr.bolNCError) THEN
+			SIf.stErr.dwoErrorID := fbAxis.NcToPlc.ErrorCode;
+		END_IF
+		
+		fbMcReset.Execute := SIf.stErr.bolErrAck;
+		
+		// State Change Condition
+		IF (fbMcReset.Done) OR (fbMcReset.Error) OR(SIf.stCfg.bolSimulation) THEN
+			SIf.stErr.dwoErrorID := fbMcReset.ErrorID;
+			SIf.stErr.bolErrAck := FALSE;
+			stStateMachine.intStateNext := cPOD_STA_PowerOff;
+		END_IF
+	END_IF
+
+
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (stStateMachine.intState<>stStateMachine.intStateNext) THEN
+		fbEcCoeSdoRead.bExecute := FALSE;
+		fbEcCoeSdoRead();
+		SIf.stErr.bolErrorActive := FALSE;
+		SIf.stErr.bolMCError := FALSE;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

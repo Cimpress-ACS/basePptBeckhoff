@@ -1,0 +1,753 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="FB_PST" Id="{177fde74-8095-4d5b-83ca-4788bd6cdc14}">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_PST EXTENDS FB_CtrlBase
+VAR_INPUT
+	In_uinBarcodeEvent: UINT;
+	In_ulnBarcode: ULINT;
+	In_bolSensorPaperAtOperatorPos: BOOL;
+	In_bolSensorStopperPosition: BOOL;
+	In_bolSensorInfeed: BOOL;
+	In_bolSensorOutfeed: BOOL;
+END_VAR
+VAR
+	/// Specific interface struct for public access
+	SIf: T_Ctrl_SIf_PST;
+	/// Paper stacker belt
+	p_fbBelt: POINTER TO FB_PTB;
+	pBeltCIf: POINTER TO T_Ctrl_CIf;
+	pBeltSif: POINTER TO T_Ctrl_SIf_PTB;
+	/// Variables for edge detection
+	bolSensorInfeedOld: BOOL;
+	bolSensorOutfeedOld: BOOL;
+	uinStackHightOld: UINT;
+	/// Tmp. Barcode reader data
+	stBarcodeData: T_BCC_Data;
+	/// Retry counter
+	uinRetryCounter: UINT;
+	/// Simulation
+	udiSimTimerPaperInfeedStroke: UDINT;
+	/// Data Channel to saber for paper stack info
+	p_fbPaperStackFifo: POINTER TO FB_DataChannelSenderFifo;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*__________________________________________________________________________________________________
+¦	
+¦	Vistaprint Schweiz GmbH
+¦	CH - 8401 Winterthur
+¦
+¦	www.vistaprint.ch - info@vistaprint.ch
+¦___________________________________________________________________________________________________
+
+Function desription:
+...
+
+History:
+Version		Date			Author		Comment
+---------------------------------------------------------------------------------------------------
+0.00.1		23.06.2014		AVME/DSC	Start history
+___________________________________________________________________________________________________*)
+
+
+SUPER^();
+]]></ST>
+    </Implementation>
+    <Method Name="Always" Id="{02adbe50-8f28-4fec-bdbf-17b6f8690f6e}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Always'}
+METHOD PROTECTED Always : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.Always();
+
+// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	
+	// Simulation
+	// --------------------------------------------
+	IF (CIf.SwCfg.bolSimulation) THEN
+		// Simulate a new paper at infeed
+		IF (me.StateMachine.intState = Base_PLC.cSTA_RUN) AND (me.SubStateMachine.intState = PST_CmdState.cSUB_WAITNEWPAPERDETECTED) AND (me.StateMachine.intState <> PST_CmdState.cSTA_EJECTbusy) THEN
+			IF (udiSimTimerPaperInfeedStroke >= SIf.Par.udiSimTimePaperInfeedStroke_ms) THEN
+				SIf.In.bolSensorInfeed.intern:= TRUE;
+			END_IF
+		ELSE
+			udiSimTimerPaperInfeedStroke:= 0;
+			SIf.In.bolSensorInfeed.intern:= FALSE;		
+		END_IF			
+		// Timer handling
+		udiSimTimerPaperInfeedStroke:= udiSimTimerPaperInfeedStroke + me.FUBInfo.udiSample_ms;
+	ELSE
+		udiSimTimerPaperInfeedStroke:= 0;
+	END_IF
+	
+	
+	// Single paper infeed counting
+	// --------------------------------------------
+	// Inc. stack hight with every pos. edge of infeed sensor 
+	IF (SIf.In.bolSensorInfeed.intern) AND NOT (bolSensorInfeedOld) THEN
+		SIf.Cur.uinStackHight:= SIf.Cur.uinStackHight + 1;
+	END_IF
+	bolSensorInfeedOld:= SIf.In.bolSensorInfeed.intern;
+			
+	// Monitoring of special error conditions
+	// --------------------------------------------
+	
+	// If a new paper is detected at the feeding during the ejection -> Alarm!
+	IF (me.StateMachine.intState = PST_CmdState.cSTA_EJECTbusy) THEN
+		// New paper detected/counted 
+		IF (SIf.Cur.uinStackHight <> uinStackHightOld) AND NOT (SIf.Cur.bolStackIncomplete) THEN
+			SIf.Cur.bolStackIncomplete:= TRUE;
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_PST.NewPaperDetectedDuringEjecting,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		END_IF	
+	END_IF	
+	
+	// If a new paper is detected at the feeding while barcode reading process -> Alarm!				
+	IF (me.StateMachine.intState = Base_PLC.cSTA_RUN) AND (me.SubStateMachine.intState <> PST_CmdState.cSUB_WAITNEWPAPERDETECTED) THEN
+		// New paper detected/counted 
+		IF (SIf.Cur.uinStackHight <> uinStackHightOld) AND NOT (SIf.Cur.bolStackIncomplete) THEN
+			SIf.Cur.bolStackIncomplete:= TRUE;
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_PST.NewPaperDetectedWhileBarcodeReading,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		END_IF
+	END_IF
+			
+END_IF
+
+// ----------------------------------------------------------------------------------
+// Always change actions in Base Library
+// ----------------------------------------------------------------------------------
+// overrule error always from base -> no EOFF State!! in EOFF go to OFF
+IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
+	IF (me.StateMachine.intState=cSTA_OFF) THEN
+		me.StateMachine.intStateNext := cSTA_OFF;
+	ELSE // stay in OFF
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	END_IF
+END_IF
+
+// Conditions Always
+IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_AlmClass.OFF) OR (me.intCmd=cCMD_OFF))
+		 AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) AND
+		(me.StateMachine.intState<>cSTA_OFF) AND (me.StateMachine.intState<>cSTA_OFFBusy) AND (me.StateMachine.intState<>cSTA_SINGLE_ANSWER)) THEN
+	// alarm evt EOFF, OFF or cmd off
+	me.StateMachine.intStateNext := cSTA_OFFBusy;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFF" Id="{0502dbf8-20f9-4117-9703-ff079cb92cdf}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFF'}
+METHOD PROTECTED sta_OFF : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		CIf.Job.intACmd:= Base_PLC.cCMD_DONE;
+		CIf.Job.intMCmd:= Base_PLC.cCMD_DONE;
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		CASE me.intCmd OF
+			
+			// Command RUN	
+			BASE_PLC.cCMD_RUN:
+				IF NOT (SIf.Cur.bolStackIncomplete) THEN
+					me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
+				ELSE
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_PST.NeedsEjectCommand,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+					me.StateMachine.intStateNext := PST_CmdState.cSTA_EJECTbusy;
+				END_IF
+				
+			// Command EJECT	
+			PST_CmdState.cCMD_EJECT:
+				me.StateMachine.intStateNext := PST_CmdState.cSTA_EJECTbusy;
+				
+		END_CASE
+
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="CtrlSIf" Id="{0c1cfe45-643d-4c44-8edd-0ab32bb0d8ca}">
+      <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIf_PST
+]]></Declaration>
+      <Get Name="Get" Id="{367fcd76-9021-4a71-b472-7997d7bdf7c5}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="StateMachine" Id="{0c9bebeb-261c-42ce-a825-4fdd856d80d2}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
+METHOD PROTECTED StateMachine : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.StateMachine();
+
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+    BASE_PLC.cSTA_RUN: 
+        THIS^.sta_RUN();
+    BASE_PLC.cSTA_RUNBusy: 
+        THIS^.sta_RUNBusy();
+	PST_CmdState.cSTA_EJECTbusy:
+        THIS^.sta_EJECTBusy();
+END_CASE;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="IoInBridge" Id="{25b53e86-9014-49d6-a156-cfd766df56aa}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'IoInBridge'}
+METHOD PROTECTED IoInBridge : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
+SIf.In.bolSensorPaperAtOperatorPos.map := THIS^.In_bolSensorPaperAtOperatorPos;
+SIf.In.bolSensorStopperPosition.map := THIS^.In_bolSensorStopperPosition;
+SIf.In.bolSensorInfeed.map := THIS^.In_bolSensorInfeed;
+SIf.In.bolSensorOutfeed.map := THIS^.In_bolSensorOutfeed;
+
+IF (CIf.SwCfg.bolSimulation = FALSE) THEN
+	getInBolDebounced(CIf.Job.bolIoForce,me.FUBInfo.udiSample_ms, sif.Par.udiPaperAtOpPosDebounceTime_ms,  ADR(SIf.In.bolSensorPaperAtOperatorPos));
+	getInBolDebounced(CIf.Job.bolIoForce,me.FUBInfo.udiSample_ms, sif.Par.udiStopperPosDebounceTime_ms,  ADR(SIf.In.bolSensorStopperPosition));	
+	getInBolDebounced(CIf.Job.bolIoForce,me.FUBInfo.udiSample_ms, sif.Par.udiSensorOutfeedDebounceTime_ms, ADR(SIf.In.bolSensorOutfeed));
+	getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolSensorInfeed));
+ELSE
+	;//simulation of global IO
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_RUN" Id="{2819f36e-4401-40c0-a2d2-886f7acb3f3a}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_RUN'}
+METHOD PROTECTED sta_RUN : BOOL
+VAR
+	pItemPaperInfo: POINTER TO T_ItemPaperInfo;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	// Initialize sub state machine
+	me.SubStateMachine.intState:= PST_CmdState.cSUB_WAITNEWPAPERDETECTED; 
+	me.SubStateMachine.intStateNext:= PST_CmdState.cSUB_WAITNEWPAPERDETECTED;	
+END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+IF (me.StateMachine.intState = me.StateMachine.intStateLastCycle) THEN
+	
+	// -------------------------------------------------------------------------------
+	// Sub state machine for reading barcode and make decision for ejecting the stack
+	// -------------------------------------------------------------------------------
+	CASE me.SubStateMachine.intState OF
+	
+		// Wait until new paper was detected at stacker infeed position
+		PST_CmdState.cSUB_WAITNEWPAPERDETECTED:
+		
+			// New paper detected/counted 
+			IF (SIf.Cur.uinStackHight <> uinStackHightOld) THEN
+				uinStackHightOld:= SIf.Cur.uinStackHight;
+				
+				IF SIf.Cfg.bolEnablePstEjectControl THEN
+					me.SubStateMachine.intStateNext := PST_CmdState.cSUB_CHECKEJECTCONDITIONS;
+				END_IF
+			END_IF
+		
+			CASE me.intCmd OF
+				// Command EJECT	
+				PST_CmdState.cCMD_EJECT:
+					me.StateMachine.intStateNext := PST_CmdState.cSTA_EJECTbusy;
+			END_CASE
+
+		// Check the eject conditions after successful read
+		PST_CmdState.cSUB_CHECKEJECTCONDITIONS:
+		
+			// Check if the stack hight is reached and last barcode ID is right
+			IF (SIf.Cur.uinStackHight = SIf.Par.uinStackHight) AND (stBarcodeData.uliBarCode = SIf.Par.uliLastBarCodeInStack) THEN
+				// Stack complete!
+				// New job can be sent by saber!
+//				SIf.Par.uinStackHight:= 0;
+				SIf.Par.uliLastBarCodeInStack:= 0;
+				// Done -> EJECT stack
+				me.SubStateMachine.intStateNext := PST_CmdState.cSUB_DONE;
+			ELSE
+				// Stack not complete -> wait for next paper
+				me.SubStateMachine.intStateNext := PST_CmdState.cSUB_WAITNEWPAPERDETECTED;
+			END_IF
+		
+			// Error conditions
+			// -------------------------
+			
+			// Stack hight is reached but last barcode ID is not right!
+			IF (SIf.Cur.uinStackHight = SIf.Par.uinStackHight) AND (stBarcodeData.uliBarCode <> SIf.Par.uliLastBarCodeInStack) THEN				
+				SIf.Cur.bolStackIncomplete:= TRUE;
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_PST.StackOkButLastCodeNotRight,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			END_IF
+		
+			// Stack hight is not reached but last barcode ID is right!
+			IF (SIf.Cur.uinStackHight <> SIf.Par.uinStackHight) AND (stBarcodeData.uliBarCode = SIf.Par.uliLastBarCodeInStack) THEN
+				SIf.Cur.bolStackIncomplete:= TRUE;
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_PST.StackNotOkButLastCodeRight,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			END_IF
+
+		// All done
+		PST_CmdState.cSUB_DONE:
+			me.StateMachine.intStateNext := PST_CmdState.cSTA_EJECTbusy;	
+			
+	END_CASE	
+
+END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Exit action
+IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+	;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCmdState" Id="{3823c242-0675-4620-ae8e-dedee287a1e5}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
+METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime
+	IF (bolState=FALSE) THEN
+		CASE intCmdState OF
+			PST_CmdState.cCMD_EJECT:
+				getCmdState := 'EJECT';
+		END_CASE;
+	ELSE
+		// States's
+		CASE intCmdState OF
+			PST_CmdState.cSTA_EJECTbusy: 
+				getCmdState := 'EJECTbusy';
+			
+			// sub states	
+			PST_CmdState.cSUB_WAITNEWPAPERDETECTED: 
+				getCmdState := 'WAITNEWPAPERDETECTED';	
+			PST_CmdState.cSUB_DELAYREADBARCODEBusy: 
+				getCmdState := 'DELAYREADBARCODEBusy';	
+			PST_CmdState.cSUB_RETRYREADBARCODE: 
+				getCmdState := 'RETRYREADBARCODE';	
+			PST_CmdState.cSUB_READBARCODEbusy: 
+				getCmdState := 'READBARCODEbusy';	
+			PST_CmdState.cSUB_CHECKEJECTCONDITIONS: 
+				getCmdState := 'CHECKEJECTCONDITIONS';	
+			
+			PST_CmdState.cSUB_DELAYSTACKEJECTBusy: 
+				getCmdState := 'DELAYSTACKEJECTBusy';	
+			PST_CmdState.cSUB_MOVEBELTEJECTDIRECTIONBusy: 
+				getCmdState := 'MOVEBELTEJECTDIRECTIONBusy';	
+			PST_CmdState.cSUB_STOPBELTBusy: 
+				getCmdState := 'STOPBELTBusy';	
+			PST_CmdState.cSUB_WAITBEFOREMOVINGREVERSE: 
+				getCmdState := 'WAITBEFOREMOVINGREVERSE';	
+			PST_CmdState.cSUB_MOVEBELTREVERSEBusy: 
+				getCmdState := 'MOVEBELTREVERSEBusy';		
+										
+			PST_CmdState.cSUB_DONE: 
+				getCmdState := 'DONE';	
+		END_CASE;
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_OFFBusy" Id="{46ae3c8b-2056-4bef-a480-b5afe2859c54}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFFBusy'}
+METHOD PROTECTED sta_OFFBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	
+		IF (p_fbPaperStackFifo <> TC3_MEMMAN.NULL) THEN
+			// Enable data channel
+			p_fbPaperStackFifo^.Enable := SIf.Cfg.bolEnableDataChannel;
+			// Clear buffer
+			p_fbPaperStackFifo^.ClearFifo();
+		END_IF
+		
+		// Childs off
+		p_fbBelt^.CtrlCIf^.Job.intACmd := BASE_PLC.cCMD_OFF;
+	
+		// In case of an OFF command or alarm, check if the stack is incomplete. 
+		// Only check if min. stack hight of 1 paper is set by saber
+		IF (SIf.Cur.uinStackHight <> SIf.Par.uinStackHight) AND (SIf.Par.uinStackHight >= 1) AND NOT (SIf.Cur.bolStackIncomplete) THEN
+			// Stack incomplete! Saber has to send an eject command before next RUN.
+			SIf.Cur.bolStackIncomplete:= TRUE;
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_PST.StackIncomplete,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		ELSE
+			// ... do nothing, normal scenario!		
+		END_IF
+	
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		IF (p_fbBelt^.CtrlCIf^.Job.intState = BASE_PLC.cSTA_OFF)  THEN 
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFF;
+		END_IF	
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_EJECTBusy" Id="{4881b1de-4f65-48cf-aaa1-07c89ae3b9ba}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_EJECTBusy'}
+METHOD PROTECTED sta_EJECTBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		CIf.Job.intACmd:= Base_PLC.cCMD_DONE;
+		CIf.Job.intMCmd:= Base_PLC.cCMD_DONE;
+		
+		// Initialize sub state machine
+		me.SubStateMachine.intState:= PST_CmdState.cSUB_DELAYSTACKEJECTBusy; 
+		me.SubStateMachine.intStateNext:= PST_CmdState.cSUB_DELAYSTACKEJECTBusy;	
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+			
+		// ---------------------------------------------------------
+		// Sub state machine for handling ejecting the paper stack
+		// ---------------------------------------------------------
+		CASE me.SubStateMachine.intState OF
+		
+			// Wait before moving in eject direction
+			PST_CmdState.cSUB_DELAYSTACKEJECTBusy:
+				// Entry action
+				IF (me.SubStateMachine.intState<>me.SubStateMachine.intStateLastCycle) THEN
+					me.SubStateMachine.intStateLastCycle := me.SubStateMachine.intState;		
+				END_IF
+			
+				// Wait X time before starting the belt
+				IF (me.SubStateMachine.udiTimeInState_ms >= SIf.Par.udiStackEjectDelayTime_ms) THEN
+					// Start the belt
+					pBeltSif^.Par.intDirection := SIf.Cfg.usiEjectingDirection;
+					pBeltSif^.Par.rBeltParam.uinBeltSpeed:= SIf.Par.uinBeltEjectSpeed_mmsec;					
+					p_fbBelt^.CIf.Job.intACmd:= cCMD_RUN;
+					me.SubStateMachine.intStateNext := PST_CmdState.cSUB_MOVEBELTEJECTDIRECTIONBusy;	
+				END_IF
+				
+			// Belt is moving in eject direction
+			PST_CmdState.cSUB_MOVEBELTEJECTDIRECTIONBusy:
+				// Entry action
+				IF (me.SubStateMachine.intState<>me.SubStateMachine.intStateLastCycle) THEN
+					me.SubStateMachine.intStateLastCycle := me.SubStateMachine.intState;		
+				END_IF
+				
+				// Simulation
+				// --------------------------------------------
+				IF (CIf.SwCfg.bolSimulation) THEN
+					// stopper is in down position
+					SIf.In.bolSensorStopperPosition.intern:= FALSE;
+				END_IF
+		
+				// Wait until stack ejecting time expired and stopper is in down position
+				IF (me.SubStateMachine.udiTimeInState_ms >= SIf.Par.udiStackEjectingTime_ms) AND (NOT SIf.In.bolSensorStopperPosition.intern) THEN
+					// Wait until paper stack has left outfeed sensor position
+					IF NOT (SIf.In.bolSensorOutfeed.intern) THEN
+						// Stop belt
+						p_fbBelt^.Cif.Job.intACmd:= cCMD_STOP;
+						me.SubStateMachine.intStateNext := PST_CmdState.cSUB_STOPBELTBusy;
+					END_IF	
+				END_IF
+		
+			// Wait before moving in reverse direction
+			PST_CmdState.cSUB_WAITBEFOREMOVINGREVERSE:
+				// Entry action
+				IF (me.SubStateMachine.intState<>me.SubStateMachine.intStateLastCycle) THEN
+					me.SubStateMachine.intStateLastCycle := me.SubStateMachine.intState;		
+				END_IF
+				
+				// Wait X time before starting the belt in reverse direction
+				IF (me.SubStateMachine.udiTimeInState_ms >= SIf.Par.udiBeltReverseDelayTime_ms) THEN
+					// Start the belt
+					pBeltSif^.Par.intDirection := SIf.Cfg.usiReverseDirection;
+					pBeltSif^.Par.rBeltParam.uinBeltSpeed:= SIf.Par.uinBeltReverseSpeed_mmsec;
+					p_fbBelt^.Cif.Job.intACmd:= cCMD_RUN;
+					me.SubStateMachine.intStateNext := PST_CmdState.cSUB_MOVEBELTREVERSEBusy;	
+				END_IF
+				
+			// Belt is moving in reverse direction
+			PST_CmdState.cSUB_MOVEBELTREVERSEBusy:
+				// Entry action
+				IF (me.SubStateMachine.intState<>me.SubStateMachine.intStateLastCycle) THEN
+					me.SubStateMachine.intStateLastCycle := me.SubStateMachine.intState;		
+				END_IF
+				
+				// Simulation
+				// --------------------------------------------
+				IF (CIf.SwCfg.bolSimulation) THEN
+					// stopper is in down position
+					SIf.In.bolSensorStopperPosition.intern:= TRUE;
+				END_IF
+			
+				// Wait until stopper is in up position
+				IF (SIf.In.bolSensorStopperPosition.intern) THEN
+					// Stop belt
+					p_fbBelt^.Cif.Job.intACmd:= cCMD_STOP;
+					me.SubStateMachine.intStateNext := PST_CmdState.cSUB_STOPBELTBusy;	
+				END_IF
+					
+			// Stop belt busy
+			PST_CmdState.cSUB_STOPBELTBusy:
+				
+				// Wait until belt stopped
+				IF (p_fbBelt^.Cif.Job.intState = Base_PLC.cSTA_STOP) THEN
+					// Decision dependent last cycle state
+					IF (me.SubStateMachine.intStateLastCycle = PST_CmdState.cSUB_MOVEBELTEJECTDIRECTIONBusy) THEN
+						// Go on with wait before moving reverse
+						me.SubStateMachine.intStateNext := PST_CmdState.cSUB_WAITBEFOREMOVINGREVERSE;
+					ELSE	
+						// Done
+						me.SubStateMachine.intStateNext := PST_CmdState.cSUB_DONE;
+					END_IF
+				END_IF
+				
+			// All done
+			PST_CmdState.cSUB_DONE:
+				// Entry action
+				IF (me.SubStateMachine.intState<>me.SubStateMachine.intStateLastCycle) THEN
+					me.SubStateMachine.intStateLastCycle := me.SubStateMachine.intState;		
+				END_IF
+
+				SIf.Par.uinStackHight:= 0;
+				// Update counter stacks ejected total
+				SIf.Cur.udiNumOfStacksEjectedTotal:= SIf.Cur.udiNumOfStacksEjectedTotal + 1;
+				// Back to RUN!
+				me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;	
+				
+		END_CASE	
+	
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCtrlSIf" Id="{73e3e1ff-7e5b-4a2f-be8b-55b712b80a98}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
+METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_PST
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CtrlInit" Id="{83e3bb31-e4dc-4af4-878f-f9306253a81b}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'CtrlInit'}
+METHOD CtrlInit : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.CtrlInit();
+
+pBeltCIf := p_fbBelt^.CtrlCIf;
+pBeltSIf := p_fbBelt^.getCtrlSIf();
+
+AddChild(p_fbBelt^);
+
+// Initialize stack buffer
+IF (p_fbPaperStackFifo <> TC3_MEMMAN.NULL) THEN
+	p_fbPaperStackFifo^.FreeDataPointer := TRUE;
+	p_fbPaperStackFifo^.Enable := TRUE;
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="Belt" Id="{95ad694d-5961-4efd-baa0-b4236677284f}">
+      <Declaration><![CDATA[PROPERTY Belt : POINTER TO FB_PTB
+]]></Declaration>
+      <Get Name="Get" Id="{18cb5851-8e55-46b8-8da0-7393b475d70d}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Belt := p_fbBelt;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{27964d54-4e7e-405d-bdd0-170c3547a199}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[p_fbBelt := Belt;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Method Name="sta_RUNBusy" Id="{b026e36e-9104-4b3f-ac49-5f4acb583f92}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_RUNBusy'}
+METHOD PROTECTED sta_RUNBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+//--------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		CIf.Job.intACmd:= Base_PLC.cCMD_DONE;
+		CIf.Job.intMCmd:= Base_PLC.cCMD_DONE;
+		// Clear stack hight
+		SIf.Cur.uinStackHight:= 0;
+		uinStackHightOld:= 0;		
+	END_IF
+
+
+//--------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		IF (TRUE) THEN
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_RUN;
+		END_IF
+		
+	END_IF
+
+//--------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="FB_init" Id="{cec5de92-8e9c-41e7-97fc-a80349787823}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'FB_init'}
+METHOD FB_init : BOOL
+VAR_INPUT
+	/// if TRUE, the retain variables are initialized (warm start / cold start)
+	bInitRetains: BOOL;
+	/// if TRUE, the instance afterwards gets moved into the copy code (online change)
+	bInCopyCode: BOOL;
+END_VAR
+VAR
+	iIdx: UINT;
+	iLength: UINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
+// to manually change in new FUB implementation!!!
+// define valid commands for this controller
+iLength := SIZEOF(CIf.Job.aCmdList)/SIZEOF(CIf.Job.aCmdList[0]);
+iIdx := 0;
+
+WHILE (iIdx < iLength) AND (CIf.Job.aCmdList[iIdx].intCmd <> cCMD_INITIALIZED) DO
+	iIdx := iIdx + 1; 
+END_WHILE
+
+IF (iIdx < iLength) THEN
+// Add configuration of own comands	
+	CIf.Job.aCmdList[iIdx].intCmd := BASE_PLC.cCMD_RUN;
+	CIf.Job.aCmdList[iIdx].strName := 'RUN'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+	iIdx := iIdx + 1;
+	CIf.Job.aCmdList[iIdx].intCmd := PST_CmdState.cCMD_EJECT;
+	CIf.Job.aCmdList[iIdx].strName := 'EJECT'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+ELSE
+	// Error if the aCmdList Array is to small
+END_IF
+
+// set name of class/typ
+CIf.Info.strType := 'FB_PST'; 
+
+// set alarm class
+
+SIf.Alm[E_ALM_PST.StackIncomplete].eAlmClass := Base_PLC.E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_PST.StackIncomplete].strText := 'Stack incomplete. Stacker was sent to OFF before finishing the job!';
+SIf.Alm[E_ALM_PST.NeedsEjectCommand].eAlmClass := Base_PLC.E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_PST.NeedsEjectCommand].strText := 'Last job was incomplete. Stacker waits for an eject command!';
+SIf.Alm[E_ALM_PST.StackOkButLastCodeNotRight].eAlmClass := Base_PLC.E_AlmClass.OFF;
+SIf.Alm[E_ALM_PST.StackOkButLastCodeNotRight].strText := 'Stack hight is reached but last barcode ID is not right!';
+SIf.Alm[E_ALM_PST.StackNotOkButLastCodeRight].eAlmClass := Base_PLC.E_AlmClass.OFF;
+SIf.Alm[E_ALM_PST.StackNotOkButLastCodeRight].strText := 'Stack hight is not reached but last barcode ID is right!';
+SIf.Alm[E_ALM_PST.ReadingBarcodeFailedAfterXRetries].eAlmClass := Base_PLC.E_AlmClass.OFF;
+SIf.Alm[E_ALM_PST.ReadingBarcodeFailedAfterXRetries].strText := 'Reading barcode failed after X retries!';
+SIf.Alm[E_ALM_PST.NewPaperDetectedDuringEjecting].eAlmClass := Base_PLC.E_AlmClass.OFF;
+SIf.Alm[E_ALM_PST.NewPaperDetectedDuringEjecting].strText := 'New paper detected during ejecting is in process!';
+SIf.Alm[E_ALM_PST.NewPaperDetectedWhileBarcodeReading].eAlmClass := Base_PLC.E_AlmClass.OFF;
+SIf.Alm[E_ALM_PST.NewPaperDetectedWhileBarcodeReading].strText := 'New paper detected while barcode reading is in process!';
+
+//*******************************************************************************
+// initial values
+//*******************************************************************************
+
+// software configuration
+CIf.SwCfg.bolExist := TRUE;
+CIf.SwCfg.bolEnable := TRUE;
+CIf.SwCfg.bolSimulation := FALSE;
+
+// Configuration
+SIf.Cfg.bolEnableDataChannel:= FALSE;
+SIf.Cfg.uinNumOfRetryRead:= 3;
+SIf.Cfg.usiEjectingDirection:= E_BELT_DIRECTION.FORWARD; // Right
+SIf.Cfg.usiReverseDirection:= E_BELT_DIRECTION.BACKWARD; // Left
+SIf.Cfg.bolEnablePstEjectControl := FALSE;
+
+// parameter
+SIf.Par.uinStackHight:= 0;
+SIf.Par.uliLastBarCodeInStack:= 0;
+
+SIf.Par.uinBeltReverseSpeed_mmsec:= 250; 
+SIf.Par.uinBeltEjectSpeed_mmsec:= 300;
+SIf.Par.udiPaperAtOpPosDebounceTime_ms:= 1000;
+SIf.Par.udiStopperPosDebounceTime_ms:= 1000;
+SIf.Par.udiSensorOutfeedDebounceTime_ms:= 1000;
+SIf.Par.udiStackEjectDelayTime_ms:= 1000;
+SIf.Par.udiBeltReverseDelayTime_ms:= 1000;
+SIf.Par.udiStackEjectingTime_ms:= 4000;
+SIf.Par.udiBarcodeReaderTriggerDelayTime_ms:= 1500;
+SIf.Par.udiSimTimePaperInfeedStroke_ms:= 5000;
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="PaperStackSendFifo" Id="{d90bdce1-ef31-43d2-a23a-6138aee95c37}">
+      <Declaration><![CDATA[PROPERTY PaperStackSendFifo : POINTER TO FB_DataChannelSenderFifo
+]]></Declaration>
+      <Set Name="Set" Id="{163812f0-92a7-4dbc-a481-c110b87704c3}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[p_fbPaperStackFifo := PaperStackSendFifo;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

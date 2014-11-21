@@ -1,0 +1,51 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <POU Name="cycle_Pce" Id="{6240b20a-42f7-491c-b89e-552a518d787f}">
+    <Declaration><![CDATA[FUNCTION cycle_Pce : BOOL
+VAR_INPUT
+	pPce: POINTER TO T_PCE;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[pPce^.ctrl.fbPce_PtbIn_Umc.In_bolEmoOk				:= pPce^.io.In_bolUmcIn_EmoOk;
+pPce^.ctrl.fbPce_PtbIn_Umc.In_uinStatus				:= pPce^.io.In_uinUmcIn_Status;
+pPce^.ctrl.fbPce_PtbIn_Umc.In_intMotorActualSpeed	:= pPce^.io.In_uinUmcIn_ActualSpeed;
+pPce^.ctrl.fbPce_PtbIn_Umc.In_uinMotorSetSpeed		:= pPce^.io.In_uinUmcIn_SetSpeed;
+pPce^.ctrl.fbPce_PtbIn_Umc.In_uinECATState			:= pPce^.io.In_uinUmcIn_ECatState;
+pPce^.ctrl.fbPce_PtbIn_Umc.In_strNetId				:= pPce^.io.In_strUmcIn_ECatNetId;
+pPce^.ctrl.fbPce_PtbIn_Umc.In_uintPort				:= pPce^.io.In_uinUmcIn_ECatPort;
+pPce^.ctrl.fbPce_PtbIn_Umc();
+pPce^.io.Out_uinUmcIn_SetSpeed						:= pPce^.ctrl.fbPce_PtbIn_Umc.Out_uinSpeedSetpoint;
+pPce^.io.Out_uinUmcIn_Control						:= pPce^.ctrl.fbPce_PtbIn_Umc.Out_uinControl;
+
+pPce^.ctrl.fbPce_PtbIn_Vpc.In_bolPumpOk				:= pPce^.io.In_bolVpc_PumpOk;
+pPce^.ctrl.fbPce_PtbIn_Vpc.In_bolVacuumOk			:= pPce^.io.In_bolVpc_VacuumSensor;
+pPce^.ctrl.fbPce_PtbIn_Vpc();
+pPce^.io.Out_bolVpc_PumpOn							:= pPce^.ctrl.fbPce_PtbIn_Vpc.Out_bolVaccumPumpOn;
+
+pPce^.ctrl.fbPce_PtbIn.In_bolBeltEntrySensor		:= pPce^.io.In_bolInputSensor;
+pPce^.ctrl.fbPce_PtbIn.In_bolBeltExitSensor			:= pPce^.io.In_bolCornerSensor;
+pPce^.ctrl.fbPce_PtbIn();
+
+pPce^.ctrl.fbPce_PtbOut_Umc.In_bolEmoOk				:= pPce^.io.In_bolUmcIn_EmoOk;
+pPce^.ctrl.fbPce_PtbOut_Umc.In_uinStatus			:= pPce^.io.In_uinUmcOut_Status;
+pPce^.ctrl.fbPce_PtbOut_Umc.In_intMotorActualSpeed	:= pPce^.io.In_uinUmcOut_ActualSpeed;
+pPce^.ctrl.fbPce_PtbOut_Umc.In_uinMotorSetSpeed		:= pPce^.io.In_uinUmcOut_SetSpeed;
+pPce^.ctrl.fbPce_PtbOut_Umc.In_uinECATState			:= pPce^.io.In_uinUmcOut_ECatState;
+pPce^.ctrl.fbPce_PtbOut_Umc.In_strNetId				:= pPce^.io.In_strUmcOut_ECatNetId;
+pPce^.ctrl.fbPce_PtbOut_Umc.In_uintPort				:= pPce^.io.In_uinUmcOut_ECatPort;
+pPce^.ctrl.fbPce_PtbOut_Umc();
+pPce^.io.Out_uinUmcOut_SetSpeed						:= pPce^.ctrl.fbPce_PtbOut_Umc.Out_uinSpeedSetpoint;
+pPce^.io.Out_uinUmcOut_Control						:= pPce^.ctrl.fbPce_PtbOut_Umc.Out_uinControl;
+
+pPce^.ctrl.fbPce_PtbOut.In_bolBeltEntrySensor		:= pPce^.io.In_bolCornerSensor;
+pPce^.ctrl.fbPce_PtbOut.In_bolBeltExitSensor		:= pPce^.io.In_bolOutputSensor;
+pPce^.ctrl.fbPce_PtbOut();
+
+pPce^.ctrl.fbPce.In_bolPaperAvailable				:=pPce^.io.In_bolCornerSensor;
+pPce^.ctrl.fbPce();
+pPce^.io.Out_bolVacuumValveIn						:= pPce^.ctrl.fbPce.Out_bolVacuumValveIn;
+pPce^.io.Out_bolVacuumValveOut						:= pPce^.ctrl.fbPce.Out_bolVacuumValveOut;]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

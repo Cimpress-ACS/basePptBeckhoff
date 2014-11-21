@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_PTS_ID" Id="{dcb242cc-f298-470a-9b98-0ee1351b7af7}">
+    <Declaration><![CDATA[TYPE T_PTS_ID :
+STRUCT
+	Pts				: INT;
+	Pts_Ptb			: INT;
+	Pts_Ptb_Umc		: INT;
+	Pts_Ptb_Vpc		: INT;
+	Pts_Mdc			: INT;
+	Pts_Mdc_Umc		: INT;
+	/// New Servo Drive PLC opend driver
+	Pts_RAX_POD		: INT;
+	/// New Servo Drive
+	Pts_RAX			: INT;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>
