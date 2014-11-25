@@ -642,8 +642,7 @@ END_VAR
 VAR
 	iIdx: UINT;
 	iLength: UINT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
 // to manually change in new FUB implementation!!!
@@ -677,7 +676,8 @@ ELSE
 END_IF
 
 // set name of class/typ
-CIf.Info.strType := 'FB_PBC'; 
+CIf.Info.strType := 'FB_PBC';
+CIf.Info.strFullName := 'Paper Buffer Controller';
 
 // set alarm class
 SIf.Alm[E_ALM_PBC.BufferEmpty].eAlmClass := Base_PLC.E_AlmClass.WARNING;

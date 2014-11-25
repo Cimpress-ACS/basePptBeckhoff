@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.24">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
   <POU Name="FB_PTB" Id="{655f278b-e80b-449e-a7e9-7932049a4287}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_PTB EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -160,8 +160,7 @@ END_VAR
 VAR
 	iIdx		: UINT;
 	iLength		: UINT;	
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
 // to manually change in new FUB implementation!!!
@@ -195,10 +194,10 @@ ELSE
 END_IF
 
 // set name of class/typ
-CIf.Info.strType := 'FB_PTB'; 
+CIf.Info.strType := 'FB_PTB';
+CIf.Info.strFullName := 'Paper Transport Belt';
 
 // set alarm class
-
 SIf.Alm[E_ALM_PTB.TestAlarm].eAlmClass := Base_PLC.E_AlmClass.TSTOP;
 SIf.Alm[E_ALM_PTB.TestAlarm].strText := 'Baum' ;
 

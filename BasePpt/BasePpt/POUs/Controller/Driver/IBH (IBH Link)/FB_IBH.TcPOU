@@ -583,8 +583,7 @@ VAR_INPUT
 END_VAR
 VAR
 	uiIdx: UINT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
 // to manually change in new FUB implementation!!!
@@ -615,6 +614,7 @@ CIf.Job.aCmdList[uiIdx].bolAvailable := TRUE;
 
 // set name of class/typ
 CIf.Info.strType := 'FB_IBH';
+CIf.Info.strFullName := 'IBH Link';
 
 //*******************************************************************************
 // initial values

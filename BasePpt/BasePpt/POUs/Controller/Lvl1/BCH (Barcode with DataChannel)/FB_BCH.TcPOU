@@ -320,8 +320,7 @@ END_VAR
 VAR
 	iIdx: UINT;
 	iLength: UINT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// ------------------------------------------------------------------------------------------------------------------------
 // to manually change in new FUB implementation!!!
@@ -348,7 +347,8 @@ ELSE
 END_IF
 
 // set name of class/typ
-CIf.Info.strType := 'FB_BCH'; 
+CIf.Info.strType := 'FB_BCH';
+CIf.Info.strFullName := 'Barcode with DataChannel';
 
 // set alarm class
 SIf.Alm[E_ALM_BCH.DataChannelMissing].eAlmClass := E_AlmClass.TSTOP;

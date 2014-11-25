@@ -435,8 +435,7 @@ END_VAR
 VAR
 	iIdx: UINT;
 	iLength: UINT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
 // to manually change in new FUB implementation!!!
@@ -470,7 +469,8 @@ ELSE
 END_IF
 
 // set name of class/typ
-CIf.Info.strType := 'FB_PTS'; 
+CIf.Info.strType := 'FB_PTS';
+CIf.Info.strFullName := 'Paper Turning Station';
 
 // set alarm class
 SIf.Alm[E_ALM_PTS.PaperTransport].eAlmClass := E_AlmClass.TSTOP;
