@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="E_ALM_GRN" Id="{2ddd3ec5-985c-4274-8386-49a72f6ef000}">
+    <Declaration><![CDATA[TYPE E_ALM_GRN :
+(
+	NONE := 1,
+	SystemError := 2,
+	MainPressureError := 3,
+	EoffOrFuseError := 4,
+	LowPowderWarning := 5,
+	ManualOperationWarning := 6,
+	MAX_E_ALM_GRN
+) UINT;
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

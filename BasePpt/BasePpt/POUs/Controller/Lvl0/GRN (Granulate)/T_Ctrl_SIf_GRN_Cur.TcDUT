@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+  <DUT Name="T_Ctrl_SIf_GRN_Cur" Id="{870c1da3-b9c3-4c46-8548-558c22626437}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_GRN_Cur :
+STRUCT
+END_STRUCT
+END_TYPE
+]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>
