@@ -14,12 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.26</ProjectVersion>
+    <ProjectVersion>0.0.0.27</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.26 - Added RAX, POD, TCP, PST
-	Updated PBC, PTS
+    <Description>0.0.0.27 - added strFullName
+0.0.0.26 - Added RAX, POD, TCP, PST, Updated PBC, PTS
 0.0.0.25 - Added the newest Base + Elements + TC 3.1 4016.6
 0.0.0.24 - Added the newest Base + Elements
 0.0.0.23 - Updated to TwinCat 4016.5
@@ -791,6 +791,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Utility\LookupTable\LUT_Constants.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Version\Global_Version.TcGVL">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
