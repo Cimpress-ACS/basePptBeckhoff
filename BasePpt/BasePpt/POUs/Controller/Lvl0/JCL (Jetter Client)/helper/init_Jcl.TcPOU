@@ -10,8 +10,7 @@ VAR_INPUT
 	pCtrlCIf		: POINTER TO T_Ctrl_CIf;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[pJcl^.ctrl.fbJcl_Tcp.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pJcl^.id.Jcl_Tcp);
-pJcl^.ctrl.fbJcl.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pJcl^.id.Jcl);
+      <ST><![CDATA[pJcl^.ctrl.fbJcl.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pJcl^.id.Jcl);
 pJcl^.ctrl.fbJcl.TCP := ADR(pJcl^.ctrl.fbJcl_Tcp);]]></ST>
     </Implementation>
     <ObjectProperties />
