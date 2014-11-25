@@ -111,7 +111,6 @@
     <Folder Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\BeltParameterFunction\" />
     <Folder Include="POUs\Controller\Lvl1\PTB [Paper Transport Belt]\helper\" />
     <Folder Include="POUs\Controller\Lvl2\" />
-    <Folder Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\" />
     <Folder Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\helper\" />
     <Folder Include="POUs\Controller\Lvl2\PCE [Paper Belt Corner Element]" />
     <Folder Include="POUs\Controller\Lvl2\PCE [Paper Belt Corner Element]\helper\" />

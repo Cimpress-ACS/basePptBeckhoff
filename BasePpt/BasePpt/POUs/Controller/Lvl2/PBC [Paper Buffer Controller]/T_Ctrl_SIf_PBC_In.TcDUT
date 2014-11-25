@@ -10,7 +10,7 @@ STRUCT
 	/// Shows if there is a paper on the output of the buffer
 	bolCapacityReached: BASE_PLC.T_Ctrl_IoBool;
 	/// Double paper detection
-	bolDoublePaperDetection: BASE_PLC.T_Ctrl_IoBoolDebounced;
+	bolDoublePaperDetection: BASE_PLC.T_Ctrl_IoBool;
 	/// Turn Table Mid Sensor
 	bolTurnTableMiddleSensor: BASE_PLC.T_Ctrl_IoBool;
 	/// Airpressure Ok
