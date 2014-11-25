@@ -94,17 +94,17 @@ METHOD PROTECTED Always : BOOL]]></Declaration>
 IF (me.StateMachine.intState <> cSTA_SINGLE_ANSWER) THEN
 	
 	IF SIf.In.bolPowderLowWarning.intern THEN
-		g_p_fbAlm_Man^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRN.LowPowderWarning,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRN.LowPowderWarning,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 	END_IF
 	
 	IF NOT SIf.In.bolAutoMode.intern THEN
-		g_p_fbAlm_Man^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRN.ManualOperationWarning,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRN.ManualOperationWarning,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 		me.StateMachine.intStateNext := cSTA_OFFBusy;
 	END_IF
 	
 	// reasons are either bolMainPressureError or bolEoffOrFuseOk
 	IF NOT SIf.In.bolSystemOk.intern THEN
-		g_p_fbAlm_Man^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRN.SystemError,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRN.SystemError,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 		me.StateMachine.intStateNext := cSTA_EOFFBusy;
 	END_IF
 	
