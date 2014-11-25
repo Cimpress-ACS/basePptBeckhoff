@@ -12,7 +12,7 @@ END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[pPta^.ctrl.fbPta_Umc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPta^.id.Pta_Umc);
 pPta^.ctrl.fbPta.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPta^.id.Pta);
-pPta^.ctrl.fbPta.Drive := ADR(pPta^.ctrl.fbPta_Umc); // g_a_pCtrlInst[pPta^.id.Pta_Umc];
+pPta^.ctrl.fbPta.Drive := ADR(pPta^.ctrl.fbPta_Umc);
 
 // PTA is a special type of PTB
 pPta^.ctrl.fbPta.CtrlSIf^.Cfg.bolVacuumPresent := FALSE;]]></ST>

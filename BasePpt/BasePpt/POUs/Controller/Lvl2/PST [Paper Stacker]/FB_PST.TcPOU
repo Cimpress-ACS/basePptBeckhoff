@@ -378,8 +378,7 @@ END_IF]]></ST>
     </Method>
     <Method Name="sta_OFFBusy" Id="{46ae3c8b-2056-4bef-a480-b5afe2859c54}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFFBusy'}
-METHOD PROTECTED sta_OFFBusy : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_OFFBusy : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------

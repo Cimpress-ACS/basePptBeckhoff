@@ -86,8 +86,7 @@ END_IF
     </Method>
     <Method Name="sta_WaitPaper" Id="{0e7414cf-d0dd-4b81-b8be-f72855b24544}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_WaitPaper'}
-METHOD PROTECTED sta_WaitPaper : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_WaitPaper : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
@@ -119,8 +118,8 @@ METHOD PROTECTED sta_WaitPaper : BOOL
 		CASE me.intCmd OF
 			PTS_CmdState.cCMD_STANDBY:
 				me.StateMachine.intStateNext := PTS_CmdState.cSTA_InitializeBusy;
-			cCMD_STOP:
-				me.StateMachine.intStateNext := cSTA_STOPBusy;
+			Base_PLC.cCMD_STOP:
+				me.StateMachine.intStateNext := Base_PLC.cSTA_STOPBusy;
 		END_CASE
 	END_IF
 
@@ -435,7 +434,8 @@ END_VAR
 VAR
 	iIdx: UINT;
 	iLength: UINT;
-END_VAR]]></Declaration>
+END_VAR
+]]></Declaration>
       <Implementation>
         <ST><![CDATA[//------------------------------------------------------------------------------------------------------------------------
 // to manually change in new FUB implementation!!!
@@ -469,8 +469,7 @@ ELSE
 END_IF
 
 // set name of class/typ
-CIf.Info.strType := 'FB_PTS';
-CIf.Info.strFullName := 'Paper Turning Station';
+CIf.Info.strType := 'FB_PTS'; 
 
 // set alarm class
 SIf.Alm[E_ALM_PTS.PaperTransport].eAlmClass := E_AlmClass.TSTOP;
