@@ -4,14 +4,7 @@
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	///ctrl specific command definitions
 	cCMD_SINGLE: INT := 202;
-	cCMD_STANDBY: INT := 204;
 	///ctrl specific states definitions
-	cSTA_STANDBYBusy: INT := 203;
-	cSTA_STANDBY: INT := 204;
-	cSTA_PositionPaperBusy: INT := 205;
-	cSTA_RUNEmpty: INT := 207;
-	cSTA_EjectBusy: INT := 209;
-	cSTA_EjectCheck: INT := 211;
 	cSUB_WAITPAPER: INT := 300;
 	cSUB_POSITIONbusy: INT := 301;
 	cSUB_POSITIONSTOPbusy: INT := 302;
