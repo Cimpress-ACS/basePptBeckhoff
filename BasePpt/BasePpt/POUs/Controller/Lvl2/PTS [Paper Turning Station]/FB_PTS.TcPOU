@@ -323,10 +323,6 @@ METHOD PROTECTED sta_TurnPaperBusy : BOOL
 				//--------------------------------------------------------------------------------------
 				PTS_CmdState.cSUB_TURNDONE:
 					IF (p_fbMalteser^.CtrlCIf^.Job.intState = MDC_CmdState.cSTA_InPosition) THEN
-						IF NOT SIf.In.bolPaperAvailable.intern THEN
-							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PTS.PaperTransport),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-						END_IF
-	
 						me.StateMachine.intStateNext := PTS_CmdState.cSTA_WaitPaperGone;
 					END_IF
 			END_CASE
