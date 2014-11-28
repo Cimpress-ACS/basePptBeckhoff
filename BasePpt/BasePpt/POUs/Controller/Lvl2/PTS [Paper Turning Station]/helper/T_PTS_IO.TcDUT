@@ -31,6 +31,9 @@ STRUCT
 	In_bolPtb_Vpc_VacuumSensor: REFERENCE TO BOOL;
 	In_bolPtb_Vpc_PumpOk: REFERENCE TO BOOL;
 	Out_bolPtb_Vpc_PumpOn: REFERENCE TO BOOL;
+	
+	In_bolRax_PositionSensor: REFERENCE TO BOOL;
+	//TODO
 END_STRUCT
 END_TYPE]]></Declaration>
     <ObjectProperties />
