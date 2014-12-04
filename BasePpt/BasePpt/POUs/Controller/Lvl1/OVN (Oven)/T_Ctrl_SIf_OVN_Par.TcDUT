@@ -34,8 +34,7 @@ STRUCT
 	udiTimeoutBeltOnlyReaction_ms: UDINT;
 	udiTimeoutBeltOnlyBusy_ms: UDINT;
 END_STRUCT
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.29</ProjectVersion>
+    <ProjectVersion>0.0.0.30</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.29 - Fix PTS warning bug
+    <Description>0.0.0.30 - updated Oven and IBH
+0.0.0.29 - Fix PTS warning bug
 0.0.0.28 - Added a new version of the PBC
 0.0.0.27 - added strFullName
 0.0.0.26 - Added RAX, POD, TCP, PST, Updated PBC, PTS
@@ -445,9 +446,6 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Lvl1\OVN %28Oven%29\FB_Tracker.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\Controller\Lvl1\OVN (Oven)\Constants.TcGVL">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Lvl1\OVN %28Oven%29\helper\cycle_Ovn.TcPOU">

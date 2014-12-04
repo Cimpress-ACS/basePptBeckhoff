@@ -23,12 +23,12 @@ STRUCT
 	diMinAir_p: DINT;
 	/// Maximal Airflow in % 
 	diMaxAir_p: DINT;
+	/// Auto Continue After Connection Error
 	bAutoContinueAfterConnectionError: BOOL;
 	/// Enable Data Channel
 	bolDataChannelEnable: BOOL;
 END_STRUCT
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

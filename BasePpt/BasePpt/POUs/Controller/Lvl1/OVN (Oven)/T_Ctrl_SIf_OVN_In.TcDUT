@@ -4,8 +4,7 @@
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_OVN_In :
 STRUCT
 END_STRUCT
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

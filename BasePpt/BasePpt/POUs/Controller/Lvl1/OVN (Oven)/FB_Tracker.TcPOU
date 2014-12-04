@@ -10,8 +10,7 @@ VAR
 	diDistanceBeforeOven_mm: DINT;
 	diDistanceAfterOven_mm: DINT;
 	pDataChannelFifo: POINTER TO FB_DataChannelSenderFifo;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[]]></ST>
     </Implementation>

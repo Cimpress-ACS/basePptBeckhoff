@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_Ctrl_SIf_IBH" Id="{2725bd14-fd94-4897-95d4-f6c347d7f97c}">
+  <DUT Name="T_Ctrl_SIf_IBH" Id="{9b8b2b04-8aab-48c2-b146-879d3dea3eba}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_IBH :
 STRUCT
 	///configuration
@@ -10,8 +10,7 @@ STRUCT
 	///current values
 	Cur: T_Ctrl_SIf_IBH_Cur;
 END_STRUCT
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

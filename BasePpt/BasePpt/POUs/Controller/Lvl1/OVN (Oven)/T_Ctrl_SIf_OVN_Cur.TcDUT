@@ -10,8 +10,7 @@ STRUCT
 	/// Airflow in % 
 	adiAir_p: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
 END_STRUCT
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

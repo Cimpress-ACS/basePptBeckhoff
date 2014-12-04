@@ -1,11 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_Ctrl_SIf_IBH_Cur" Id="{72196609-9fb3-46ba-8c13-a79ce2040ddf}">
+  <DUT Name="T_Ctrl_SIf_IBH_Cur" Id="{491621bb-4870-4bbd-b8aa-17de8d584c9e}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_IBH_Cur :
 STRUCT
 END_STRUCT
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

@@ -15,8 +15,7 @@ STRUCT
 	diTemperature_mc: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
 	diAirflow_prc: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
 END_STRUCT
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

@@ -71,8 +71,7 @@
 	HostConnectionLost,
 	MAX_E_ALM_OVN
 );
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

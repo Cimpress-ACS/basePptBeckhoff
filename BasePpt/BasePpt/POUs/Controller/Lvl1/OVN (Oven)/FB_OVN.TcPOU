@@ -40,7 +40,6 @@ END_VAR
 VAR
 	/// Specific interface struct for public access
 	SIf: T_Ctrl_SIf_OVN;
-	SIf_MOD: T_Ctrl_SIf_MOD;
 	/// this allows to detect parameter changes
 	lastSifPar: T_Ctrl_SIf_OVN_Par;
 	/// pointer to function block
@@ -59,12 +58,9 @@ VAR
 	uiNewElementOld_2: UINT;
 	uiDeleteElementOld_1: UINT;
 	uiDeleteElementOld_2: UINT;
-	/// Other
-	/// -------------------------------------------------------------------------------------------------------------
-	/// Timeout supervision of Keep alive Toggle Bit
-	udinTimeToggle_ms: UDINT;
-END_VAR
-]]></Declaration>
+	
+	bSimLastCycle: BOOL;
+END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[(*__________________________________________________________________________________________________
 ¦	
@@ -106,8 +102,8 @@ END_IF;]]></ST>
 METHOD PROTECTED sta_PONBusy : BOOL
 VAR
 	bReady: BOOL := FALSE;
-END_VAR
-]]></Declaration>
+	uiIdx: UINT;
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 
@@ -131,7 +127,18 @@ END_VAR
 //--------------------------------------------------------------------------------------
 	// Simulation
 	IF (CIf.SwCfg.bolSimulation) THEN
-		;
+		THIS^.In_bDriverError := FALSE;
+		THIS^.In_bDriverConnected := TRUE;
+	
+		THIS^.In_diSpeed_mm_min := 0;
+		FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
+			THIS^.In_adiAir_p[uiIdx] := 0;
+			THIS^.In_adiTemp_dc[uiIdx] := 0;
+		END_FOR
+		
+		SIf.Cur.diSpeed_mm_min := THIS^.In_diSpeed_mm_min;
+		SIf.Cur.adiAir_p := THIS^.In_adiAir_p;
+		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
 	END_IF
 	
 	IF THIS^.In_bDriverError THEN
@@ -157,8 +164,7 @@ END_VAR
       </Implementation>
     </Method>
     <Property Name="IBH" Id="{0b4480b7-3bde-45c6-abd5-acb8b3ccef8a}">
-      <Declaration><![CDATA[PROPERTY IBH : POINTER TO FB_IBH
-]]></Declaration>
+      <Declaration><![CDATA[PROPERTY IBH : POINTER TO FB_IBH]]></Declaration>
       <Get Name="Get" Id="{3b457766-1f3d-4b88-8777-646809f00c9b}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
@@ -179,8 +185,7 @@ VAR
 	uiIdx: UINT;
 	bOutOfBand: BOOL := FALSE;
 	bError: BOOL := FALSE;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 
@@ -205,7 +210,16 @@ END_VAR
 
 	// Simulation
 	IF (CIf.SwCfg.bolSimulation) THEN
-		;
+		In_bRun := TRUE;
+		In_iStatus := 4;
+		
+		THIS^.In_diSpeed_mm_min := SIf.Par.diSpeed_mm_min;
+		THIS^.In_adiAir_p := SIf.Par.adiAir_p;
+		THIS^.In_adiTemp_dc := SIf.Par.adiTemp_dc;
+		
+		SIf.Cur.diSpeed_mm_min := THIS^.In_diSpeed_mm_min;
+		SIf.Cur.adiAir_p := THIS^.In_adiAir_p;
+		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
 	END_IF
 	
 	// check if parameters have changed
@@ -291,8 +305,7 @@ END_VAR
     </Method>
     <Method Name="CtrlInit" Id="{2a33c5c2-2929-43b4-98e4-e525d775c03f}">
       <Declaration><![CDATA[{attribute 'object_name' := 'CtrlInit'}
-METHOD CtrlInit : BOOL
-]]></Declaration>
+METHOD CtrlInit : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[SUPER^.CtrlInit();
 
@@ -304,13 +317,7 @@ fbTracker.numberOfModules := SIf.Cfg.uiNumberOfModules;
 fbTracker.sampleTime_us := me.FUBInfo.udiSample_us;
 fbTracker.moduleLength_mm := SIf.Cfg.diModuleLength_mm;
 fbTracker.distanceBeforeOven_mm := SIf.Cfg.diDistanceBeforeOven_mm;	//TODO: BB: This should be the distance from the barcode reader to the begin of the first module of the oven
-fbTracker.distanceAfterOven_mm := SIf.Cfg.diDistanceAfterOven_mm;	//TODO: BB: This should be the distance from the barcode reader to the end of the first module of the oven
-
-SIf_MOD.Cfg := ADR(SIf.Cfg);
-SIf_MOD.Par := ADR(SIf.Par);
-SIf_MOD.Cur := ADR(SIf.Cur);
-SIf_MOD.In  := ADR(SIf.In);
-]]></ST>
+fbTracker.distanceAfterOven_mm := SIf.Cfg.diDistanceAfterOven_mm;	//TODO: BB: This should be the distance from the barcode reader to the end of the first module of the oven]]></ST>
       </Implementation>
     </Method>
     <Method Name="checkParameter" Id="{461f61da-a69b-4cdc-91b0-f8573fe2e847}">
@@ -318,8 +325,7 @@ SIf_MOD.In  := ADR(SIf.In);
 METHOD checkParameter : BOOL
 VAR
 	uiIdx: UINT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Belt Speed
 IF (SIf.Par.diSpeed_mm_min > SIf.Cfg.diMaxSpeed_mm_min) THEN
@@ -356,7 +362,9 @@ END_FOR]]></ST>
     <Method Name="sta_OFF" Id="{4e39778e-86f6-46f0-a7cb-954ff485b184}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFF'}
 METHOD PROTECTED sta_OFF : BOOL
-]]></Declaration>
+VAR
+	uiIdx: UINT;
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 
@@ -373,7 +381,18 @@ METHOD PROTECTED sta_OFF : BOOL
 
 	// Simulation
 	IF (CIf.SwCfg.bolSimulation) THEN
-		;
+		In_bOff := TRUE;
+		In_iStatus := 1;
+		
+		THIS^.In_diSpeed_mm_min := 0;
+		FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
+			THIS^.In_adiAir_p[uiIdx] := 0;
+			THIS^.In_adiTemp_dc[uiIdx] := 0;
+		END_FOR
+		
+		SIf.Cur.diSpeed_mm_min := THIS^.In_diSpeed_mm_min;
+		SIf.Cur.adiAir_p := THIS^.In_adiAir_p;
+		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
 	END_IF
 	
 	IF NOT In_bOff OR NOT (In_iStatus=1 OR In_iStatus=6 OR In_iStatus=5) THEN
@@ -528,10 +547,6 @@ CIf.SwCfg.bolExist := TRUE;
 CIf.SwCfg.bolEnable := TRUE;
 CIf.SwCfg.bolSimulation := FALSE;
 
-// Configuration - Default Saber Communication
-SIf.Cfg.bolComToLineControlEnabled := FALSE;	//TODO: BB: set back to true once saber is available
-SIf.Par.udiComTimeOutLineCtrl_ms := 100000;
-
 // Configuration
 SIf.Cfg.uiNumberOfModules := 4;
 SIf.Cfg.diModuleLength_mm := 2000;
@@ -554,12 +569,12 @@ SIf.Par.udiSpeedTimeout_ms := 5000;
 SIf.Par.udiTimeoutOffBusyReaction_ms := 1000;
 SIf.Par.udiTimeoutOffBusy_ms := 2000;
 SIf.Par.udiTimeoutRunBusyReaction_ms := 1000;
-SIf.Par.udiTimeoutRunBusyInBand_ms := 2*60*1000;
+SIf.Par.udiTimeoutRunBusyInBand_ms := 1*60*1000;
 SIf.Par.udiTimeoutBeltOnlyReaction_ms := 1000;
 SIf.Par.udiTimeoutBeltOnlyBusy_ms := 10000;
 
 FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
-	SIf.Par.adiTemp_dc[uiIdx] := 1600;
+	SIf.Par.adiTemp_dc[uiIdx] := 1000;
 	SIf.Par.adiTempBand1_dc[uiIdx] := 30;
 	SIf.Par.adiTempBand2_dc[uiIdx] := 60;
 	SIf.Par.audiTempTimeout_ms[uiIdx] := 5000;
@@ -567,7 +582,10 @@ FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
 	SIf.Par.adiAirBand1_p[uiIdx] := 2;
 	SIf.Par.adiAirBand2_p[uiIdx] := 4;
 	SIf.Par.audiAirTimeout_ms[uiIdx] := 5000;
-END_FOR]]></ST>
+END_FOR
+
+// others
+bSimLastCycle := CIf.SwCfg.bolSimulation;]]></ST>
       </Implementation>
     </Method>
     <Method Name="chooseTesomaErrors" Id="{82894b6e-8205-4d89-aa41-938c35174021}">
@@ -575,8 +593,7 @@ END_FOR]]></ST>
 METHOD chooseTesomaErrors : BOOL
 VAR_IN_OUT
 	bResettable: BOOL;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[bResettable := FALSE;
 
@@ -684,8 +701,7 @@ END_CASE]]></ST>
     </Method>
     <Method Name="sta_ERROR" Id="{8be44ae0-c6d5-4bb8-8bb6-82295e13fffe}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
-METHOD PROTECTED sta_ERROR : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_ERROR : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 
@@ -764,8 +780,7 @@ IF (getCmdState='') THEN // global not defined get local
 			getCmdState := 'State not defined';
 		END_CASE;
 	END_IF
-END_IF
-]]></ST>
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_RUNBusy" Id="{92f4de2c-89b2-4610-a1cf-ca3d87a3484b}">
@@ -775,8 +790,7 @@ VAR
 	iIdx: UINT;
 	bReady: BOOL;
 	iErrorNumber: INT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 
@@ -804,7 +818,16 @@ END_VAR
 
 	// Simulation 
 	IF (CIf.SwCfg.bolSimulation) THEN
-		;
+		In_bRun := TRUE;
+		In_iStatus := 4;
+		
+		THIS^.In_diSpeed_mm_min := SIf.Par.diSpeed_mm_min;
+		THIS^.In_adiAir_p := SIf.Par.adiAir_p;
+		THIS^.In_adiTemp_dc := SIf.Par.adiTemp_dc;
+		
+		SIf.Cur.diSpeed_mm_min := THIS^.In_diSpeed_mm_min;
+		SIf.Cur.adiAir_p := THIS^.In_adiAir_p;
+		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
 	END_IF
 	
 	// check if parameters have changed
@@ -826,7 +849,7 @@ END_VAR
 	
 	// Check if ready
 	bReady := TRUE;
-	IF NOT In_bRun OR NOT (In_iStatus=4) OR (In_iStatus=6) THEN
+	IF NOT In_bRun OR NOT (In_iStatus=4) THEN	// ignoring In_iStatus=6 since it's only temporary
 		bReady := FALSE;
 	END_IF
 	IF (ABS(THIS^.In_diSpeed_mm_min - SIf.Par.diSpeed_mm_min) > ABS(SIf.Par.diSpeedBand1_mm_min)) THEN
@@ -884,14 +907,28 @@ METHOD PROTECTED Always : BOOL
 VAR
 	fbOVN: INT;
 	bResettable: BOOL;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[SUPER^.Always();
 
 // ----------------------------------------------------------------------------------
 // cyclic actions outside of statemachine
 IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	
+	// copy number of modules to IBH driver
+	p_fbIBH^.getCtrlSIf()^.Cfg.uiNumberOfModules := SIf.Cfg.uiNumberOfModules;
+	
+	// Simulation
+	IF (CIf.SwCfg.bolSimulation) THEN
+		p_fbIBH^.CtrlCIf^.SwCfg.bolEnable := FALSE;
+	ELSE
+		p_fbIBH^.CtrlCIf^.SwCfg.bolEnable := TRUE;
+		IF bSimLastCycle THEN
+			me.StateMachine.intState := cSTA_PONBusy;
+			me.StateMachine.intStateNext := cSTA_PONBusy;
+		END_IF
+	END_IF
+	bSimLastCycle := CIf.SwCfg.bolSimulation;
 	
 	// check parameter from GUI
 	THIS^.checkParameter();
@@ -925,7 +962,7 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	END_IF
 	
 	// check errors when higher than PONBusy
-	IF me.StateMachine.intState>Base_PLC.cSTA_PONBusy THEN
+	IF (me.StateMachine.intState>=Base_PLC.cSTA_PON) AND (NOT CIf.SwCfg.bolSimulation) THEN
 		
 		// go to error if Driver connection is lost
 		IF 		NOT THIS^.In_bDriverConnected
@@ -958,43 +995,12 @@ IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
 	ELSE // stay in OFF
 		me.StateMachine.intStateNext := cSTA_OFFBusy;
 	END_IF
-END_IF
-
-//-------------------------------------------------------------------------------
-// Keep Alive function to line controller with togglebit
-//-------------------------------------------------------------------------------
-
-// Communication to line control enabled
-IF (SIf_MOD.Cfg^.bolComToLineControlEnabled = TRUE) THEN
-	IF (SIf_MOD.Cur^.bolKeepAliveHost <> SIf_MOD.Cur^.bolKeepAlivePlc) THEN
-		udinTimeToggle_ms := 0;
-		SIf_MOD.Cur^.bolKeepAlivePlc := SIf_MOD.Cur^.bolKeepAliveHost;
-	ELSE
-		IF (udinTimeToggle_ms >= SIf_MOD.Par^.udiComTimeOutLineCtrl_ms) THEN
-			// Set Alarm: SIf_MOD.Alm[2].strText := 'Communication error to line control'; 
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UDINT(E_ALM_OVN.HostConnectionLost),UDINT_TO_DINT(udinTimeToggle_ms),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);	
-			me.StateMachine.intStateNext := cSTA_Error;	
-		END_IF
-		udinTimeToggle_ms:= udinTimeToggle_ms + me.FUBInfo.udiSample_ms;
-	END_IF
-// Communication to line control disabled
-ELSE
-	SIf_MOD.Cur^.bolKeepAliveHost:= NOT SIf_MOD.Cur^.bolKeepAlivePlc;
-END_IF
-
-//-------------------------------------------------------------------------------
-// Calculate the sum of all hangers in the system and the capacity of the system
-//-------------------------------------------------------------------------------
-SIf_MOD.Cur^.dinNumOfHangers:= 0;
-SIf_MOD.Cur^.dinMaxCapacity:= 1;
-
-]]></ST>
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="StateMachine" Id="{d8673dce-427e-4f92-84cb-c01c9f1b5157}">
       <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
-METHOD PROTECTED StateMachine : BOOL
-]]></Declaration>
+METHOD PROTECTED StateMachine : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[SUPER^.StateMachine();
 
@@ -1016,7 +1022,9 @@ END_CASE;]]></ST>
     <Method Name="sta_PON" Id="{da5770fa-bc28-4fb4-bd44-52ca2d422777}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_PON'}
 METHOD PROTECTED sta_PON : BOOL
-]]></Declaration>
+VAR
+	uiIdx: UINT;
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 
@@ -1033,7 +1041,15 @@ METHOD PROTECTED sta_PON : BOOL
 	
 	// Simulation
 	IF (CIf.SwCfg.bolSimulation) THEN
-		;
+		THIS^.In_diSpeed_mm_min := 0;
+		FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
+			THIS^.In_adiAir_p[uiIdx] := 0;
+			THIS^.In_adiTemp_dc[uiIdx] := 0;
+		END_FOR
+		
+		SIf.Cur.diSpeed_mm_min := THIS^.In_diSpeed_mm_min;
+		SIf.Cur.adiAir_p := THIS^.In_adiAir_p;
+		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
 	END_IF
 	
 	// State Change Condition
@@ -1058,8 +1074,8 @@ METHOD PROTECTED sta_OFFBusy : BOOL
 VAR
 	bReady: BOOL;
 	iErrorNumber: INT;
-END_VAR
-]]></Declaration>
+	uiIdx: UINT;
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 
@@ -1082,7 +1098,18 @@ END_VAR
 
 	// Simulation
 	IF (CIf.SwCfg.bolSimulation) THEN
-		;
+		In_bOff := TRUE;
+		In_iStatus := 1;
+		
+		THIS^.In_diSpeed_mm_min := 0;
+		FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
+			THIS^.In_adiAir_p[uiIdx] := 0;
+			THIS^.In_adiTemp_dc[uiIdx] := 0;
+		END_FOR
+		
+		SIf.Cur.diSpeed_mm_min := THIS^.In_diSpeed_mm_min;
+		SIf.Cur.adiAir_p := THIS^.In_adiAir_p;
+		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
 	END_IF
 	
 	// check timeouts
@@ -1100,7 +1127,7 @@ END_VAR
 	
 	// check if ready
 	bReady := TRUE;
-	IF NOT In_bOff OR NOT (In_iStatus=1) OR (In_iStatus=6) THEN
+	IF NOT In_bOff OR NOT ((In_iStatus=1) OR (In_iStatus=6)) THEN
 		bReady := FALSE;
 	END_IF
 	
@@ -1124,10 +1151,10 @@ END_VAR
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_BELTONLYBusy'}
 METHOD PROTECTED sta_BELTONLYBusy : BOOL
 VAR
+	uiIdx: UINT;
 	bReady: BOOL;
 	iErrorNumber: INT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 
@@ -1142,14 +1169,25 @@ END_VAR
 		p_fbIBH^.setSpeed(In_diSpeed_mm_min := SIf.Par.diSpeed_mm_min);
 		THIS^.lastSifPar := SIf.Par;
 	END_IF
-
+	
 	
 // Cyclic action
 //--------------------------------------------------------------------------------------
 
 	// Simulation
-	IF (CIf.SwCfg.bolSimulation) THEN
-		;
+	IF CIf.SwCfg.bolSimulation THEN
+		In_bBeltOn := TRUE;
+		In_iStatus := 2;
+		
+		THIS^.In_diSpeed_mm_min := SIf.Par.diSpeed_mm_min;
+		FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
+			THIS^.In_adiAir_p[uiIdx] := 0;
+			THIS^.In_adiTemp_dc[uiIdx] := 0;
+		END_FOR
+		
+		SIf.Cur.diSpeed_mm_min := THIS^.In_diSpeed_mm_min;
+		SIf.Cur.adiAir_p := THIS^.In_adiAir_p;
+		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
 	END_IF
 	
 	// check if parameters have changed
@@ -1173,7 +1211,7 @@ END_VAR
 	
 	// Check if ready
 	bReady := TRUE;
-	IF NOT In_bBeltOn OR NOT (In_iStatus=2) OR (In_iStatus=6) THEN
+	IF NOT In_bBeltOn OR NOT ((In_iStatus=2) OR (In_iStatus=6)) THEN
 		bReady := FALSE;
 	END_IF
 	IF (ABS(THIS^.In_diSpeed_mm_min - SIf.Par.diSpeed_mm_min) > ABS(SIf.Par.diSpeedBand1_mm_min)) THEN
@@ -1205,15 +1243,13 @@ END_VAR
     </Method>
     <Method Name="getCtrlSIf" Id="{e8890661-eb02-49d5-a71a-b91c93c31ffb}">
       <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
-METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_OVN
-]]></Declaration>
+METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_OVN]]></Declaration>
       <Implementation>
         <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
       </Implementation>
     </Method>
     <Property Name="DataChannel" Id="{e958c2e0-9251-41de-ab54-10e3fb2d939f}">
-      <Declaration><![CDATA[PROPERTY DataChannel : POINTER TO FB_DataChannelSenderFifo
-]]></Declaration>
+      <Declaration><![CDATA[PROPERTY DataChannel : POINTER TO FB_DataChannelSenderFifo]]></Declaration>
       <Set Name="Set" Id="{226626be-f4fc-4e44-ac7c-c5a827ac2bfc}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
@@ -1277,7 +1313,9 @@ METHOD PROTECTED sta_ERRORQuit : BOOL
     <Method Name="sta_BELTONLY" Id="{ef13c3e6-1be7-4d47-88b2-2246ce4bd4fa}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_BELTONLY'}
 METHOD PROTECTED sta_BELTONLY : BOOL
-]]></Declaration>
+VAR
+	uiIdx: UINT;
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 
@@ -1292,11 +1330,21 @@ METHOD PROTECTED sta_BELTONLY : BOOL
 // Cyclic action
 //--------------------------------------------------------------------------------------
 
-	// Simulation
-	IF (CIf.SwCfg.bolSimulation) THEN
-		;
+	IF CIf.SwCfg.bolSimulation THEN
+		In_bBeltOn := TRUE;
+		In_iStatus := 2;
+		
+		THIS^.In_diSpeed_mm_min := SIf.Par.diSpeed_mm_min;
+		FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
+			THIS^.In_adiAir_p[uiIdx] := 0;
+			THIS^.In_adiTemp_dc[uiIdx] := 0;
+		END_FOR
+		
+		SIf.Cur.diSpeed_mm_min := THIS^.In_diSpeed_mm_min;
+		SIf.Cur.adiAir_p := THIS^.In_adiAir_p;
+		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
 	END_IF
-	
+
 	// check if parameters have changed
 	IF (TC2_SYSTEM.MEMCMP(pBuf1:=ADR(SIf.Par), pBuf2:=ADR(THIS^.lastSifPar), n:=SIZEOF(SIf.Par)) <> 0) THEN
 		me.StateMachine.intStateNext := OVN_CmdState.cSTA_BELTONLYBusy;

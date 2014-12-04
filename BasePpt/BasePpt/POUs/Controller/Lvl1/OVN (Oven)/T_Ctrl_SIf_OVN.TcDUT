@@ -16,8 +16,7 @@ STRUCT
 	///alarm number used in this controller
 	Alm: ARRAY[1..(E_ALM_OVN.MAX_E_ALM_OVN - 1)] OF T_Ctrl_Alm;
 END_STRUCT
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

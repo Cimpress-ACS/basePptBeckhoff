@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <GVL Name="IBH_CmdState" Id="{bd8a19b0-2aaf-4639-abbe-0b0f638bef82}">
+  <GVL Name="IBH_CmdState" Id="{eb94b744-ef37-4bb9-8490-3ce9eadc8ed4}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	///ctrl commands definitions
 	///specific commands >200 - every command has to be a even number

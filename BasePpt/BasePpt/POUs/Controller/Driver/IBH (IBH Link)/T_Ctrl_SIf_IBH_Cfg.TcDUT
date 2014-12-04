@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_Ctrl_SIf_IBH_Cfg" Id="{747e4551-0fe4-4b72-9c19-1d7e12b2a96f}">
+  <DUT Name="T_Ctrl_SIf_IBH_Cfg" Id="{3ba03782-c7db-4092-abc5-720424700977}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_IBH_Cfg :
 STRUCT
 	/// Number of Modules in use, <= 8 
@@ -51,8 +51,7 @@ STRUCT
 	uiByteOffset_wr_adiAir_p: UINT;
 	uiByteOffset_wr_diSpeed_mm_min: UINT;
 END_STRUCT
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>
