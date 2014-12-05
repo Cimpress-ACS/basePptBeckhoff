@@ -89,6 +89,7 @@
     </LibraryReference>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="GVLs" />
     <Folder Include="POUs" />
     <Folder Include="POUs\Controller\" />
     <Folder Include="POUs\Controller\Driver\" />
@@ -133,6 +134,9 @@
     <Folder Include="Version\" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="GVLs\Constants.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="POUs\Controller\Driver\IBH %28IBH Link%29\FB_IBH.TcPOU">
       <SubType>Code</SubType>
     </Compile>
