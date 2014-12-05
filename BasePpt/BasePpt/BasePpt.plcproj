@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.30</ProjectVersion>
+    <ProjectVersion>0.0.0.31</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.30 - updated Oven and IBH
+    <Description>0.0.0.31 - BaseElements V0.0.1.30 referred
+0.0.0.30 - updated Oven and IBH
 0.0.0.29 - Fix PTS warning bug
 0.0.0.28 - Added a new version of the PBC
 0.0.0.27 - added strFullName
@@ -51,7 +52,7 @@
     <AssemblyName>MyApplication</AssemblyName>-->
   </PropertyGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.1.29,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.1.30,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
     <LibraryReference Include="Base_PLC,0.3.5.4,Vistaprint">
