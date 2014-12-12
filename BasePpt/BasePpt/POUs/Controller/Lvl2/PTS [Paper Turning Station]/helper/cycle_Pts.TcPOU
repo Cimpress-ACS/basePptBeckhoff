@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="cycle_Pts" Id="{37a42ab4-c720-4022-b266-af1a7ee7007b}">
     <Declaration><![CDATA[FUNCTION cycle_Pts : BOOL
 VAR_INPUT
@@ -22,20 +22,23 @@ pPts^.ctrl.fbPts_Ptb_Vpc.In_bolVacuumOk 			:= pPts^.io.In_bolPtb_Vpc_VacuumSenso
 pPts^.ctrl.fbPts_Ptb_Vpc();
 pPts^.io.Out_bolPtb_Vpc_PumpOn 						:= pPts^.ctrl.fbPts_Ptb_Vpc.Out_bolVaccumPumpOn;
 
-pPts^.ctrl.fbPts_Mdc_Umc.In_bolEmoOk 				:= pPts^.io.In_bolMdc_Umc_EmoOk;
-pPts^.ctrl.fbPts_Mdc_Umc.In_uinStatus 				:= pPts^.io.In_uinMdc_Umc_Status;
-pPts^.ctrl.fbPts_Mdc_Umc.In_intMotorActualSpeed		:= pPts^.io.In_uinMdc_Umc_ActualSpeed;
-pPts^.ctrl.fbPts_Mdc_Umc.In_uinMotorSetSpeed 		:= pPts^.io.In_uinMdc_Umc_SetSpeed;
-pPts^.ctrl.fbPts_Mdc_Umc.In_uinECATState 			:= pPts^.io.In_uinMdc_Umc_ECatState;
-pPts^.ctrl.fbPts_Mdc_Umc.In_strNetId 				:= pPts^.io.In_strMdc_Umc_ECatNetId;
-pPts^.ctrl.fbPts_Mdc_Umc.In_uintPort 				:= pPts^.io.In_uinMdc_Umc_ECatPort;
-pPts^.ctrl.fbPts_Mdc_Umc();
-pPts^.io.Out_uinMdc_Umc_SetSpeed 					:= pPts^.ctrl.fbPts_Mdc_Umc.Out_uinSpeedSetpoint;
-pPts^.io.Out_uinMdc_Umc_Control 					:= pPts^.ctrl.fbPts_Mdc_Umc.Out_uinControl;
+IF (pPts^.ctrl.fbPts.CtrlSIf^.Cfg.bolRaxEnable = FALSE) THEN
+	pPts^.ctrl.fbPts_Mdc_Umc.In_bolEmoOk 				:= pPts^.io.In_bolMdc_Umc_EmoOk;
+	pPts^.ctrl.fbPts_Mdc_Umc.In_uinStatus 				:= pPts^.io.In_uinMdc_Umc_Status;
+	pPts^.ctrl.fbPts_Mdc_Umc.In_intMotorActualSpeed		:= pPts^.io.In_uinMdc_Umc_ActualSpeed;
+	pPts^.ctrl.fbPts_Mdc_Umc.In_uinMotorSetSpeed 		:= pPts^.io.In_uinMdc_Umc_SetSpeed;
+	pPts^.ctrl.fbPts_Mdc_Umc.In_uinECATState 			:= pPts^.io.In_uinMdc_Umc_ECatState;
+	pPts^.ctrl.fbPts_Mdc_Umc.In_strNetId 				:= pPts^.io.In_strMdc_Umc_ECatNetId;
+	pPts^.ctrl.fbPts_Mdc_Umc.In_uintPort 				:= pPts^.io.In_uinMdc_Umc_ECatPort;
+	pPts^.ctrl.fbPts_Mdc_Umc();
+	pPts^.io.Out_uinMdc_Umc_SetSpeed 					:= pPts^.ctrl.fbPts_Mdc_Umc.Out_uinSpeedSetpoint;
+	pPts^.io.Out_uinMdc_Umc_Control 					:= pPts^.ctrl.fbPts_Mdc_Umc.Out_uinControl;
+ELSE
+	pPts^.ctrl.fbPts_RAX_POD.In_bolHomeSwitch			:= pPts^.io.In_bolRax_PositionSensor;
+	pPts^.ctrl.fbPts_RAX_POD();
 
-// New Servo Drive Axis
-pPts^.ctrl.fbPts_RAX_POD();
-pPts^.ctrl.fbPts_RAX();
+	pPts^.ctrl.fbPts_RAX();
+END_IF
 
 pPts^.ctrl.fbPts_Ptb();
 

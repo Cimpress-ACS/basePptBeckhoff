@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_PTS" Id="{ce4721d8-0ee6-4269-bb23-f91a21a98bc0}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_PTS EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -46,6 +46,7 @@ Version		Date			Author		Comment
 0.00.1		09.07.2013		PC			Start history
 0.00.2		24.09.2014		AVME/MRU	Servo instead of MCD added
 0.00.3		19.11.2014		AVME/MRU	Changes after Commissioning
+0.00.4		12.12.2014		AVME/MRU	Connect Input of HomeSensor
 ___________________________________________________________________________________________________*)
 
 

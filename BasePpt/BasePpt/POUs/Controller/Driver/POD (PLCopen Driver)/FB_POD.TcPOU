@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_POD" Id="{48ed7df6-9b05-464b-ba09-66aaed082b6c}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_POD
 VAR_INPUT
@@ -85,7 +85,7 @@ Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		18.06.2013		AVME/KVO	Start history
 0.00.2		22.09.2014		AVME/MRU	Rework for Beckhoff Servo Drives
-
+0.00.3		12.12.2014		AVME/MRU	Add cCMD_OFF
 ___________________________________________________________________________________________________*)
 
 
@@ -1025,6 +1025,8 @@ METHOD PROTECTED sta_HomeBusy : BOOL
 			END_IF;
 			stStateMachine.intStateNext := cPOD_STA_WaitForJob;
 		ELSIF (SIf.intCmd=cPOD_CMD_STOP) THEN
+			stStateMachine.intStateNext := cPOD_STA_StopBusy;
+		ELSIF (SIf.intCmd=cPOD_CMD_CTRL_OFF) THEN
 			stStateMachine.intStateNext := cPOD_STA_StopBusy;
 		ELSIF (SIf.stCfg.bolSimulation AND SIf.stStatus.bolHomeOk) THEN
 			IF (SIf.intCmd=cPOD_CMD_HOME) THEN
