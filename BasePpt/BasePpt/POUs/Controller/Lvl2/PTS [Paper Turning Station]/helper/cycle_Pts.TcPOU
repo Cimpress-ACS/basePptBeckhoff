@@ -33,6 +33,10 @@ IF (pPts^.ctrl.fbPts.CtrlSIf^.Cfg.bolRaxEnable = FALSE) THEN
 	pPts^.ctrl.fbPts_Mdc_Umc();
 	pPts^.io.Out_uinMdc_Umc_SetSpeed 					:= pPts^.ctrl.fbPts_Mdc_Umc.Out_uinSpeedSetpoint;
 	pPts^.io.Out_uinMdc_Umc_Control 					:= pPts^.ctrl.fbPts_Mdc_Umc.Out_uinControl;
+	
+	pPts^.ctrl.fbPts_Mdc.In_bolCrossPositionSensor 		:= pPts^.io.In_bolMdc_CrossPositionSensor;
+	pPts^.ctrl.fbPts_Mdc.In_bolTablePositionSensor 		:= pPts^.io.In_bolMdc_TablePositionSensor;
+	pPts^.ctrl.fbPts_Mdc();
 ELSE
 	pPts^.ctrl.fbPts_RAX_POD.In_bolHomeSwitch			:= pPts^.io.In_bolRax_PositionSensor;
 	pPts^.ctrl.fbPts_RAX_POD();
@@ -41,10 +45,6 @@ ELSE
 END_IF
 
 pPts^.ctrl.fbPts_Ptb();
-
-pPts^.ctrl.fbPts_Mdc.In_bolCrossPositionSensor 		:= pPts^.io.In_bolMdc_CrossPositionSensor;
-pPts^.ctrl.fbPts_Mdc.In_bolTablePositionSensor 		:= pPts^.io.In_bolMdc_TablePositionSensor;
-pPts^.ctrl.fbPts_Mdc();
 
 pPts^.ctrl.fbPts.In_bol_PaperAvailable 				:= pPts^.io.In_bolPaperSensor;
 pPts^.ctrl.fbPts();]]></ST>
