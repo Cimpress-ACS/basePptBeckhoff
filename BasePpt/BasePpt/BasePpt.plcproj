@@ -14,11 +14,13 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.32</ProjectVersion>
+    <ProjectVersion>0.0.0.33</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.32 - Bug fixes in PTS and POD
+    <Description>0.0.0.33 	- Upgraded to newest TC 3.1 4016.12
+	- Upgraded all Libraries
+0.0.0.32 - Bug fixes in PTS and POD
 0.0.0.31 - BaseElements V0.0.1.30 referred
 0.0.0.30 - updated Oven and IBH
 0.0.0.29 - Fix PTS warning bug
@@ -53,10 +55,10 @@
     <AssemblyName>MyApplication</AssemblyName>-->
   </PropertyGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.1.30,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.1.31,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Base_PLC,0.3.5.4,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.5.5,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.3.0,Beckhoff Automation GmbH">
@@ -71,13 +73,13 @@
     <LibraryReference Include="Tc2_Standard,3.3.0.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_Standard</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_System,3.3.8.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_System,3.3.8.1,Beckhoff Automation GmbH">
       <Namespace>Tc2_System</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_TcpIp,3.3.2.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_TcpIp</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc2_Utilities,3.3.7.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc2_Utilities,3.3.8.0,Beckhoff Automation GmbH">
       <Namespace>Tc2_Utilities</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc3_Interfaces,3.3.0.0,Beckhoff Automation GmbH">
