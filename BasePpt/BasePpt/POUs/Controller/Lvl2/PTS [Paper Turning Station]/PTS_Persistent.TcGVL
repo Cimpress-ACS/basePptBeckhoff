@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <GVL Name="PTS_Persistent" Id="{18d443ac-1752-4703-a1fc-e06e8a33cc0d}">
+    <Declaration><![CDATA[VAR_GLOBAL PERSISTENT
+	udiPTS_Counter_Persistent: UDINT;	// Count of turn movements. This is a persistent variable, reset only with reset origin
+END_VAR]]></Declaration>
+    <ObjectProperties />
+  </GVL>
+</TcPlcObject>

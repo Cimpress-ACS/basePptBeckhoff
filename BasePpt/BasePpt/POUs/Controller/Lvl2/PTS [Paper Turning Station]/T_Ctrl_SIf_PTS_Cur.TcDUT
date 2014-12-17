@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <DUT Name="T_Ctrl_SIf_PTS_Cur" Id="{cb2af5e4-07b8-4ef2-b905-517e2466c72c}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PTS_Cur :
 STRUCT
@@ -11,6 +11,8 @@ STRUCT
 	udiPaperInTurnDelayTime: UDINT;
 	/// [ms] Time to wait after paper is not detected anymore before to turn back.
 	udiPaperOutTurnDelayTime: UDINT;
+	// Count of turn movements in long term test
+	udiPTS_Counter: UDINT;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

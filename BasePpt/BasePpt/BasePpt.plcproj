@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.34</ProjectVersion>
+    <ProjectVersion>0.0.0.35</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.34 	- Pts fix when using with Servo
+    <Description>0.0.0.35	- Add long term test to PTS
+0.0.0.34 	- Pts fix when using with Servo
 0.0.0.33 	- Upgraded to newest TC 3.1 4016.12
 	- Upgraded all Libraries
 0.0.0.32 - Bug fixes in PTS and POD
@@ -755,6 +756,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PTS [Paper Turning Station]\PTS_CmdState.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PTS [Paper Turning Station]\PTS_Persistent.TcGVL">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PTS [Paper Turning Station]\T_Ctrl_SIf_PTS.TcDUT">

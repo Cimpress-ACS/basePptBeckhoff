@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <DUT Name="T_Ctrl_SIf_PTS_Par" Id="{d3d69ab2-dec5-4d23-80df-1ab7408232e0}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PTS_Par :
 STRUCT
@@ -13,6 +13,8 @@ STRUCT
 	eMode: E_PTS_MODE;
 	/// [ms] Simulation Timeout for the time the Paper can have between Barcode reader and Paper on table sensor.
 	udiSimPaperBarcodeToInputSensorTime: UDINT;
+	// Activate long time test
+	bolLongTimeTestEnable: BOOL;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

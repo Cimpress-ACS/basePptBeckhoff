@@ -47,6 +47,7 @@ Version		Date			Author		Comment
 0.00.2		24.09.2014		AVME/MRU	Servo instead of MCD added
 0.00.3		19.11.2014		AVME/MRU	Changes after Commissioning
 0.00.4		12.12.2014		AVME/MRU	Connect Input of HomeSensor
+0.00.5		16.12.2014		AVME/MRU	Add long term test
 ___________________________________________________________________________________________________*)
 
 
@@ -114,6 +115,11 @@ METHOD PROTECTED sta_WaitPaper : BOOL]]></Declaration>
 			ELSE	
 				me.StateMachine.intStateNext := PTS_CmdState.cSTA_PaperDelayBusy;
 			END_IF
+		END_IF
+		
+		IF (SIf.Par.bolLongTimeTestEnable) THEN							// Long time test of PTS
+			me.StateMachine.intStateNext := PTS_CmdState.cSTA_PaperDelayBusy;	
+			udiPTS_Counter_Persistent := udiPTS_Counter_Persistent + 1;	// Persistent Counter
 		END_IF
 		
 		CASE me.intCmd OF
@@ -200,6 +206,7 @@ ELSE
 	END_IF
 END_IF
 
+SIf.Cur.udiPTS_Counter := udiPTS_Counter_Persistent;		// Update SIf.Cur Variable
 ]]></ST>
       </Implementation>
     </Method>
@@ -508,7 +515,8 @@ SIf.Par.eMode := E_PTS_MODE.FixC;
 SIf.Par.udiPaperBarcodeToInputSensorTime := 2000;
 SIf.Par.udiPaperInTurnDelayTime := 000;
 SIf.Par.udiPaperOutTurnDelayTime := 300;
-SIf.Par.udiSimPaperBarcodeToInputSensorTime := SIf.Par.udiPaperBarcodeToInputSensorTime / 2;]]></ST>
+SIf.Par.udiSimPaperBarcodeToInputSensorTime := SIf.Par.udiPaperBarcodeToInputSensorTime / 2;
+SIf.Par.bolLongTimeTestEnable := False;]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_STANDBYBusy" Id="{544b3e4d-972a-4d34-a50a-cac645562a34}">
