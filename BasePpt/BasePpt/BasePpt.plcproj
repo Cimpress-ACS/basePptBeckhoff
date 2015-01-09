@@ -14,11 +14,14 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.35</ProjectVersion>
+    <ProjectVersion>0.0.0.36</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.35	- Add long term test to PTS
+    <Description>0.0.0.36	- PTS Error Message Fixed
+	- PBC EvaluateEject fix
+	- PST Eject paper if not finished
+0.0.0.35	- Add long term test to PTS
 0.0.0.34 	- Pts fix when using with Servo
 0.0.0.33 	- Upgraded to newest TC 3.1 4016.12
 	- Upgraded all Libraries
@@ -90,7 +93,7 @@
     <LibraryReference Include="Tc3_MemMan,3.3.1.0,Beckhoff Automation GmbH">
       <Namespace>Tc3_MemMan</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Tc3_Module,3.3.5.0,Beckhoff Automation GmbH">
+    <LibraryReference Include="Tc3_Module,3.3.6.0,Beckhoff Automation GmbH">
       <Namespace>Tc3_Module</Namespace>
     </LibraryReference>
   </ItemGroup>

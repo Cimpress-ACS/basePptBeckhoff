@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <DUT Name="T_Ctrl_SIf_PST_Cur" Id="{fa22d38c-c5cf-4392-a225-50007f420a94}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PST_Cur :
 STRUCT

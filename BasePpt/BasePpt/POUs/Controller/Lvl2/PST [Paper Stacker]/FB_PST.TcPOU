@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_PST" Id="{177fde74-8095-4d5b-83ca-4788bd6cdc14}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_PST EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -157,12 +157,7 @@ METHOD PROTECTED sta_OFF : BOOL
 			
 			// Command RUN	
 			BASE_PLC.cCMD_RUN:
-				IF NOT (SIf.Cur.bolStackIncomplete) THEN
-					me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
-				ELSE
-					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_PST.NeedsEjectCommand,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-					me.StateMachine.intStateNext := PST_CmdState.cSTA_EJECTbusy;
-				END_IF
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
 				
 			// Command EJECT	
 			PST_CmdState.cCMD_EJECT:
@@ -398,7 +393,7 @@ METHOD PROTECTED sta_OFFBusy : BOOL]]></Declaration>
 	
 		// In case of an OFF command or alarm, check if the stack is incomplete. 
 		// Only check if min. stack hight of 1 paper is set by saber
-		IF (SIf.Cur.uinStackHight <> SIf.Par.uinStackHight) AND (SIf.Par.uinStackHight >= 1) AND NOT (SIf.Cur.bolStackIncomplete) THEN
+		IF ((SIf.Cur.uinStackHight <> SIf.Par.uinStackHight) AND (SIf.Par.uinStackHight >= 1) AND NOT (SIf.Cur.bolStackIncomplete)) OR NOT SIf.In.bolSensorStopperPosition.intern THEN
 			// Stack incomplete! Saber has to send an eject command before next RUN.
 			SIf.Cur.bolStackIncomplete:= TRUE;
 			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_PST.StackIncomplete,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
@@ -437,6 +432,8 @@ METHOD PROTECTED sta_EJECTBusy : BOOL
 		
 		CIf.Job.intACmd:= Base_PLC.cCMD_DONE;
 		CIf.Job.intMCmd:= Base_PLC.cCMD_DONE;
+
+		SIf.Cur.bolStackIncomplete:= TRUE;
 		
 		// Initialize sub state machine
 		me.SubStateMachine.intState:= PST_CmdState.cSUB_DELAYSTACKEJECTBusy; 
@@ -551,6 +548,7 @@ METHOD PROTECTED sta_EJECTBusy : BOOL
 					me.SubStateMachine.intStateLastCycle := me.SubStateMachine.intState;		
 				END_IF
 
+				SIf.Cur.bolStackIncomplete:= FALSE;
 				SIf.Par.uinStackHight:= 0;
 				// Update counter stacks ejected total
 				SIf.Cur.udiNumOfStacksEjectedTotal:= SIf.Cur.udiNumOfStacksEjectedTotal + 1;
@@ -633,10 +631,12 @@ METHOD PROTECTED sta_RUNBusy : BOOL
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
-		IF (TRUE) THEN
+		IF SIf.Cur.bolStackIncomplete THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_PST.NeedsEjectCommand,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := PST_CmdState.cSTA_EJECTbusy;
+		ELSE
 			me.StateMachine.intStateNext := BASE_PLC.cSTA_RUN;
 		END_IF
-		
 	END_IF
 
 //--------------------------------------------------------------------------------------
@@ -691,7 +691,7 @@ CIf.Info.strFullName := 'Paper Stacker';
 
 SIf.Alm[E_ALM_PST.StackIncomplete].eAlmClass := Base_PLC.E_AlmClass.TSTOP;
 SIf.Alm[E_ALM_PST.StackIncomplete].strText := 'Stack incomplete. Stacker was sent to OFF before finishing the job!';
-SIf.Alm[E_ALM_PST.NeedsEjectCommand].eAlmClass := Base_PLC.E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_PST.NeedsEjectCommand].eAlmClass := Base_PLC.E_AlmClass.WARNING;
 SIf.Alm[E_ALM_PST.NeedsEjectCommand].strText := 'Last job was incomplete. Stacker waits for an eject command!';
 SIf.Alm[E_ALM_PST.StackOkButLastCodeNotRight].eAlmClass := Base_PLC.E_AlmClass.OFF;
 SIf.Alm[E_ALM_PST.StackOkButLastCodeNotRight].strText := 'Stack hight is reached but last barcode ID is not right!';

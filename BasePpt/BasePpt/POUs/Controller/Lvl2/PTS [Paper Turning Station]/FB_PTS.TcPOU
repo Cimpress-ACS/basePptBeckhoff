@@ -313,10 +313,6 @@ METHOD PROTECTED sta_TurnPaperBusy : BOOL
 				//--------------------------------------------------------------------------------------
 				PTS_CmdState.cSUB_TURNDONE:
 					IF (p_fbRAX^.CtrlCIf^.Job.intState = cStA_Stop) THEN
-						IF NOT SIf.In.bolPaperAvailable.intern THEN
-							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PTS.PaperTransport),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-						END_IF
-	
 						me.StateMachine.intStateNext := PTS_CmdState.cSTA_WaitPaperGone;
 					END_IF
 			END_CASE
@@ -639,6 +635,8 @@ METHOD PROTECTED sta_STANDBY : BOOL
 		CASE me.intCmd OF
 			BASE_PLC.cCMD_RUN:
 				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
+			BASE_PLC.cCMD_STOP:
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_STOPBusy;
 		END_CASE
 	END_IF
 
@@ -685,9 +683,9 @@ METHOD PROTECTED sta_ERRORQuit : BOOL
 						cCMD_OFF:
 							me.StateMachine.intStateNext := cSTA_OFFBusy;
 						cCMD_RUN:
-							me.StateMachine.intStateNext := cSTA_STOPBusy;
-						cCMD_STOP:
 							me.StateMachine.intStateNext := cSTA_RUNBusy;
+						cCMD_STOP:
+							me.StateMachine.intStateNext := cSTA_STOPBusy;
 					END_CASE
 				ELSE
 					CASE me.StateMachine.intStateHistory OF
@@ -789,9 +787,9 @@ METHOD PROTECTED sta_OFF : BOOL
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		CASE me.intCmd OF
-			BASE_PLC.cCMD_RUN : 
-				me.StateMachine.intStateNext := PTS_CmdState.cSTA_InitializeBusy;
-			PTS_CmdState.cCMD_STANDBY : 
+			BASE_PLC.cCMD_RUN,
+			PTS_CmdState.cCMD_STANDBY,
+			Base_plc.cCMD_STOP: 
 				me.StateMachine.intStateNext := PTS_CmdState.cSTA_InitializeBusy;
 		END_CASE
 	END_IF

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <DUT Name="T_ItemPaperInfo" Id="{ca9b333e-3027-40f6-af2e-a7ff12c0e406}">
     <Declaration><![CDATA[{attribute 'enable_dynamic_creation' := ''}
 TYPE T_ItemPaperInfo :

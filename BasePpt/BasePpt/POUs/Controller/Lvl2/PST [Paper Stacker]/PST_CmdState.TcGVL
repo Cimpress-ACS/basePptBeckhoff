@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <GVL Name="PST_CmdState" Id="{05beb03a-4925-449e-af03-b1583d0d4fe6}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	/// specific commands >200 - every command has to be a even number

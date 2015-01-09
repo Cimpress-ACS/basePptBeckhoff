@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="init_Pst" Id="{557e8472-4797-4608-acef-2cc63da5260f}">
     <Declaration><![CDATA[FUNCTION init_Pst : BOOL
 VAR_INPUT

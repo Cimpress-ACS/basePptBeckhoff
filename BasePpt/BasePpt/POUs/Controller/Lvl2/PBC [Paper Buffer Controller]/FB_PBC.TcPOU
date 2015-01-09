@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_PBC" Id="{744e56d7-ea25-41b1-bbc0-c4f20ff57876}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_PBC EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -912,7 +912,7 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 				IF (SIf.Cur.uinPaperToEjectCount > 0) OR (SIf.Cur.uinPaperToEjectParameter = 0) OR SIf.Par.bolAutomaticMode THEN
 					// Make a delay from sheet to sheet if it is not the first sheet
 					IF   (SIf.Cur.uinSheetToSheetTime > SIf.Par.udiSheetToSheetTime) 
-					  OR (SIf.Cur.uinPaperToEjectCount = SIf.Cur.uinPaperToEjectParameter) THEN
+					  OR ((SIf.Cur.uinPaperToEjectCount = SIf.Cur.uinPaperToEjectParameter) AND NOT SIf.Par.bolAutomaticMode) THEN
 						SIf.Cur.uinSheetToSheetTime := 0;
 	
 						IF SIf.In.bolPaperAvailableExit.intern THEN
