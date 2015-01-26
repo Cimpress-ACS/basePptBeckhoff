@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_Ctrl_SIf_BCH_Par" Id="{b315e189-20e7-4bb6-972c-bcbd52a149a6}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_BCH_Par" Id="{e3777b1d-a485-441e-8de6-ab9bdac44976}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCH_Par :
 STRUCT
 END_STRUCT

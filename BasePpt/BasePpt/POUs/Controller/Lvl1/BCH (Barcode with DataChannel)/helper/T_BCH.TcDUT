@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_BCH" Id="{fce3e406-4e67-43c0-8f2d-53075efc4517}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_BCH" Id="{db4ebda9-2810-4491-a080-f1efb648f9e5}">
     <Declaration><![CDATA[TYPE T_BCH :
 STRUCT
-	io		: T_BCH_IO;
-	ctrl	: T_BCH_CTRL;
-	id		: T_BCH_ID;
-	datachn	: T_BCH_DATACHN;
+	io: T_BCH_IO;
+	ctrl: T_BCH_CTRL;
+	id: T_BCH_ID;
+	datachn: T_BCH_DATACHN;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

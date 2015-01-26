@@ -1,42 +1,40 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_PBC_IO" Id="{804ff791-8bbd-4f43-b9b3-43e75642ebbf}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_PBC_IO" Id="{674f6dce-5194-4e3e-8d64-1bd4b27cb0f4}">
     <Declaration><![CDATA[TYPE T_PBC_IO :
 STRUCT
-In_bolPts_PaperSensor: REFERENCE TO BOOL;	//TODO: describe why this is here
-	
-In_bolInputSensor: REFERENCE TO BOOL;
-In_bolOutputSensor: REFERENCE TO BOOL;
-In_bolCapacitySensor: REFERENCE TO BOOL;
-In_bolDoublePaperSensor: REFERENCE TO BOOL;
-In_bolAirPressureOk: REFERENCE TO BOOL;
-Out_bolAirPressureOn: REFERENCE TO BOOL;
-
-In_bolPtbBelt_Vpc_VacuumSensor: REFERENCE TO BOOL;
-In_bolPtbBelt_Vpc_PumpOk: REFERENCE TO BOOL;
-Out_bolPtbBelt_Vpc_PumpOn: REFERENCE TO BOOL;
-
-In_bolPtbBelt_Umc_EmoOk: REFERENCE TO BOOL;
-In_uinPtbBelt_Umc_Status: REFERENCE TO UINT;
-In_uinPtbBelt_Umc_ActualSpeed: REFERENCE TO UINT;
-In_uinPtbBelt_Umc_SetSpeed: REFERENCE TO UINT;
-In_uinPtbBelt_Umc_ECatState: REFERENCE TO UINT;
-In_strPtbBelt_Umc_ECatNetId: REFERENCE TO AMSNETID;
-In_uinPtbBelt_Umc_ECatPort: REFERENCE TO WORD;
-Out_uinPtbBelt_Umc_Control: REFERENCE TO UINT;
-Out_uinPtbBelt_Umc_SetSpeed: REFERENCE TO UINT;
-
-In_bolPtbDeStacker_Umc_EmoOk: REFERENCE TO BOOL;
-In_uinPtbDeStacker_Umc_Status: REFERENCE TO UINT;
-In_uinPtbDeStacker_Umc_ActualSpeed: REFERENCE TO UINT;
-In_uinPtbDeStacker_Umc_SetSpeed: REFERENCE TO UINT;
-In_uinPtbDeStacker_Umc_ECatState: REFERENCE TO UINT;
-In_strPtbDeStacker_Umc_ECatNetId: REFERENCE TO AMSNETID;
-In_uinPtbDeStacker_Umc_ECatPort: REFERENCE TO WORD;
-Out_uinPtbDeStacker_Umc_Control: REFERENCE TO UINT;
-Out_uinPtbDeStacker_Umc_SetSpeed: REFERENCE TO UINT;
+	///TODO: describe why this is here
+	In_bolPts_PaperSensor: REFERENCE TO BOOL;
+	In_bolInputSensor: REFERENCE TO BOOL;
+	In_bolOutputSensor: REFERENCE TO BOOL;
+	In_bolCapacitySensor: REFERENCE TO BOOL;
+	In_bolDoublePaperSensor: REFERENCE TO BOOL;
+	In_bolAirPressureOk: REFERENCE TO BOOL;
+	Out_bolAirPressureOn: REFERENCE TO BOOL;
+	In_bolPtbBelt_Vpc_VacuumSensor: REFERENCE TO BOOL;
+	In_bolPtbBelt_Vpc_PumpOk: REFERENCE TO BOOL;
+	Out_bolPtbBelt_Vpc_PumpOn: REFERENCE TO BOOL;
+	In_bolPtbBelt_Umc_EmoOk: REFERENCE TO BOOL;
+	In_uinPtbBelt_Umc_Status: REFERENCE TO UINT;
+	In_uinPtbBelt_Umc_ActualSpeed: REFERENCE TO UINT;
+	In_uinPtbBelt_Umc_SetSpeed: REFERENCE TO UINT;
+	In_uinPtbBelt_Umc_ECatState: REFERENCE TO UINT;
+	In_strPtbBelt_Umc_ECatNetId: REFERENCE TO AMSNETID;
+	In_uinPtbBelt_Umc_ECatPort: REFERENCE TO WORD;
+	Out_uinPtbBelt_Umc_Control: REFERENCE TO UINT;
+	Out_uinPtbBelt_Umc_SetSpeed: REFERENCE TO UINT;
+	In_bolPtbDeStacker_Umc_EmoOk: REFERENCE TO BOOL;
+	In_uinPtbDeStacker_Umc_Status: REFERENCE TO UINT;
+	In_uinPtbDeStacker_Umc_ActualSpeed: REFERENCE TO UINT;
+	In_uinPtbDeStacker_Umc_SetSpeed: REFERENCE TO UINT;
+	In_uinPtbDeStacker_Umc_ECatState: REFERENCE TO UINT;
+	In_strPtbDeStacker_Umc_ECatNetId: REFERENCE TO AMSNETID;
+	In_uinPtbDeStacker_Umc_ECatPort: REFERENCE TO WORD;
+	Out_uinPtbDeStacker_Umc_Control: REFERENCE TO UINT;
+	Out_uinPtbDeStacker_Umc_SetSpeed: REFERENCE TO UINT;
 END_STRUCT
-END_TYPE]]></Declaration>
+END_TYPE
+]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

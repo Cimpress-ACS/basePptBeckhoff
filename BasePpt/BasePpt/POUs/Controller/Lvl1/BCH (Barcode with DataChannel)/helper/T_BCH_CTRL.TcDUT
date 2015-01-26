@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_BCH_CTRL" Id="{8fb2c00a-fc1d-4c57-87a3-493b67109f55}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_BCH_CTRL" Id="{6d46a953-4402-4fa3-b66e-d8b63216333c}">
     <Declaration><![CDATA[TYPE T_BCH_CTRL :
 STRUCT
-	fbBch			: FB_BCH;
-	fbBch_Bcc		: FB_BCC;
-	fbBch_Bcc_Bcd	: FB_BCD;
+	fbBch: FB_BCH;
+	fbBch_Bcc: FB_BCC;
+	fbBch_Bcc_Bcd: FB_BCD;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

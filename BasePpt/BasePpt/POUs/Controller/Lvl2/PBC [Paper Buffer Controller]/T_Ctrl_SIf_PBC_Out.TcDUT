@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_Ctrl_SIf_PBC_Out" Id="{6609d895-09cf-42fb-9e7a-072e7e7d68e2}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_PBC_Out" Id="{97adb3c6-3be0-4aaf-8fbd-9c7b2b2a3d76}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PBC_Out :
 STRUCT
 	/// Air on the Airpressure supply unit on:

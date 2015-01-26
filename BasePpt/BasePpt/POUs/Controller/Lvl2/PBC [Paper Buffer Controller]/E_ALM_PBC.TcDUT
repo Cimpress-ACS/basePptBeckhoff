@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="E_ALM_PBC" Id="{51a272ee-2087-493a-87d9-ce2fb7b698f2}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="E_ALM_PBC" Id="{458f5ed4-9a55-4394-9d40-0739731b2f09}">
     <Declaration><![CDATA[TYPE E_ALM_PBC :
 (
 	PaperTransport := 1,

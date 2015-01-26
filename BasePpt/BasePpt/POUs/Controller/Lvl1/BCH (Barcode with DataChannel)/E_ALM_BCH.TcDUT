@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="E_ALM_BCH" Id="{517baf44-243b-4350-b7c7-eed39560c7f0}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="E_ALM_BCH" Id="{f1707bac-3b87-4d7a-8601-778a01900a2c}">
     <Declaration><![CDATA[TYPE E_ALM_BCH :
 (
 	DataChannelMissing := 1,

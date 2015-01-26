@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_Ctrl_SIf_BCH_In" Id="{90468af3-dd70-4030-a037-3e13ce2a2aba}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_BCH_In" Id="{8e257ca9-a9ed-4505-8281-61d161c6d389}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCH_In :
 STRUCT
 	/// Trigger the measurement sensor

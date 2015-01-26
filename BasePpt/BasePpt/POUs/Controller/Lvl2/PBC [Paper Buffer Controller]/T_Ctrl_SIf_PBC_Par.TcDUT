@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_Ctrl_SIf_PBC_Par" Id="{6ad866b6-6e54-4a31-80fd-91f2b04a6b1d}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_PBC_Par" Id="{b3b085ca-6c2d-49f9-8120-e852f4988829}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PBC_Par :
 STRUCT
 	/// [ms] Paper transport timeout - Time that paper is allowed to have for the transport to the front.

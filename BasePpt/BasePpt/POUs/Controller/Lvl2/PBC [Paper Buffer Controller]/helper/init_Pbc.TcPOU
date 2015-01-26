@@ -1,14 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <POU Name="init_Pbc" Id="{4039498f-3824-4827-97b9-10305e31dbd8}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <POU Name="init_Pbc" Id="{62e943a2-576a-418a-988e-654de7809956}">
     <Declaration><![CDATA[FUNCTION init_Pbc : BOOL
 VAR_INPUT
-	pPbc			: POINTER TO T_PBC;
+	pPbc: POINTER TO T_PBC;
 	/// instance array of all controller instances
-	pCtrlInst		: POINTER TO fb_CtrlBase;
+	pCtrlInst: POINTER TO fb_CtrlBase;
 	/// common interface array of all controllers (main use for PLC)
-	pCtrlCIf		: POINTER TO T_Ctrl_CIf;
-END_VAR]]></Declaration>
+	pCtrlCIf: POINTER TO T_Ctrl_CIf;
+END_VAR
+]]></Declaration>
     <Implementation>
       <ST><![CDATA[pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPbc^.id.Pbc_PtbDeStacker_Umc); // init and entry fb_instance in global fb pointer array
 pPbc^.ctrl.fbPbc_PtbDeStacker.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPbc^.id.Pbc_PtbDeStacker); // init and entry fb_instance in global fb pointer array
