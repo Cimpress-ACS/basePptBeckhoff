@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_JCL" Id="{c17da65c-a92e-4a2e-8441-640d2b3c5bca}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_JCL EXTENDS FB_CtrlBase
 VAR
@@ -304,8 +304,7 @@ METHOD PROTECTED sta_RUN : BOOL
       </Implementation>
     </Method>
     <Property Name="CtrlSIf" Id="{6cd7df45-f8a7-47ec-aacd-12ea1150d983}">
-      <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIf_JCL
-]]></Declaration>
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_JCL]]></Declaration>
       <Get Name="Get" Id="{f109c573-fc6f-41bd-bc60-c1e8e8fd11cd}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>

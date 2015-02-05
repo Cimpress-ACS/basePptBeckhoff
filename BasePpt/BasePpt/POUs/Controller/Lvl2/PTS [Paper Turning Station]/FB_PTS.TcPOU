@@ -67,6 +67,15 @@ IF (me.bolActivate) THEN // cyclic call enabled
 END_IF;
 ]]></ST>
     </Implementation>
+    <Property Name="CtrlSIf" Id="{04d92a51-52d2-4695-9002-096d0ca5376f}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_PTS]]></Declaration>
+      <Get Name="Get" Id="{922f06ae-3100-49f5-bb7f-36d4954ee3f6}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="IoInBridge" Id="{07fa2a9a-5cf1-4304-820c-dcfd32c717c1}">
       <Declaration><![CDATA[{attribute 'object_name' := 'IoInBridge'}
 METHOD PROTECTED IoInBridge : BOOL
@@ -1302,22 +1311,6 @@ METHOD PROTECTED sta_GetItemBusy : BOOL
         <ST><![CDATA[]]></ST>
       </Implementation>
     </Method>
-    <Property Name="CtrlSIf" Id="{e6aa0218-2698-496f-89cc-ed7463afbdc0}">
-      <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIf_PTS
-]]></Declaration>
-      <Set Name="Set" Id="{16e6a992-9ef8-45f6-8f11-5cb5a568b54a}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Set>
-      <Get Name="Get" Id="{43298112-8d03-4f50-8048-6b6cb4c63c59}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
     <Method Name="CtrlInit" Id="{e72e0771-1032-4225-a926-fb885add5154}">
       <Declaration><![CDATA[{attribute 'object_name' := 'CtrlInit'}
 METHOD CtrlInit : BOOL]]></Declaration>

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_OVN" Id="{d4623e6e-93c7-42a6-a41a-a4db5bbad042}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_OVN EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -699,6 +699,15 @@ ELSE
 END_CASE]]></ST>
       </Implementation>
     </Method>
+    <Property Name="CtrlSIf" Id="{88e71e60-cf7d-426c-97d7-afaf858362e5}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_OVN]]></Declaration>
+      <Get Name="Get" Id="{c94c05ae-47d3-42a5-b512-6fc1e70efd2e}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="sta_ERROR" Id="{8be44ae0-c6d5-4bb8-8bb6-82295e13fffe}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
 METHOD PROTECTED sta_ERROR : BOOL]]></Declaration>

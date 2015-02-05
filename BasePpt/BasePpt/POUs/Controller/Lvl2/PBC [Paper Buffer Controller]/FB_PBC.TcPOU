@@ -541,14 +541,7 @@ END_IF
       </Set>
     </Property>
     <Property Name="CtrlSIf" Id="{bfc7f02e-b539-42c0-9bf1-78e902685e93}">
-      <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIf_PBC
-]]></Declaration>
-      <Set Name="Set" Id="{1350ed5b-efa3-44d7-8ffb-141e5f715ad4}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Set>
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_PBC]]></Declaration>
       <Get Name="Get" Id="{46330c7d-51ae-49e3-8330-d23337364660}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>

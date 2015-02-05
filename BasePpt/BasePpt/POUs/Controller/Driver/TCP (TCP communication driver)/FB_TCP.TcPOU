@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_TCP" Id="{60bf3355-9353-4ec6-88e7-1322a695face}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_TCP EXTENDS FB_CtrlBase
 VAR
@@ -432,14 +432,7 @@ fbRecieve();
       </Implementation>
     </Method>
     <Property Name="CtrlSIf" Id="{825112e6-1150-4935-9c6f-fbd494d8a4d0}">
-      <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIf_TCP
-]]></Declaration>
-      <Set Name="Set" Id="{2bbe898c-fea8-41d5-9ef0-75fa60e770a4}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Set>
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_TCP]]></Declaration>
       <Get Name="Get" Id="{4bffdab9-25de-4895-8217-8d3c430ef2a7}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>

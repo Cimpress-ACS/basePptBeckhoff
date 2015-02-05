@@ -175,8 +175,7 @@ METHOD PROTECTED sta_OFF : BOOL
       </Implementation>
     </Method>
     <Property Name="CtrlSIf" Id="{0c1cfe45-643d-4c44-8edd-0ab32bb0d8ca}">
-      <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIf_PST
-]]></Declaration>
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_PST]]></Declaration>
       <Get Name="Get" Id="{367fcd76-9021-4a71-b472-7997d7bdf7c5}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>

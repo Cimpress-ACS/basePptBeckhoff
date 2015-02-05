@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_IBH" Id="{b0e34786-1945-4fbf-ba31-18ca8b1b1f1d}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_IBH EXTENDS FB_CtrlBase
 VAR_OUTPUT
@@ -895,6 +895,15 @@ METHOD PROTECTED sta_OFFBusy : BOOL]]></Declaration>
 	END_IF]]></ST>
       </Implementation>
     </Method>
+    <Property Name="CtrlSIf" Id="{ac1b81dd-4af3-4d7b-b0e2-b818e149d37c}">
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_IBH]]></Declaration>
+      <Get Name="Get" Id="{db198881-bdc5-463a-9883-afe4a9ed0fa8}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="StateMachine" Id="{b6378721-e5d5-48a1-a704-766c361a5de7}">
       <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
 METHOD PROTECTED StateMachine : BOOL]]></Declaration>

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_MDC" Id="{caba4f97-8b2b-426d-95b4-6b3a12d61c7c}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_MDC EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -899,21 +899,11 @@ END_IF]]></ST>
     <Property Name="CtrlSIf" Id="{f55c22f4-5455-4359-9676-c5b5c6df8117}">
       <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_MDC]]></Declaration>
       <Get Name="Get" Id="{03258199-6dd8-4638-83d5-c83c41e90e79}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
+        <Declaration><![CDATA[]]></Declaration>
         <Implementation>
           <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
         </Implementation>
       </Get>
-      <Set Name="Set" Id="{0813cdc4-d202-4042-8e47-85da7be80cd1}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Set>
     </Property>
     <Method Name="sta_InitializeBusy" Id="{f67ccfc1-89db-43e9-908c-4d508516b44d}">
       <Declaration><![CDATA[METHOD PROTECTED sta_InitializeBusy : BOOL

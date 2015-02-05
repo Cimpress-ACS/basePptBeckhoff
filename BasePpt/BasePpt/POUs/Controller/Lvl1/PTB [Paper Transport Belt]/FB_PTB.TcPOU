@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_PTB" Id="{655f278b-e80b-449e-a7e9-7932049a4287}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_PTB EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -623,21 +623,11 @@ SetPumpComand(cCMD_RUN);
     <Property Name="CtrlSIf" Id="{81acc2b3-095a-407a-aa96-26f254cf6c26}">
       <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_PTB]]></Declaration>
       <Get Name="Get" Id="{5186126d-d335-423d-8a38-fd75203eaee0}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
+        <Declaration><![CDATA[]]></Declaration>
         <Implementation>
           <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
         </Implementation>
       </Get>
-      <Set Name="Set" Id="{8c9dac1d-5df8-4628-954b-962643e8ae67}">
-        <Declaration><![CDATA[VAR
-END_VAR
-]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Set>
     </Property>
     <Method Name="SetPumpComand" Id="{9aefb630-c621-4bf6-8829-228022425f36}">
       <Declaration><![CDATA[METHOD PROTECTED SetPumpComand : BOOL

@@ -189,7 +189,7 @@ METHOD PROTECTED sta_ERROR : BOOL]]></Declaration>
       </Implementation>
     </Method>
     <Property Name="CtrlSIf" Id="{7a4e8331-ad47-4ba5-b879-cea967c63058}">
-      <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIF_GRN]]></Declaration>
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_GRN]]></Declaration>
       <Get Name="Get" Id="{09d94cee-b290-446b-a751-03d4e8bf104b}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>

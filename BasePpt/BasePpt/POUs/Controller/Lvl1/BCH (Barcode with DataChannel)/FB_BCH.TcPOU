@@ -398,8 +398,7 @@ END_IF]]></ST>
       </Implementation>
     </Method>
     <Property Name="CtrlSIf" Id="{db229bff-9c1f-41b4-a548-0a656bc10ad3}">
-      <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIf_BCH
-]]></Declaration>
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_BCH]]></Declaration>
       <Get Name="Get" Id="{bae1b32a-cbe7-46c1-b4b6-9a29f80ac6b1}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>

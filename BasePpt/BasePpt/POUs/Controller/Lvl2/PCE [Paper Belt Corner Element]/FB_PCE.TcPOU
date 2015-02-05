@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_PCE" Id="{4fd21a2c-bb8c-40f2-b8bb-db801457e1c0}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_PCE EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -120,20 +120,13 @@ END_VAR
       </Implementation>
     </Method>
     <Property Name="CtrlSIf" Id="{0bd066fc-5211-4c2e-8575-3afaf461be8b}">
-      <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIf_PCE
-]]></Declaration>
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_PCE]]></Declaration>
       <Get Name="Get" Id="{7db522a6-7056-4b38-969f-56f250380177}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
           <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
         </Implementation>
       </Get>
-      <Set Name="Set" Id="{d4219c5a-474c-47a0-a477-d329d8e4db1a}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[]]></ST>
-        </Implementation>
-      </Set>
     </Property>
     <Method Name="getCmdState" Id="{0fec2fc7-2d33-449b-952a-564156cf70da}">
       <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}

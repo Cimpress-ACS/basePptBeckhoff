@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_RAX" Id="{1ba66dca-9f6b-4b33-9c14-53cbd4cf9f57}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_RAX EXTENDS FB_CtrlBase
 VAR_INPUT
@@ -389,8 +389,7 @@ END_CASE;]]></ST>
       </Implementation>
     </Method>
     <Property Name="CtrlSIf" Id="{2db2a783-c62d-4fdd-b68b-65450c8c6487}">
-      <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIf_RAX
-]]></Declaration>
+      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_RAX]]></Declaration>
       <Get Name="Get" Id="{7cade0fd-3910-4b22-9909-04bc58f55f99}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
