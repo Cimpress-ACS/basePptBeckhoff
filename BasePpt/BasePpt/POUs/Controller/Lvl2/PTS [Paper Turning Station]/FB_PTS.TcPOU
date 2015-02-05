@@ -1351,8 +1351,7 @@ THIS^.CIf.Info.p_aCIf[1] := pBeltCIf;
     </Method>
     <Method Name="sta_ERROR" Id="{f097df25-2b08-4c3f-a239-d39a12bbf963}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
-METHOD PROTECTED sta_ERROR : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_ERROR : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
@@ -1360,10 +1359,12 @@ METHOD PROTECTED sta_ERROR : BOOL
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		// stop child controllers
+		pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_OFF;
 		IF (SIf.Cfg.bolRaxEnable) THEN
 			pRaxCIf^.Job.intACmd := cCMD_OFF;
 		ELSE
-			pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_OFF;
 			pMalteserCIf^.Job.intACmd := BASE_PLC.cCMD_OFF;
 		END_IF
 	END_IF
