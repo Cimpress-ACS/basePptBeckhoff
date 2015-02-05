@@ -50,6 +50,7 @@ History:
 Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		09.07.2013		PC			Start history
+0.00.2		05.02.2015		RE			React on StopReleaseItems flag to stop destacking
 ___________________________________________________________________________________________________*)
 
 
@@ -151,6 +152,8 @@ SIf.Alm[E_ALM_PBC.PaperInject].eAlmClass := E_AlmClass.TSTOP;
 SIf.Alm[E_ALM_PBC.PaperInject].strText := 'Paper is not transported to the front';
 SIf.Alm[E_ALM_PBC.PaperInjectRetry].eAlmClass := E_AlmClass.WARNING;
 SIf.Alm[E_ALM_PBC.PaperInjectRetry].strText := 'Paper transport retry';
+SIf.Alm[E_ALM_PBC.DoNotReleaseItems].eAlmClass := E_AlmClass.INFO;
+SIf.Alm[E_ALM_PBC.DoNotReleaseItems].strText := 'Currently not releasing items';
 
 //*******************************************************************************
 // initial values
@@ -168,6 +171,7 @@ SIf.Cfg.bolGranulatAirPressureUnitAvailable := FALSE;
 
 // parameter
 SIf.Par.bolAutomaticMode := FALSE;
+SIf.Par.bolStopReleaseItems := FALSE;
 SIf.Par.udiPaperTransportTime := 3000;
 SIf.Par.udiSheetToEject := 0;
 SIf.Par.udiSheetToSheetTime := 5600;
@@ -509,7 +513,11 @@ END_VAR
 // ----------------------------------------------------------------------------------
 // cyclic actions outside of statemachine
 IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
-	;
+	IF SIf.Par.bolStopReleaseItems THEN
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(SIf.Alm),E_AlmState.SET,CIf.Job.eMe_ActivAlmClass);
+	ELSE
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
+	END_IF
 END_IF
 
 // ----------------------------------------------------------------------------------
@@ -743,7 +751,7 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_EVALUATEEJECT:
 				// Eject next paper if there are still paper to edject or endless ejection
-				IF ((SIf.Cur.uinPaperToEjectCount > 0) AND (NOT SIf.Par.bolAutomaticMode)) OR SIf.Par.bolAutomaticMode THEN
+				IF (((SIf.Cur.uinPaperToEjectCount > 0) AND (NOT SIf.Par.bolAutomaticMode)) OR SIf.Par.bolAutomaticMode) AND (NOT SIf.Par.bolStopReleaseItems) THEN
 					// Make a delay from sheet to sheet if it is not the first sheet
 					IF SIf.In.bolPaperAvailableExit.intern THEN
 						IF   (SIf.Cur.uinSheetToSheetTime > SIf.Par.udiSheetToSheetTime) 

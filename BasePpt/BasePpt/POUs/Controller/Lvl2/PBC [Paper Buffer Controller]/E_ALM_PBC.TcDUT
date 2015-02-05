@@ -11,10 +11,10 @@
 	DataChannelSend := 6,
 	PaperInject := 7,
 	PaperInjectRetry := 8,
+	DoNotReleaseItems := 9,
 	MAX_E_ALM_PBC
 );
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

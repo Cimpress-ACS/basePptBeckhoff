@@ -23,6 +23,8 @@ STRUCT
 	udiPaperInjectRetryPauseTime_ms: UDINT;
 	/// Automatic or Manual DeStacking Mode
 	bolAutomaticMode: BOOL;
+	/// Indicates that the controller must not release any item but can still collect new items (RUN state)
+	bolStopReleaseItems: BOOL;
 END_STRUCT
 END_TYPE
 ]]></Declaration>
