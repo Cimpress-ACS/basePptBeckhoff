@@ -114,9 +114,9 @@ IF (me.StateMachine.intState <> cSTA_SINGLE_ANSWER) THEN
 		bToggleBitGrnOld := SIf.In.bolToggleBitGrn.intern;
 		udiToggleBitGrnTimer_ms := 0;
 	END_IF
-	bToggleBitOK := TRUE;
+	bToggleBitOK := FALSE;
 	IF (udiToggleBitGrnTimer_ms < 1000) THEN
-		bToggleBitOK := FALSE;
+		bToggleBitOK := TRUE;
 	END_IF
 	
 	IF SIf.In.bolPowderLowWarning.intern THEN
