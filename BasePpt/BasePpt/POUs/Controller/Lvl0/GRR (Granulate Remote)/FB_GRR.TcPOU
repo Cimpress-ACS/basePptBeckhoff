@@ -499,9 +499,7 @@ METHOD PROTECTED sta_OFFBusy : BOOL]]></Declaration>
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 		
-		IF SIf.In.bolAutoMode.intern THEN
-			SIf.Out.intCommand.intern := cCMD_OFF;
-		END_IF
+		SIf.Out.intCommand.intern := cCMD_OFF;
 	END_IF
 
 
