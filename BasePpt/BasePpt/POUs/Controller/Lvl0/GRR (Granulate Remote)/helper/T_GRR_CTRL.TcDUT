@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_GRR_CTRL" Id="{7e0e6bd2-bcf5-4f53-978f-1f970a336a31}">
+    <Declaration><![CDATA[TYPE T_GRR_CTRL :
+STRUCT
+	fbGrr: FB_GRR;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>

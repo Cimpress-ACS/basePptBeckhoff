@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.41</ProjectVersion>
+    <ProjectVersion>0.0.0.42</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.41   - StopReleaseItems for PBC
+    <Description>0.0.0.42	- namechange GRN to GRR, ToggleBit for GRR
+0.0.0.41   - StopReleaseItems for PBC
 0.0.0.40	- new BaseElements
 0.0.0.39	- added CtrlSIf and strFullName where missing, new libraries
 0.0.0.38	- Better GRN error msgs
@@ -112,8 +113,8 @@
     <Folder Include="POUs\Controller\Driver\PTR [Paper Tracker]\" />
     <Folder Include="POUs\Controller\Driver\TCP %28TCP communication driver%29\" />
     <Folder Include="POUs\Controller\Lvl0\" />
-    <Folder Include="POUs\Controller\Lvl0\GRN %28Granulate%29\" />
-    <Folder Include="POUs\Controller\Lvl0\GRN %28Granulate%29\helper\" />
+    <Folder Include="POUs\Controller\Lvl0\GRR %28Granulate Remote%29" />
+    <Folder Include="POUs\Controller\Lvl0\GRR %28Granulate Remote%29\helper" />
     <Folder Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\" />
     <Folder Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\helper\" />
     <Folder Include="POUs\Controller\Lvl0\RAX%28Rotative Axis%29\" />
@@ -250,46 +251,46 @@
     <Compile Include="POUs\Controller\Driver\TCP %28TCP communication driver%29\T_Ctrl_SIf_TCP_Par.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\GRN %28Granulate%29\E_ALM_GRN.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\GRR (Granulate Remote)\E_ALM_GRR.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\GRN %28Granulate%29\FB_GRN.TcPOU">
+    <Compile Include="POUs\Controller\Lvl0\GRR (Granulate Remote)\FB_GRR.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\GRN %28Granulate%29\helper\cycle_Grn.TcPOU">
+    <Compile Include="POUs\Controller\Lvl0\GRR (Granulate Remote)\helper\cycle_Grr.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\GRN %28Granulate%29\helper\init_Grn.TcPOU">
+    <Compile Include="POUs\Controller\Lvl0\GRR (Granulate Remote)\helper\init_Grr.TcPOU">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\GRN %28Granulate%29\helper\T_GRN.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\GRR (Granulate Remote)\helper\T_GRR.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\GRN %28Granulate%29\helper\T_GRN_CTRL.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\GRR (Granulate Remote)\helper\T_GRR_CTRL.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\GRN %28Granulate%29\helper\T_GRN_ID.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\GRR (Granulate Remote)\helper\T_GRR_ID.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\GRN %28Granulate%29\helper\T_GRN_IO.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\GRR (Granulate Remote)\helper\T_GRR_IO.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\GRN %28Granulate%29\T_Ctrl_SIf_GRN.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\GRR (Granulate Remote)\T_Ctrl_SIf_GRR.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\GRN %28Granulate%29\T_Ctrl_SIf_GRN_Cfg.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\GRR (Granulate Remote)\T_Ctrl_SIf_GRR_Cfg.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\GRN %28Granulate%29\T_Ctrl_SIf_GRN_Cur.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\GRR (Granulate Remote)\T_Ctrl_SIf_GRR_Cur.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\GRN %28Granulate%29\T_Ctrl_SIf_GRN_In.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\GRR (Granulate Remote)\T_Ctrl_SIf_GRR_In.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\GRN %28Granulate%29\T_Ctrl_SIf_GRN_Out.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\GRR (Granulate Remote)\T_Ctrl_SIf_GRR_Out.TcDUT">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="POUs\Controller\Lvl0\GRN %28Granulate%29\T_Ctrl_SIf_GRN_Par.TcDUT">
+    <Compile Include="POUs\Controller\Lvl0\GRR (Granulate Remote)\T_Ctrl_SIf_GRR_Par.TcDUT">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\E_ALM_JCL.TcDUT">
@@ -812,6 +813,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Utility\LookupTable\LUT_Constants.TcGVL">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Version\Global_Version.TcGVL">
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>

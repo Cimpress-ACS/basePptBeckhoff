@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <POU Name="cycle_Grr" Id="{6622eaea-7002-4bb9-9027-a844e797871b}">
+    <Declaration><![CDATA[FUNCTION cycle_Grr : BOOL
+VAR_INPUT
+	pGrr: POINTER TO T_GRR;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[pGrr^.ctrl.fbGrr.In_bolAutoMode				:= pGrr^.io.In_bolAutoMode;
+pGrr^.ctrl.fbGrr.In_bolEoffOrFuseOk			:= pGrr^.io.In_bolEoffOrFuseOk;
+pGrr^.ctrl.fbGrr.In_bolMainPressureError	:= pGrr^.io.In_bolMainPressureError;
+pGrr^.ctrl.fbGrr.In_bolPowderLowWarning		:= pGrr^.io.In_bolPowderLowWarning;
+pGrr^.ctrl.fbGrr.In_bolSystemOk				:= pGrr^.io.In_bolSystemOk;
+pGrr^.ctrl.fbGrr.In_intState				:= pGrr^.io.In_intState;
+pGrr^.ctrl.fbGrr.In_bolToggleBitGrn			:= pGrr^.io.In_bolToggleBitGrn;
+pGrr^.ctrl.fbGrr();
+pGrr^.io.Out_intCommand						:= pGrr^.ctrl.fbGrr.Out_intCommand;
+pGrr^.io.Out_intConveyorBelt				:= pGrr^.ctrl.fbGrr.Out_intConveyorBelt;
+pGrr^.io.Out_intConveyorVibrator			:= pGrr^.ctrl.fbGrr.Out_intConveyorVibrator;
+pGrr^.io.Out_intPowderVibrator				:= pGrr^.ctrl.fbGrr.Out_intPowderVibrator;
+pGrr^.io.Out_uinFilterClearingCycleTime_min	:= pGrr^.ctrl.fbGrr.Out_uinFilterClearingCycleTime_min;
+pGrr^.io.Out_bolToggleBitGrr				:= pGrr^.ctrl.fbGrr.Out_bolToggleBitGrr;]]></ST>
+    </Implementation>
+    <ObjectProperties />
+  </POU>
+</TcPlcObject>

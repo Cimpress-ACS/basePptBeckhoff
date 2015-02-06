@@ -1,16 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <POU Name="init_Grn" Id="{28c11cc5-75dd-4c5f-9183-c6956d5e8d7a}">
-    <Declaration><![CDATA[FUNCTION init_Grn : BOOL
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <POU Name="init_Grr" Id="{28c11cc5-75dd-4c5f-9183-c6956d5e8d7a}">
+    <Declaration><![CDATA[FUNCTION init_Grr : BOOL
 VAR_INPUT
-	pGrn			: POINTER TO T_GRN;
+	pGrr			: POINTER TO T_GRR;
 	/// instance array of all controller instances
 	pCtrlInst		: POINTER TO fb_CtrlBase;
 	/// common interface array of all controllers (main use for PLC)
 	pCtrlCIf		: POINTER TO T_Ctrl_CIf;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[pGrn^.ctrl.fbGrn.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pGrn^.id.Grn);]]></ST>
+      <ST><![CDATA[pGrr^.ctrl.fbGrr.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pGrr^.id.Grr);]]></ST>
     </Implementation>
     <ObjectProperties />
   </POU>

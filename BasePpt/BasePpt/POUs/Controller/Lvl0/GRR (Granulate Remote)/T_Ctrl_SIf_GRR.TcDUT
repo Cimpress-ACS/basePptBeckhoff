@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_GRR" Id="{ce689142-c101-4ab0-84e2-c32c97551540}">
+    <Declaration><![CDATA[TYPE T_Ctrl_SIf_GRR :
+STRUCT
+	/// configuration
+	Cfg: T_Ctrl_SIf_GRR_Cfg;
+	/// parameter
+	Par: T_Ctrl_SIf_GRR_Par;
+	/// current values
+	Cur: T_Ctrl_SIf_GRR_Cur;
+	///io input
+	In: T_Ctrl_SIf_GRR_In;
+	///io output
+	Out: T_Ctrl_SIf_GRR_Out;
+	/// alarm number used in this controller
+	Alm: ARRAY[1..(E_ALM_GRR.MAX_E_ALM_GRR - 1)] OF T_Ctrl_Alm;
+END_STRUCT
+END_TYPE]]></Declaration>
+    <ObjectProperties />
+  </DUT>
+</TcPlcObject>
