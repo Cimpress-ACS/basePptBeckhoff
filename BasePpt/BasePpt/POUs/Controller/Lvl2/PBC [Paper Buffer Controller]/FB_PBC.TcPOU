@@ -51,6 +51,7 @@ Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		09.07.2013		PC			Start history
 0.00.2		05.02.2015		RE			React on StopReleaseItems flag to stop destacking
+0.00.3		06.02.2015		RE			Bug fix StopReleaseItems, fixed some comments
 ___________________________________________________________________________________________________*)
 
 
@@ -671,15 +672,17 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 			// substate Wait paper - wait for the next paper if the buffer was empty
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_WAITPAPER:
-				IF NOT SIf.In.bolPaperAvailableExit.intern THEN
-					IF SIf.In.bolCapacityReached.intern THEN
-						me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONSTARTbusy;
+				IF (NOT SIf.Par.bolStopReleaseItems) THEN
+					IF NOT SIf.In.bolPaperAvailableExit.intern THEN
+						IF SIf.In.bolCapacityReached.intern THEN
+							me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONSTARTbusy;
+						END_IF
+					ELSE
+						me.SubStateMachine.intStateNext := cSUB_EVALUATEEJECT;
 					END_IF
-				ELSE
-					me.SubStateMachine.intStateNext := cSUB_EVALUATEEJECT;
 				END_IF
 				
-			// substate Wait paper - wait for the next paper if the buffer was empty
+			// substate PositionStart busy
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_POSITIONSTARTbusy:
 				IF NOT SIf.In.bolPaperAvailableExit.intern THEN
@@ -690,7 +693,7 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 					me.SubStateMachine.intStateNext := cSUB_EVALUATEEJECT;
 				END_IF
 	
-			// substate Wait paper - wait for the next paper if the buffer was empty
+			// substate Position busy
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_POSITIONbusy:
 				IF me.SubStateMachine.udiTimeInState_ms <= SIf.Par.udiPaperTransportTime THEN
@@ -740,18 +743,18 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 					me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONSTARTbusy;
 				END_IF
 
-			// substate Wait paper - wait for the next paper if the buffer was empty
+			// substate PositionStop busy
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_POSITIONSTOPbusy:
 				IF pDeStackerCIf^.Job.intState = BASE_PLC.cSTA_STOP THEN
 					me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_EVALUATEEJECT;
 				END_IF
 
-			// substate Wait paper - wait for the next paper if the buffer was empty
+			// substate Evaluate Eject
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_EVALUATEEJECT:
 				// Eject next paper if there are still paper to edject or endless ejection
-				IF (((SIf.Cur.uinPaperToEjectCount > 0) AND (NOT SIf.Par.bolAutomaticMode)) OR SIf.Par.bolAutomaticMode) AND (NOT SIf.Par.bolStopReleaseItems) THEN
+				IF (((SIf.Cur.uinPaperToEjectCount > 0) AND (NOT SIf.Par.bolAutomaticMode)) OR SIf.Par.bolAutomaticMode) THEN
 					// Make a delay from sheet to sheet if it is not the first sheet
 					IF SIf.In.bolPaperAvailableExit.intern THEN
 						IF   (SIf.Cur.uinSheetToSheetTime > SIf.Par.udiSheetToSheetTime) 
@@ -766,7 +769,7 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 					me.StateMachine.intStateNext := cSTA_STOPBusy;
 				END_IF
 	
-			// substate Wait paper - wait for the next paper if the buffer was empty
+			// substate EjectStart busy
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_EJECTSTARTbusy:
 				pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
@@ -774,7 +777,7 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 				SIf.Par.udiSimPaperToPaperTransportTime := SIf.Cur.uinPaperToPaperTime_ms / 3; 
 				me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_EJECTbusy;
 	
-			// substate Wait paper - wait for the next paper if the buffer was empty
+			// substate Eject busy
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_EJECTbusy:
 				IF NOT SIf.In.bolPaperAvailableExit.intern AND NOT SIf.Cfg.bolUseTurnTableSensorForEject THEN
@@ -820,7 +823,7 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 				// -----------------------------------
 
 	
-			// substate Wait paper - wait for the next paper if the buffer was empty
+			// substate EjectStop busy
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_EJECTSTOPbusy:
 				IF pDeStackerCIf^.Job.intState = BASE_PLC.cSTA_STOP THEN
