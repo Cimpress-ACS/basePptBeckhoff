@@ -141,6 +141,11 @@ END_VAR]]></Declaration>
 		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
 	END_IF
 	
+	IF (p_fbIBH_CIf^.Job.intState = cSTA_OFF) THEN
+		// Start Driver
+		p_fbIBH_CIf^.Job.intACmd := IBH_CmdState.cCMD_CONNECT;
+	END_IF
+	
 	IF THIS^.In_bDriverError THEN
 		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UDINT(E_ALM_OVN.ConnectionError),UDINT_TO_DINT(THIS^.In_udiDriverErrorID),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 		me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
@@ -744,6 +749,10 @@ METHOD PROTECTED sta_ERROR : BOOL]]></Declaration>
 	
 	// State Change Condition
 	IF (CIf.Job.bolAlmReset = TRUE) THEN
+		IF (p_fbIBH_CIf^.Job.intState = cSTA_OFF) THEN
+			// Start Driver
+			p_fbIBH_CIf^.Job.intACmd := IBH_CmdState.cCMD_CONNECT;
+		END_IF
 		p_fbIBH^.setAckError();
 		me.StateMachine.intStateNext := cSTA_ERRORQuit;
 	END_IF
@@ -1268,8 +1277,7 @@ METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_OVN]]></Declaration>
     </Property>
     <Method Name="sta_ERRORQuit" Id="{e9ab53d3-ca72-481e-a944-6fa5721b31b2}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERRORQuit'}
-METHOD PROTECTED sta_ERRORQuit : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_ERRORQuit : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 
