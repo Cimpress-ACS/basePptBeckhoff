@@ -629,8 +629,7 @@ METHOD PROTECTED sta_PON : BOOL
 METHOD PROTECTED sta_RUN : BOOL
 VAR
 	pItem: POINTER TO T_IdBase_DCH;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
@@ -672,7 +671,7 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 			// substate Wait paper - wait for the next paper if the buffer was empty
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_WAITPAPER:
-				IF (NOT SIf.Par.bolStopReleaseItems) THEN
+				IF ((NOT SIf.Par.bolStopReleaseItems) OR (NOT SIf.Par.bolAutomaticMode)) THEN
 					IF NOT SIf.In.bolPaperAvailableExit.intern THEN
 						IF SIf.In.bolCapacityReached.intern THEN
 							me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONSTARTbusy;
