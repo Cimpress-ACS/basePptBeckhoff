@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.44</ProjectVersion>
+    <ProjectVersion>0.0.0.45</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.44	- OVN recovers from EOFF by reconnecting IBHLink
+    <Description>0.0.0.45	- manual operation on GRR is only a WARNING
+0.0.0.44	- OVN recovers from EOFF by reconnecting IBHLink
 0.0.0.43	- ignore bolStopReleaseItems when in manual mode
 0.0.0.42	- namechange GRN to GRR, ToggleBit for GRR
 0.0.0.41   - StopReleaseItems for PBC
