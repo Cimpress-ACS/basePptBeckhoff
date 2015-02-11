@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.45</ProjectVersion>
+    <ProjectVersion>0.0.0.46</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.45	- manual operation on GRR is only a WARNING
+    <Description>0.0.0.46	- TCP.CtrlInit-Added call to super
+0.0.0.45	- manual operation on GRR is only a WARNING
 0.0.0.44	- OVN recovers from EOFF by reconnecting IBHLink
 0.0.0.43	- ignore bolStopReleaseItems when in manual mode
 0.0.0.42	- namechange GRN to GRR, ToggleBit for GRR
@@ -69,10 +70,10 @@
     <AssemblyName>MyApplication</AssemblyName>-->
   </PropertyGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.1.38,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.1.39,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Base_PLC,0.3.5.7,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.5.8,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.3.0,Beckhoff Automation GmbH">

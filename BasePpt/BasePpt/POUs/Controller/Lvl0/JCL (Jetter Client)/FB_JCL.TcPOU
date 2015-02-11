@@ -1126,8 +1126,7 @@ METHOD CtrlInit : BOOL
 me.StateMachine.intStateNext := JCL_CmdState.cSTA_ConnectBusy;
 
 // get child if
-pTCP_CIF := p_fbTCP^.CtrlCIf;
-THIS^.AddChild(p_fbTCP^);]]></ST>
+pTCP_CIF 	:= AddChild(p_fbTCP^);]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_RUNBusy" Id="{f27e9cf8-1161-450e-b7fa-40b808c2f2f3}">

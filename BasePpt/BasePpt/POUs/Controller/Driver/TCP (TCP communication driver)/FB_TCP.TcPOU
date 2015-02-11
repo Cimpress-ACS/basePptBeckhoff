@@ -108,6 +108,8 @@ METHOD CtrlInit : BOOL
       <Implementation>
         <ST><![CDATA[// one time first cyclic call
 // The socket is closed
+SUPER^.CtrlInit();
+
 me.StateMachine.intStateNext := TCP_CmdState.cSTA_Close;]]></ST>
       </Implementation>
     </Method>
