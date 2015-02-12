@@ -4,11 +4,13 @@
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PBC_Cfg :
 STRUCT
 	/// True : Use the turn table sensor to detect ejects.
-	bolUseTurnTableSensorForEject: BOOL;
+	bolUseTurnTableSensorForEject			: BOOL;
 	/// Enable the Data Channel to Saber to send the read barcodes to Saber
-	bolEnableDataChannel: BOOL;
+	bolEnableDataChannel					: BOOL;
 	/// Airpressure unit for the granulate available
-	bolGranulatAirPressureUnitAvailable: BOOL;
+	bolGranulatAirPressureUnitAvailable		: BOOL;
+	// Enable or Disable the Saber Stop DeStack to do manual operation
+	bolEnableSaberStopDeStack				: BOOL;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

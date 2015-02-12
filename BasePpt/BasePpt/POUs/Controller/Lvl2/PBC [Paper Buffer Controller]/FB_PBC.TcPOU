@@ -166,9 +166,10 @@ CIf.SwCfg.bolEnable := TRUE;
 CIf.SwCfg.bolSimulation := FALSE;
 
 // Configuration
-SIf.Cfg.bolUseTurnTableSensorForEject := TRUE;
-SIf.Cfg.bolEnableDataChannel		  := FALSE;
+SIf.Cfg.bolUseTurnTableSensorForEject 		:= TRUE;
+SIf.Cfg.bolEnableDataChannel		  		:= FALSE;
 SIf.Cfg.bolGranulatAirPressureUnitAvailable := FALSE;
+SIf.Cfg.bolEnableSaberStopDeStack 			:= TRUE;
 
 // parameter
 SIf.Par.bolAutomaticMode := FALSE;
@@ -671,21 +672,19 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 			// substate Wait paper - wait for the next paper if the buffer was empty
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_WAITPAPER:
-				IF ((NOT SIf.Par.bolStopReleaseItems) OR (NOT SIf.Par.bolAutomaticMode)) THEN
-					IF NOT SIf.In.bolPaperAvailableExit.intern THEN
-						IF SIf.In.bolCapacityReached.intern THEN
-							me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONSTARTbusy;
-						END_IF
-					ELSE
-						me.SubStateMachine.intStateNext := cSUB_EVALUATEEJECT;
+				IF NOT SIf.In.bolPaperAvailableExit.intern THEN
+					IF SIf.In.bolCapacityReached.intern OR SIf.In.bolPaperAvailableEntry.intern THEN
+						me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONSTARTbusy;
 					END_IF
+				ELSE
+					me.SubStateMachine.intStateNext := cSUB_EVALUATEEJECT;
 				END_IF
 				
 			// substate PositionStart busy
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_POSITIONSTARTbusy:
 				IF NOT SIf.In.bolPaperAvailableExit.intern THEN
-					SIf.Cur.bolPaperBeforeEjectAvailable := SIf.In.bolCapacityReached.intern;
+					SIf.Cur.bolPaperBeforeEjectAvailable := SIf.In.bolCapacityReached.intern OR SIf.In.bolPaperAvailableEntry.intern;
 					pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
 					me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONbusy;
 				ELSE
@@ -702,7 +701,7 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 						me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONSTOPbusy;
 					END_IF
 				ELSE
-					IF SIf.Cur.bolPaperBeforeEjectAvailable THEN
+					IF SIf.Cur.bolPaperBeforeEjectAvailable OR SIf.In.bolCapacityReached.intern OR SIf.In.bolPaperAvailableEntry.intern THEN
 						IF DINT_TO_UDINT(m_intRetry) < SIf.Par.udiPaperInjectRetries THEN
 							pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
 							m_intRetry := m_intRetry + 1;
@@ -756,10 +755,12 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 				IF (((SIf.Cur.uinPaperToEjectCount > 0) AND (NOT SIf.Par.bolAutomaticMode)) OR SIf.Par.bolAutomaticMode) THEN
 					// Make a delay from sheet to sheet if it is not the first sheet
 					IF SIf.In.bolPaperAvailableExit.intern THEN
-						IF   (SIf.Cur.uinSheetToSheetTime > SIf.Par.udiSheetToSheetTime) 
-						  OR ((SIf.Cur.uinPaperToEjectCount = SIf.Cur.uinPaperToEjectParameter) AND NOT SIf.Par.bolAutomaticMode) THEN
-							SIf.Cur.uinSheetToSheetTime := 0;
-							me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_EJECTSTARTbusy;
+						IF ((NOT SIf.Par.bolStopReleaseItems) OR (NOT SIf.Cfg.bolEnableSaberStopDeStack)) THEN
+							IF   (SIf.Cur.uinSheetToSheetTime > SIf.Par.udiSheetToSheetTime) 
+							  OR ((SIf.Cur.uinPaperToEjectCount = SIf.Cur.uinPaperToEjectParameter) AND NOT SIf.Par.bolAutomaticMode) THEN
+								SIf.Cur.uinSheetToSheetTime := 0;
+								me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_EJECTSTARTbusy;
+							END_IF
 						END_IF
 					ELSE
 						me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_WAITPAPER;
