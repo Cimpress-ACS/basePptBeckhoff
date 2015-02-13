@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <DUT Name="E_ALM_OVN" Id="{3b539a88-dc59-486c-9a4f-d59657f9b921}">
     <Declaration><![CDATA[TYPE E_ALM_OVN :
 (
@@ -68,7 +68,8 @@
 	/// TemperatureFault									- software reset
 	Tesoma13x00 := 35,
 	TesomaUnknown := 36,
-	HostConnectionLost,
+	HostConnectionLost := 37,
+	SettingsChanged := 38,
 	MAX_E_ALM_OVN
 );
 END_TYPE]]></Declaration>

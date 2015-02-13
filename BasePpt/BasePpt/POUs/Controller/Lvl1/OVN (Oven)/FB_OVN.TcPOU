@@ -229,6 +229,7 @@ END_VAR]]></Declaration>
 	
 	// check if parameters have changed
 	IF (TC2_SYSTEM.MEMCMP(pBuf1:=ADR(SIf.Par), pBuf2:=ADR(THIS^.lastSifPar), n:=SIZEOF(SIf.Par)) <> 0) THEN
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UDINT(E_ALM_OVN.SettingsChanged),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 		me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;
 	END_IF
 	
@@ -541,7 +542,8 @@ SIf.Alm[E_ALM_OVN.TesomaUnknown].eAlmClass := E_AlmClass.TSTOP;
 SIf.Alm[E_ALM_OVN.TesomaUnknown].strText := 'Tesoma - Unknown Error';
 SIf.Alm[E_ALM_OVN.HostConnectionLost].eAlmClass := E_AlmClass.TSTOP;
 SIf.Alm[E_ALM_OVN.HostConnectionLost].strText := 'Saber Communication Lost';
-
+SIf.Alm[E_ALM_OVN.SettingsChanged].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_OVN.SettingsChanged].strText := 'Settings Changed';
 
 //*******************************************************************************
 // initial values
