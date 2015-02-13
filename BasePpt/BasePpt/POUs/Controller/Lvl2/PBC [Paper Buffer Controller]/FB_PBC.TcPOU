@@ -188,8 +188,7 @@ SIf.Par.udiSimPaperToPaperTransportTime := SIf.Par.udiPaperTransportTime / 20;
     </Method>
     <Method Name="sta_OFFBusy" Id="{17679244-0d63-474b-a2e5-0ad08cf944d6}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFFBusy'}
-METHOD PROTECTED sta_OFFBusy : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_OFFBusy : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
@@ -201,6 +200,9 @@ METHOD PROTECTED sta_OFFBusy : BOOL
 		
 		pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_OFF;
 		pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_OFF;
+		
+		// clear alarm
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
 	END_IF
 
 
@@ -444,8 +446,7 @@ END_IF
     </Method>
     <Method Name="sta_STOPbusy" Id="{49640ce3-b706-47ab-996f-c339af87606a}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_STOPbusy'}
-METHOD PROTECTED sta_STOPbusy : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_STOPbusy : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
@@ -454,6 +455,9 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 
 	pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
+	
+	// set alarm
+	pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(SIf.Alm),E_AlmState.SET,CIf.Job.eMe_ActivAlmClass);
 END_IF
 
 
@@ -513,19 +517,14 @@ METHOD PROTECTED Always : BOOL
 VAR
 	pItem: POINTER TO T_IdBase_DCH;
 	bResult: BOOL;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[SUPER^.Always();
 
 // ----------------------------------------------------------------------------------
 // cyclic actions outside of statemachine
 IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
-	IF SIf.Par.bolStopReleaseItems THEN
-		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(SIf.Alm),E_AlmState.SET,CIf.Job.eMe_ActivAlmClass);
-	ELSE
-		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
-	END_IF
+	;
 END_IF
 
 // ----------------------------------------------------------------------------------
@@ -901,8 +900,7 @@ METHOD PROTECTED sta_ERROR : BOOL
     </Method>
     <Method Name="sta_RUNbusy" Id="{d8dd0726-50f9-4984-adec-e6d7ad48dc4b}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_RUNbusy'}
-METHOD PROTECTED sta_RUNbusy : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_RUNbusy : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
@@ -920,6 +918,9 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 	
 	pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
 	pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+	
+	// clear alarm
+	pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
 END_IF
 
 
