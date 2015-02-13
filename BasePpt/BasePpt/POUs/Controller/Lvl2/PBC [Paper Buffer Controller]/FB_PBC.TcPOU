@@ -330,7 +330,7 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 			IF SIf.In.bolPaperAvailableExit.intern THEN
 				me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_READYEJECT;
 			ELSE
-				IF SIf.In.bolCapacityReached.intern THEN
+				IF SIf.In.bolCapacityReached.intern OR SIf.In.bolPaperAvailableEntry.intern THEN
 					me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONSTARTbusy;
 				END_IF
 			END_IF
@@ -339,7 +339,7 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		// ------------------------------------------------------------------------
 		PBC_CmdState.cSUB_POSITIONSTARTbusy:
 			IF NOT SIf.In.bolPaperAvailableExit.intern THEN
-				SIf.Cur.bolPaperBeforeEjectAvailable := SIf.In.bolCapacityReached.intern;
+				SIf.Cur.bolPaperBeforeEjectAvailable := SIf.In.bolCapacityReached.intern OR SIf.In.bolPaperAvailableEntry.intern;
 				pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
 				me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONbusy;
 			ELSE
@@ -350,7 +350,7 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		// ------------------------------------------------------------------------
 		PBC_CmdState.cSUB_POSITIONbusy:
 			IF me.SubStateMachine.udiTimeInState_ms > SIf.Par.udiPaperTransportTime THEN
-				IF SIf.Cur.bolPaperBeforeEjectAvailable THEN
+				IF SIf.Cur.bolPaperBeforeEjectAvailable OR SIf.In.bolCapacityReached.intern OR SIf.In.bolPaperAvailableEntry.intern THEN
 					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.PaperTransport),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 					me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;	
 				ELSE
@@ -395,7 +395,13 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
 			END_IF
 		
-			IF (me.intCmd = BASE_PLC.cCMD_RUN) OR SIf.Par.bolAutomaticMode THEN
+			IF ((me.intCmd = BASE_PLC.cCMD_RUN) AND (NOT SIf.Par.bolStopReleaseItems AND SIf.Cfg.bolEnableSaberStopDeStack))
+				OR ((me.intCmd = BASE_PLC.cCMD_RUN) AND NOT SIf.Cfg.bolEnableSaberStopDeStack) THEN
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
+			END_IF
+
+			IF (SIf.Par.bolAutomaticMode AND (NOT SIf.Par.bolStopReleaseItems AND SIf.Cfg.bolEnableSaberStopDeStack))
+				OR (SIf.Par.bolAutomaticMode AND NOT SIf.Cfg.bolEnableSaberStopDeStack) THEN
 				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
 			END_IF
 	END_CASE
@@ -752,15 +758,13 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_EVALUATEEJECT:
 				// Eject next paper if there are still paper to edject or endless ejection
-				IF (((SIf.Cur.uinPaperToEjectCount > 0) AND (NOT SIf.Par.bolAutomaticMode)) OR SIf.Par.bolAutomaticMode) THEN
+				IF (((SIf.Cur.uinPaperToEjectCount > 0) AND (NOT SIf.Par.bolAutomaticMode) AND (NOT SIf.Cfg.bolEnableSaberStopDeStack)) OR SIf.Par.bolAutomaticMode OR (SIf.Cfg.bolEnableSaberStopDeStack AND SIf.Par.bolStopReleaseItems)) THEN
 					// Make a delay from sheet to sheet if it is not the first sheet
 					IF SIf.In.bolPaperAvailableExit.intern THEN
-						IF ((NOT SIf.Par.bolStopReleaseItems) OR (NOT SIf.Cfg.bolEnableSaberStopDeStack)) THEN
-							IF   (SIf.Cur.uinSheetToSheetTime > SIf.Par.udiSheetToSheetTime) 
-							  OR ((SIf.Cur.uinPaperToEjectCount = SIf.Cur.uinPaperToEjectParameter) AND NOT SIf.Par.bolAutomaticMode) THEN
-								SIf.Cur.uinSheetToSheetTime := 0;
-								me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_EJECTSTARTbusy;
-							END_IF
+						IF   (SIf.Cur.uinSheetToSheetTime > SIf.Par.udiSheetToSheetTime) 
+						  OR ((SIf.Cur.uinPaperToEjectCount = SIf.Cur.uinPaperToEjectParameter) AND NOT SIf.Par.bolAutomaticMode) THEN
+							SIf.Cur.uinSheetToSheetTime := 0;
+							me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_EJECTSTARTbusy;
 						END_IF
 					ELSE
 						me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_WAITPAPER;
