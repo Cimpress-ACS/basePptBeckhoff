@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_PBC_IO" Id="{674f6dce-5194-4e3e-8d64-1bd4b27cb0f4}">
+  <DUT Name="T_PBC_IO" Id="{23cea475-9ef2-4eda-a290-b979cc2bc72f}">
     <Declaration><![CDATA[TYPE T_PBC_IO :
 STRUCT
 	///TODO: describe why this is here

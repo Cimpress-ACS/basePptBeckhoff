@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_PBC_CTRL" Id="{33cb85df-498b-4dd9-8272-25b3923e26bc}">
+  <DUT Name="T_PBC_CTRL" Id="{5a45d332-ebf9-483d-9ed4-a8db9fdb70b1}">
     <Declaration><![CDATA[TYPE T_PBC_CTRL :
 STRUCT
 	fbPbc_PtbDeStacker: FB_PTB;

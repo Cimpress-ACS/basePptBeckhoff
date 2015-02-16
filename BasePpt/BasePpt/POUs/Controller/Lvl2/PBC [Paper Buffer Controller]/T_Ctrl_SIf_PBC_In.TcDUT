@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_Ctrl_SIf_PBC_In" Id="{0ae8fdb6-cd35-4cbc-8daf-5decef1d5cef}">
+  <DUT Name="T_Ctrl_SIf_PBC_In" Id="{ccd0b3ac-c62e-4c7a-af02-b6f61ed750b0}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PBC_In :
 STRUCT
 	/// This sensor shows if the buffer reaches his capacity limits

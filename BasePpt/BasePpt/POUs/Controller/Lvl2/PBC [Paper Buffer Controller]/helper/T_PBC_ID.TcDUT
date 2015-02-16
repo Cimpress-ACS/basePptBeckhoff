@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_PBC_ID" Id="{3a57df00-7ae0-4036-949e-a99eb2ac5c1b}">
+  <DUT Name="T_PBC_ID" Id="{caa203cc-72be-4259-b87b-9c5be7015c95}">
     <Declaration><![CDATA[TYPE T_PBC_ID :
 STRUCT
 	Pbc: INT;

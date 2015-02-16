@@ -1,10 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <GVL Name="PBC_CmdState" Id="{9ab67083-6dff-49d7-8564-4bfb34c224b2}">
+  <GVL Name="PBC_CmdState" Id="{c08a46b0-45e8-438d-90f8-78fc66cf873f}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	///ctrl specific command definitions
-	cCMD_SINGLE: INT := 202;
+	cCMD_SINGLE			: INT := 202;
+	cCMD_MANUALSTART	: INT := 204;
 	///ctrl specific states definitions
+	cSTA_INITbusy		: INT := 205;
 	cSUB_WAITPAPER: INT := 300;
 	cSUB_POSITIONbusy: INT := 301;
 	cSUB_POSITIONSTOPbusy: INT := 302;
