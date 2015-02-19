@@ -9,7 +9,7 @@ VAR
 	fbClientConnection: TC2_TCPIP.FB_ClientServerConnection;
 	fbSend: TC2_TCPIP.FB_SocketSend;
 	fbReceive: TC2_TCPIP.FB_SocketReceive;
-	/// buffer for recieved messages
+	/// buffer for received messages
 	fbReceiveBuffer: FB_DataSetFifo;
 	/// buffer for messages to be sendt
 	fbSendBuffer: FB_DataSetFifo;
@@ -60,24 +60,23 @@ VAR
 	bSuccess		: BOOL;
 	nLoad			: UDINT;
 	stACK			: ST_Header;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// recieve data if connected
+        <ST><![CDATA[// receive data if connected
 IF (fbClientConnection.eState = TC2_TCPIP.E_SocketConnectionState.eSOCKET_CONNECTED) THEN
-	IF fbRecieve.bBusy THEN	
-		fbRecieve.bExecute := FALSE;
-		fbRecieve.sSrvNetId := '';
-		fbRecieve();
+	IF fbReceive.bBusy THEN	
+		fbReceive.bExecute := FALSE;
+		fbReceive.sSrvNetId := '';
+		fbReceive();
 		
-		IF NOT (fbRecieve.bBusy) THEN
-			// Recieve is finished => see what we got
+		IF NOT (fbReceive.bBusy) THEN
+			// Receive is finished => see what we got
 				
 			// First Check about FUB error	
-			IF (fbRecieve.bError = TRUE) THEN
+			IF (fbReceive.bError = TRUE) THEN
 				IF NOT (SIf.Cur.bolFubErrorActive) THEN
 					SIf.Cur.bolFubErrorActive:= TRUE;																				
-					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_TCP.FubErrorReceiveData, UDINT_TO_DINT(fbRecieve.nErrId),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);																						
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_TCP.FubErrorReceiveData, UDINT_TO_DINT(fbReceive.nErrId),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);																						
 					// Try to close the socket. Needs reconnect for socket after an error!	
 					me.StateMachine.intStateNext := TCP_CmdState.cSTA_CloseBusy;					
 				END_IF	
@@ -85,29 +84,29 @@ IF (fbClientConnection.eState = TC2_TCPIP.E_SocketConnectionState.eSOCKET_CONNEC
 			// No error			
 			ELSE
 				// Check received data
-				CASE pRecieveHead^.uinMsgId  OF
+				CASE pReceiveHead^.uinMsgId  OF
 					// ACK
 					// **************************
 					999: 
-						bRecievedAck := 1;
+						bReceivedAck := 1;
 					
 					// NACK
 					// **************************
 					998: 
-						bRecievedNack := 1;
+						bReceivedNack := 1;
 						
 					// Valid message IDs
 					// **************************
 					2, 3, 4, 5, 6, 7: 
 					
-						fbReceiveBuffer.A_Add(in := ADR(naRecieveData), iAddSize:= UDINT_TO_INT(SIZEOF(ST_Header) + pRecieveHead^.udiMsgSize), bOk=>bSuccess , nLoad => nLoad );
+						fbReceiveBuffer.A_Add(in := ADR(naReceiveData), iAddSize:= UDINT_TO_INT(SIZEOF(ST_Header) + pReceiveHead^.udiMsgSize), bOk=>bSuccess , nLoad => nLoad );
 						IF NOT ( bSuccess ) THEN 
 							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_TCP.AddToReceiveBufferFailed,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 							me.StateMachine.intStateNext := BASE_PLC.cSTA_ERROR;
 							me.StateMachine.intState := BASE_PLC.cSTA_ERROR;
 						END_IF
 								
-					// nothing has been recieved	
+					// nothing has been received	
 					// **************************
 					0: 
 					
@@ -124,26 +123,25 @@ IF (fbClientConnection.eState = TC2_TCPIP.E_SocketConnectionState.eSOCKET_CONNEC
 					END_IF
 				
 				END_CASE
-				// empty the recieve data
-				pRecieveHead^.uinMsgId := 0;			
+				// empty the receive data
+				pReceiveHead^.uinMsgId := 0;			
 			END_IF	
 			
 		END_IF
 		
 	// Trigger the next data receive 
 	ELSE
-		fbRecieve(bExecute := FALSE); // Needs new trigger!
-		fbRecieve.sSrvNetId := '';
-		fbRecieve.hSocket := fbClientConnection.hSocket;
-		fbRecieve.cbLen := SIZEOF(naRecieveData);
-		fbRecieve.pDest := ADR(naRecieveData);
-		fbRecieve.tTimeout := SIf.Par.tTOReceive;
-		fbRecieve.bExecute := TRUE;
-		fbRecieve();
+		fbReceive(bExecute := FALSE); // Needs new trigger!
+		fbReceive.sSrvNetId := '';
+		fbReceive.hSocket := fbClientConnection.hSocket;
+		fbReceive.cbLen := SIZEOF(naReceiveData);
+		fbReceive.pDest := ADR(naReceiveData);
+		fbReceive.tTimeout := SIf.Par.tTOReceive;
+		fbReceive.bExecute := TRUE;
+		fbReceive();
 	END_IF
 END_IF 
-fbRecieve();
-]]></ST>
+fbReceive();]]></ST>
       </Implementation>
     </Method>
     <Method Name="getCtrlSIf" Id="{3c967a15-aae8-4975-9dd3-a4f410eac033}">
@@ -278,7 +276,7 @@ CASE intSendState OF
 			iNumSendTry := iNumSendTry +1;
 			IF iNumSendTry >= SIf.Par.iMaxSendTry THEN
 				// the signal has not been acknoledged too many times => error
-				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_TCP.NoAckRecieved,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_TCP.NoAckReceived,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 				me.StateMachine.intStateNext := BASE_PLC.cSTA_ERROR;
 			ELSE // retry sending
 				fbSend.bExecute := TRUE;
@@ -388,23 +386,23 @@ CIf.Info.strFullName := 'TCP Communication Driver';
 
 // set alarm class
 SIf.Alm[E_ALM_TCP.AddToReceiveBufferFailed].eAlmClass := E_AlmClass.INFO;
-SIf.Alm[E_ALM_TCP.AddToReceiveBufferFailed].strText := 'addRecieveBufferFailed'; 
+SIf.Alm[E_ALM_TCP.AddToReceiveBufferFailed].strText := 'addReceiveBufferFailed'; 
 SIf.Alm[E_ALM_TCP.AddToSendBufferFailed].eAlmClass := E_AlmClass.INFO;
 SIf.Alm[E_ALM_TCP.AddToSendBufferFailed].strText := 'addSendBufferFailed'; 
 SIf.Alm[E_ALM_TCP.GetFromReceiveBufferFailed].eAlmClass := E_AlmClass.INFO;
-SIf.Alm[E_ALM_TCP.GetFromReceiveBufferFailed].strText := 'getRecieveBufferFailed'; 
+SIf.Alm[E_ALM_TCP.GetFromReceiveBufferFailed].strText := 'getReceiveBufferFailed'; 
 SIf.Alm[E_ALM_TCP.GetFromSendBufferFailed].eAlmClass := E_AlmClass.INFO;
 SIf.Alm[E_ALM_TCP.GetFromSendBufferFailed].strText := 'getSendBufferFailed'; 
 SIf.Alm[E_ALM_TCP.RemoveFromReceiveBufferFailed].eAlmClass := E_AlmClass.INFO;
-SIf.Alm[E_ALM_TCP.RemoveFromReceiveBufferFailed].strText := 'RemoveRecieveBufferFailed'; 
+SIf.Alm[E_ALM_TCP.RemoveFromReceiveBufferFailed].strText := 'RemoveReceiveBufferFailed'; 
 SIf.Alm[E_ALM_TCP.RemoveFromSendBufferFailed].eAlmClass := E_AlmClass.INFO;
 SIf.Alm[E_ALM_TCP.RemoveFromSendBufferFailed].strText := 'RemoveSendBufferFailed'; 
 SIf.Alm[E_ALM_TCP.SocketConnectionLost].eAlmClass := E_AlmClass.INFO;
 SIf.Alm[E_ALM_TCP.SocketConnectionLost].strText := 'SocketLost'; 
 SIf.Alm[E_ALM_TCP.NotSent].eAlmClass := BASE_PLC.E_AlmClass.INFO;
 SIf.Alm[E_ALM_TCP.NotSent].strText := 'NotSent';
-SIf.Alm[E_ALM_TCP.NoAckRecieved].eAlmClass := BASE_PLC.E_AlmClass.INFO;
-SIf.Alm[E_ALM_TCP.NoAckRecieved].strText := 'NoAckRecieved';
+SIf.Alm[E_ALM_TCP.NoAckReceived].eAlmClass := BASE_PLC.E_AlmClass.INFO;
+SIf.Alm[E_ALM_TCP.NoAckReceived].strText := 'NoAckReceived';
 SIf.Alm[E_ALM_TCP.FubErrorClientConnection].eAlmClass := BASE_PLC.E_AlmClass.INFO;
 SIf.Alm[E_ALM_TCP.FubErrorClientConnection].strText := 'FUB error - client connection. Note add. info number';
 SIf.Alm[E_ALM_TCP.FubErrorSendData].eAlmClass := BASE_PLC.E_AlmClass.INFO;
@@ -432,7 +430,7 @@ SIF.Par.udiPort := 7443;
 SIF.Par.tTOConnection := T#10S;
 SIF.Par.tTOReceive := T#5S;
 SIF.Par.tTOSend := T#5S;
-SIf.Par.iMaxWaitTimeAck := T#4S; // wait for Ack before declaring it not recieved
+SIf.Par.iMaxWaitTimeAck := T#4S; // wait for Ack before declaring it not received
 SIf.Par.iMaxSendTry := 5;
 
 SIf.Cfg.bUsingAck := TRUE;
@@ -686,7 +684,7 @@ VAR_OUTPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[IF fbReceiveBuffer.nCount > 0 THEN // there is something in the recieve buffer
+        <ST><![CDATA[IF fbReceiveBuffer.nCount > 0 THEN // there is something in the receive buffer
 	fbReceiveBuffer.A_Remove( pHeader => pByteReceive );
 	naPopMsg := pByteReceive^;
 	M_Pop := 1;

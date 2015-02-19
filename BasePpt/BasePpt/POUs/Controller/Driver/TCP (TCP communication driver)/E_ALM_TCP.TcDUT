@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <DUT Name="E_ALM_TCP" Id="{f836299a-6fde-4c28-8245-b3ccb02f077f}">
     <Declaration><![CDATA[TYPE E_ALM_TCP :
 (
@@ -11,14 +11,13 @@
 	RemoveFromReceiveBufferFailed := 6,
 	GetFromReceiveBufferFailed := 7,
 	NotSent := 8,
-	NoAckRecieved := 9,
+	NoAckReceived := 9,
 	FubErrorClientConnection := 10,
 	FubErrorSendData := 11,
 	FubErrorReceiveData := 12,
 	MAX_E_ALM_TCP
 ) UINT;
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>
