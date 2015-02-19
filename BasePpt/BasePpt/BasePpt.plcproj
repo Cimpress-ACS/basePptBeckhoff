@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.51</ProjectVersion>
+    <ProjectVersion>0.0.0.52</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.51	- PBC - Fix for StopDestacking and Manual mode.
+    <Description>0.0.0.52	- TCP - Introduced automatic reconnect
+0.0.0.51	- PBC - Fix for StopDestacking and Manual mode.
 0.0.0.50	- OVN has TSTOP when settings change
 0.0.0.49	- Saber PBC StopBit modification, different PBC alarm handling
 0.0.0.48	- small fixes for DeStacker
