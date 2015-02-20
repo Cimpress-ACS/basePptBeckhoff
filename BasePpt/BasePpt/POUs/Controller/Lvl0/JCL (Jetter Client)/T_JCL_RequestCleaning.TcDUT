@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_JCL_RequestCleaning" Id="{b2259633-25b6-46a2-99e7-d1dec1512bdf}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_JCL_RequestCleaning" Id="{4e31c75f-5039-48aa-9133-50d0e0181c1e}">
     <Declaration><![CDATA[{attribute 'pack_mode' := '1'}
 TYPE T_JCL_RequestCleaning :
 STRUCT

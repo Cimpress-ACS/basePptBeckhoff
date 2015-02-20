@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="U_JCL_Message" Id="{e7fc896b-72c0-4aca-9062-419ca60938d0}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="U_JCL_Message" Id="{26b5ae5b-0001-4e86-9833-95cbffacef4b}">
     <Declaration><![CDATA[{attribute 'pack_mode' := '1'}
 TYPE U_JCL_Message :
 

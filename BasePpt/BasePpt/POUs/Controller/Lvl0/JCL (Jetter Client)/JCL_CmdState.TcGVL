@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <GVL Name="JCL_CmdState" Id="{ef182f02-0639-40ae-b3ff-9e5eec8e6f28}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <GVL Name="JCL_CmdState" Id="{8cc16870-4bba-4a11-a5cb-f09716f511c6}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	/// Preparing jetter for production
 	cCMD_Standby: INT := 202;

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_JCL_Command" Id="{4a8da929-a9b5-4ca5-a614-adfbca688298}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_JCL_Command" Id="{34641e26-e3c8-4d26-bea7-8ade705cad6f}">
     <Declaration><![CDATA[{attribute 'pack_mode' := '1'}
 TYPE T_JCL_Command :
 STRUCT

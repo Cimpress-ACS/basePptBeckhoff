@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_Ctrl_SIf_JCL_Cur" Id="{a6acc4c7-c62a-4f80-80ef-536e12199f51}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_JCL_Cur" Id="{08a8d2df-bdd8-4eed-9eec-4fc39a8073ef}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_JCL_Cur :
 STRUCT
 	/// Additional states from TCP server

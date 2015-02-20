@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="ST_Header" Id="{f5d054f1-f932-4e45-8603-63090a1a960e}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="ST_Header" Id="{afb99a30-6c22-4c5d-93b6-5ebee914fe84}">
     <Declaration><![CDATA[{attribute 'pack_mode' := '1'}
 TYPE ST_Header :
 STRUCT

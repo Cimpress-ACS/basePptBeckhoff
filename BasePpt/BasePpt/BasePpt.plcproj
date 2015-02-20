@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.53</ProjectVersion>
+    <ProjectVersion>0.0.0.54</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.53	- fixes
+    <Description>0.0.0.52	- TCP - Fix for constant resend of command
+0.0.0.53	- fixes
 0.0.0.52	- TCP - Introduced automatic reconnect
 0.0.0.51	- PBC - Fix for StopDestacking and Manual mode.
 0.0.0.50	- OVN has TSTOP when settings change
@@ -122,12 +123,9 @@
     <Folder Include="POUs\Controller\Driver\IBH %28IBH Link%29\" />
     <Folder Include="POUs\Controller\Driver\POD %28PLCopen Driver%29\" />
     <Folder Include="POUs\Controller\Driver\PTR [Paper Tracker]\" />
-    <Folder Include="POUs\Controller\Driver\TCP %28TCP communication driver%29\" />
     <Folder Include="POUs\Controller\Lvl0\" />
     <Folder Include="POUs\Controller\Lvl0\GRR %28Granulate Remote%29" />
     <Folder Include="POUs\Controller\Lvl0\GRR %28Granulate Remote%29\helper" />
-    <Folder Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\" />
-    <Folder Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\helper\" />
     <Folder Include="POUs\Controller\Lvl0\RAX%28Rotative Axis%29\" />
     <Folder Include="POUs\Controller\Lvl1\" />
     <Folder Include="POUs\Controller\Lvl1\BCH %28Barcode with DataChannel%29\" />

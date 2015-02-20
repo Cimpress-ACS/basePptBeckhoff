@@ -1,13 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_JCL" Id="{0f0817a4-a938-4989-891f-c5b60580399d}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_JCL" Id="{7568ee02-ec83-4109-ac32-b5feb88f54eb}">
     <Declaration><![CDATA[TYPE T_JCL :
 STRUCT
-	io:		T_JCL_IO;
-	ctrl:	T_JCL_CTRL;
-	id:		T_JCL_ID;
+	io: T_JCL_IO;
+	ctrl: T_JCL_CTRL;
+	id: T_JCL_ID;
 END_STRUCT
-END_TYPE]]></Declaration>
+END_TYPE
+]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

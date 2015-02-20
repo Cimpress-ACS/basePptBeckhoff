@@ -1,12 +1,13 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_JCL_CTRL" Id="{2a51c65d-0dc2-4cc8-af74-7492ee33886e}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_JCL_CTRL" Id="{ff093b2e-09a7-4e26-9d17-43e3abab4aa4}">
     <Declaration><![CDATA[TYPE T_JCL_CTRL :
 STRUCT
 	fbJcl: FB_JCL;
 	fbJcl_Tcp: FB_TCP;
 END_STRUCT
-END_TYPE]]></Declaration>
+END_TYPE
+]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_TCP" Id="{60bf3355-9353-4ec6-88e7-1322a695face}">
+  <POU Name="FB_TCP" Id="{609a1fce-4485-45bf-bed3-527e862ab814}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_TCP EXTENDS FB_CtrlBase
 VAR
 	/// Specific interface struct for public access
@@ -54,13 +54,206 @@ ________________________________________________________________________________
 
 SUPER^();]]></ST>
     </Implementation>
-    <Method Name="ReceiveDataSequence" Id="{0744c279-122b-43c0-a8ab-8c91150a56c3}">
-      <Declaration><![CDATA[METHOD PROTECTED ReceiveDataSequence : BOOL
+    <Method Name="sta_CONNECT" Id="{012444c2-4f4c-4e85-8562-de1e9f46c149}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_CONNECT'}
+METHOD sta_CONNECT : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_TCP.SocketConnectionLost,0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		// check if connection has been lost
+		IF (fbClientConnection.eState <> TC2_TCPIP.E_SocketConnectionState.eSOCKET_CONNECTED) THEN 
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_TCP.SocketConnectionLost,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			
+			IF SIf.Cfg.bolAutoReconnectEnable THEN
+				me.StateMachine.intStateNext := TCP_CmdState.cSTA_CloseBusy;
+			ELSE	
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_ERROR;
+			END_IF
+		END_IF
+		
+		CASE me.intCmd OF
+			TCP_CmdState.cCMD_Close:
+				me.StateMachine.intStateNext := TCP_CmdState.cSTA_CloseBusy;
+		END_CASE
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="Always" Id="{04443b31-aa81-49ea-8367-9dea755a08ac}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'Always'}
+METHOD PROTECTED Always : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// not inherite from base !!!  special behaviour for this TCP driver
+// SUPER^.Always();
+
+// Conditions Always
+IF (me.bolChangeBackToAUTO=TRUE) THEN // switch mode to automatic switch off controller
+	//me.StateMachine.intStateNext := cSTA_OFFBusy;
+	me.bolChangeBackToAUTO := FALSE;
+END_IF
+
+IF (CIf.SwCfg.bolExist=FALSE) THEN // hardware of controller does not exist
+	me.StateMachine.intStateNext := cSTA_SINGLE_ANSWER;
+ELSE
+	;
+END_IF
+
+// ----------------------------------------------------------------------------------
+// cyclic actions outside of statemachine
+IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
+	
+	// Cyclic call of the client connection
+	fbClientConnection();	
+END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="StateMachine" Id="{3cb57e38-141e-4dd7-970e-0e4941e75bee}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
+METHOD PROTECTED StateMachine : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.StateMachine();
+
+// main statemachine of base controller
+CASE me.StateMachine.intState OF
+	TCP_CmdState.cSTA_Close:
+		THIS^.sta_CLOSE();
+    TCP_CmdState.cSTA_ConnectBusy:
+		THIS^.sta_CONNECTBusy();
+	TCP_CmdState.cSTA_Connect:
+		THIS^.sta_CONNECT();
+	TCP_CmdState.cSTA_CloseBusy:
+		THIS^.sta_CLOSEBusy();
+END_CASE;]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_CLOSE" Id="{47f3292b-7439-43f8-81ff-d5483f06761c}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_CLOSE'}
+METHOD sta_CLOSE : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		;
+		
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		CASE me.intCmd OF
+			TCP_CmdState.cCMD_Connect:
+				me.StateMachine.intStateNext := TCP_CmdState.cSTA_ConnectBusy;
+		END_CASE
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_CONNECTBusy" Id="{5e77cbec-e67c-4c84-b6f6-7e55aead2e7b}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_CONNECTBusy'}
+METHOD sta_CONNECTBusy : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		// Initialize and connect socket
+		fbClientConnection.nMode := 0; 	// not used
+		fbClientConnection.sRemoteHost := SIf.Par.strIPAdr;
+		fbClientConnection.nRemotePort := SIf.Par.udiPort;
+		fbClientConnection.tReconnect := SIF.Par.tTOConnection;
+		fbClientConnection.bEnable:= TRUE;
+	
+		// clear both buffers
+		fbSendBuffer.A_Reset();
+		fbReceiveBuffer.A_Reset();
+		
+		// reset all nessecary parameters
+		bReceivedAck := 0;
+		bReceivedNack := 0;
+		intSendState := 0;
+	END_IF
+
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// Check about FUB error	
+		IF (fbClientConnection.bError = TRUE) OR (fbClientConnection.nErrId <> 0) THEN		
+			SIf.Cur.bolFubErrorActive:= TRUE;																			
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_TCP.FubErrorClientConnection, UDINT_TO_DINT(fbClientConnection.nErrId),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);																			
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_ERROR;	
+		END_IF
+				
+		// Wait for socket handle ID and connection state
+		IF (fbClientConnection.hSocket.handle <> 0) AND (fbClientConnection.eState = TC2_TCPIP.E_SocketConnectionState.eSOCKET_CONNECTED) THEN 	
+			me.StateMachine.intStateNext := TCP_CmdState.cSTA_Connect;
+		END_IF
+		
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Property Name="CtrlSIf" Id="{61395e9e-4929-4e3c-b49a-241234675ebf}">
+      <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIf_TCP
+]]></Declaration>
+      <Get Name="Get" Id="{6eca0612-60c3-485a-b8ff-b3d5380d3101}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+        </Implementation>
+        <ObjectProperties />
+      </Get>
+      <ObjectProperties />
+    </Property>
+    <Method Name="ReceiveDataSequence" Id="{6223387b-56c6-4f61-b93b-45a4f434992c}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'ReceiveDataSequence'}
+METHOD PROTECTED ReceiveDataSequence : BOOL
 VAR
-	bSuccess		: BOOL;
-	nLoad			: UDINT;
-	stACK			: ST_Header;
-END_VAR]]></Declaration>
+	bSuccess: BOOL;
+	nLoad: UDINT;
+	stACK: ST_Header;
+END_VAR
+]]></Declaration>
       <Implementation>
         <ST><![CDATA[// receive data if connected
 IF (fbClientConnection.eState = TC2_TCPIP.E_SocketConnectionState.eSOCKET_CONNECTED) THEN
@@ -143,56 +336,11 @@ IF (fbClientConnection.eState = TC2_TCPIP.E_SocketConnectionState.eSOCKET_CONNEC
 END_IF 
 fbReceive();]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="getCtrlSIf" Id="{3c967a15-aae8-4975-9dd3-a4f410eac033}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
-METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_TCP
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="getCmdState" Id="{4ce23f6a-849a-4333-b1bd-041d08a36015}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
-METHOD PROTECTED getCmdState : STRING
-VAR_INPUT
-	intCmdState: INT;
-	bolState: BOOL;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
-
-IF (getCmdState='') THEN // global not defined get local
-	// get string cmd/state string information in runtime	
-	IF (bolState=FALSE) THEN
-		// States's
-		CASE intCmdState OF
-			TCP_CmdState.cCMD_Connect: 
-				getCmdState := 'cCMD_CONNECT';
-			TCP_CmdState.cCMD_Close: 
-				getCmdState := 'cCMD_CLOSE';
-
-		END_CASE;
-	ELSE
-		// States's
-		CASE intCmdState OF
-			TCP_CmdState.cSTA_Close: 
-				getCmdState := 'cSTA_CLOSE';
-			TCP_CmdState.cSTA_CloseBusy: 
-				getCmdState := 'cSTA_CLOSEBusy';
-			TCP_CmdState.cSTA_Connect: 
-				getCmdState := 'cSTA_CONNECT';
-			TCP_CmdState.cSTA_ConnectBusy: 
-				getCmdState := 'cSTA_CONNECTBusy';			
-		END_CASE;
-	END_IF 
-END_IF 
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="SendDataSequence" Id="{54e8f9cf-485b-4c8c-89ff-51e6bfa9fe82}">
-      <Declaration><![CDATA[METHOD PROTECTED SendDataSequence : BOOL
+    <Method Name="SendDataSequence" Id="{7678623a-1051-42f6-b7bd-f6b96cc6e55f}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'SendDataSequence'}
+METHOD PROTECTED SendDataSequence : BOOL
 VAR
 	intI: INT;
 END_VAR
@@ -244,6 +392,7 @@ CASE intSendState OF
 			// no error			
 			ELSE
 				IF (stNextHead.uinMsgId > 997) OR (NOT (SIf.Cfg.bUsingAck)) THEN // the sent was ack or nack
+					fbSendBuffer.A_Remove();
 					intSendState := cSendIdle;
 				ELSE // wair for ack
 					intSendState := cSendWait;
@@ -266,7 +415,7 @@ CASE intSendState OF
 		tonSendTime(IN := 1);
 		// Wait for the ACK
 		IF bReceivedAck THEN
-			fbSendBuffer.A_Remove(pHeader => pSendHeader);
+			fbSendBuffer.A_Remove();
 			bReceivedAck := 0;
 			iNumSendTry := 0; // reset for next send
 			intSendState := cSendIdle;
@@ -288,40 +437,77 @@ CASE intSendState OF
 END_CASE // *)
 fbSend();]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="CtrlInit" Id="{68926212-0744-4a77-af90-ff761abc2112}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'CtrlInit'}
-METHOD CtrlInit : BOOL
+    <Method Name="M_Push" Id="{7883c642-dc3f-4d2e-8350-26171b083dbe}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'M_Push'}
+METHOD M_Push : BOOL
+VAR_INPUT
+	paPushMsg: POINTER TO ARRAY[0..MAX_DATASET_SIZE] OF BYTE;
+END_VAR
+VAR
+	pstPushMsg: POINTER TO ST_Header;
+END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[// one time first cyclic call
-// The socket is closed
-SUPER^.CtrlInit();
+        <ST><![CDATA[// send if desired
+pstPushMsg := paPushMsg;
+	
+fbSendBuffer.A_Add(in := paPushMsg, iAddSize := UDINT_TO_INT(pstPushMsg^.udiMsgSize + SIZEOF(ST_HEADER)) , bOk=>M_Push );
 
-me.StateMachine.intStateNext := TCP_CmdState.cSTA_Close;]]></ST>
+IF NOT ( M_Push ) THEN 
+	pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_TCP.AddToSendBufferFailed,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+	me.StateMachine.intStateNext := BASE_PLC.cSTA_ERROR;
+END_IF
+			
+]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="sta_CLOSE" Id="{6ff059a4-a31f-4201-ad61-3059e2bc51be}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'sta_CLOSE'}
-METHOD sta_CLOSE : BOOL
+    <Method Name="getCtrlSIf" Id="{93d2be0a-cef5-4a77-8dd0-13d55ddeeb32}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
+METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_TCP
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_ERROR" Id="{97cd2621-3b4d-46ec-8472-5429b0b9a4c2}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
+METHOD PROTECTED sta_ERROR : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 // --------------------------------------------------------------------------------------
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		;
 		
+		// Clear pending commands
+		CIf.Job.intACmd:= Base_PLC.cCMD_DONE;
+		CIf.Job.intMCmd:= Base_PLC.cCMD_DONE;
+			
+		iNumSendTry := 0;
+				
+		// clear both buffers
+		fbSendBuffer.A_Reset();
+		fbReceiveBuffer.A_Reset();
+		// Reset Tx state
+		intSendState:= cSendIdle;
 	END_IF
+	
 
 // --------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		CASE me.intCmd OF
-			TCP_CmdState.cCMD_Connect:
-				me.StateMachine.intStateNext := TCP_CmdState.cSTA_ConnectBusy;
-		END_CASE
+		
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			SIf.Cur.bolFubErrorActive:= FALSE;
+			me.StateMachine.intStateNext := cSTA_ERRORQuit;
+		END_IF
 	END_IF
 
 // --------------------------------------------------------------------------------------
@@ -330,18 +516,9 @@ METHOD sta_CLOSE : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="CycleEndDuty" Id="{7568bdde-1024-48f0-8b45-752434d67b2d}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'CycleEndDuty'}
-METHOD PROTECTED CycleEndDuty : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SUPER^.CycleEndDuty();
-
-SendDataSequence();]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="FB_init" Id="{7b8b03c0-2eca-4030-a09e-d1a06ec2630e}">
+    <Method Name="FB_init" Id="{9f31c568-7162-437c-8e00-9f15ed125f3e}">
       <Declaration><![CDATA[{attribute 'object_name' := 'FB_init'}
 METHOD FB_init : BOOL
 VAR_INPUT
@@ -353,7 +530,8 @@ END_VAR
 VAR
 	iIdx: UINT;
 	iLength: UINT;
-END_VAR]]></Declaration>
+END_VAR
+]]></Declaration>
       <Implementation>
         <ST><![CDATA[// ------------------------------------------------------------------------------------------------------------------------
 // to manually change in new FUB implementation!!!
@@ -438,185 +616,9 @@ SIf.Cfg.bUsingAck := TRUE;
 pReceiveData := ADR(naReceiveData);
 pReceiveHead := pReceiveData;]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="CycleStartDuty" Id="{7f8dfc88-c6f0-47c7-b7c9-1593e40e750d}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'CycleStartDuty'}
-METHOD PROTECTED CycleStartDuty : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SUPER^.CycleStartDuty();
-
-ReceiveDataSequence();]]></ST>
-      </Implementation>
-    </Method>
-    <Property Name="CtrlSIf" Id="{825112e6-1150-4935-9c6f-fbd494d8a4d0}">
-      <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_TCP]]></Declaration>
-      <Get Name="Get" Id="{4bffdab9-25de-4895-8217-8d3c430ef2a7}">
-        <Declaration><![CDATA[]]></Declaration>
-        <Implementation>
-          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
-        </Implementation>
-      </Get>
-    </Property>
-    <Method Name="sta_ERRORQuit" Id="{9211ba2d-25f1-47ca-aad9-c552e80fd00b}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERRORQuit'}
-METHOD PROTECTED sta_ERRORQuit : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-// --------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		;
-	END_IF
-
-// -------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		IF (CIf.Job.bolAlmReset = TRUE) THEN
-			CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
-			CIf.Job.bolAlmReset := FALSE;
-		END_IF
-		
-		// State Change Condition
-		IF (CIf.Job.bolAlmReset = FALSE) THEN
-			// Needs reconnect for socket after an error!	
-			me.StateMachine.intStateNext := TCP_CmdState.cSTA_CloseBusy;
-		END_IF
-	END_IF
-
-// --------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_CONNECTBusy" Id="{96265da1-81ab-4cbb-9794-6450e53905ce}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'sta_CONNECTBusy'}
-METHOD sta_CONNECTBusy : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-// --------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-		// Initialize and connect socket
-		fbClientConnection.nMode := 0; 	// not used
-		fbClientConnection.sRemoteHost := SIf.Par.strIPAdr;
-		fbClientConnection.nRemotePort := SIf.Par.udiPort;
-		fbClientConnection.tReconnect := SIF.Par.tTOConnection;
-		fbClientConnection.bEnable:= TRUE;
-	
-		// clear both buffers
-		fbSendBuffer.A_Reset();
-		fbReceiveBuffer.A_Reset();
-		
-		// reset all nessecary parameters
-		bReceivedAck := 0;
-		bReceivedNack := 0;
-		intSendState := 0;
-	END_IF
-
-
-// --------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		// Check about FUB error	
-		IF (fbClientConnection.bError = TRUE) OR (fbClientConnection.nErrId <> 0) THEN		
-			SIf.Cur.bolFubErrorActive:= TRUE;																			
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_TCP.FubErrorClientConnection, UDINT_TO_DINT(fbClientConnection.nErrId),ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);																			
-			me.StateMachine.intStateNext := BASE_PLC.cSTA_ERROR;	
-		END_IF
-				
-		// Wait for socket handle ID and connection state
-		IF (fbClientConnection.hSocket.handle <> 0) AND (fbClientConnection.eState = TC2_TCPIP.E_SocketConnectionState.eSOCKET_CONNECTED) THEN 	
-			me.StateMachine.intStateNext := TCP_CmdState.cSTA_Connect;
-		END_IF
-		
-	END_IF
-
-// --------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_ERROR" Id="{9c176648-1bf0-429f-b79d-274dbf69678c}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
-METHOD PROTECTED sta_ERROR : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-// --------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-		// Clear pending commands
-		CIf.Job.intACmd:= Base_PLC.cCMD_DONE;
-		CIf.Job.intMCmd:= Base_PLC.cCMD_DONE;
-			
-		iNumSendTry := 0;
-				
-		// clear both buffers
-		fbSendBuffer.A_Reset();
-		fbReceiveBuffer.A_Reset();
-		// Reset Tx state
-		intSendState:= cSendIdle;
-	END_IF
-	
-
-// --------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
-		// State Change Condition
-		IF (CIf.Job.bolAlmReset = TRUE) THEN
-			SIf.Cur.bolFubErrorActive:= FALSE;
-			me.StateMachine.intStateNext := cSTA_ERRORQuit;
-		END_IF
-	END_IF
-
-// --------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="M_Push" Id="{9ed4b347-fa30-4434-8280-4143fd4f333f}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'M_Push'}
-METHOD M_Push : BOOL
-VAR_INPUT
-	paPushMsg: POINTER TO ARRAY[0..MAX_DATASET_SIZE] OF BYTE;
-END_VAR
-VAR
-	pstPushMsg: POINTER TO ST_Header;
-END_VAR
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// send if desired
-pstPushMsg := paPushMsg;
-	
-fbSendBuffer.A_Add(in := paPushMsg, iAddSize := UDINT_TO_INT(pstPushMsg^.udiMsgSize + SIZEOF(ST_HEADER)) , bOk=>M_Push );
-
-IF NOT ( M_Push ) THEN 
-	pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_TCP.AddToSendBufferFailed,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-	me.StateMachine.intStateNext := BASE_PLC.cSTA_ERROR;
-END_IF
-			
-]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="sta_CLOSEBusy" Id="{a987f8c8-4c63-481b-b330-f6201c538a8b}">
+    <Method Name="sta_CLOSEBusy" Id="{a785f369-92e3-4aee-a34d-b351690afae6}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_CLOSEBusy'}
 METHOD sta_CLOSEBusy : BOOL
 ]]></Declaration>
@@ -674,8 +676,121 @@ METHOD sta_CLOSEBusy : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
+      <ObjectProperties />
     </Method>
-    <Method Name="M_Pop" Id="{bf558eee-0857-439f-ba62-ad30662597d1}">
+    <Method Name="CycleEndDuty" Id="{c30c6ca9-5d88-4952-9272-3ecf84574e81}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'CycleEndDuty'}
+METHOD PROTECTED CycleEndDuty : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.CycleEndDuty();
+
+SendDataSequence();]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="sta_ERRORQuit" Id="{c4893612-b17e-49b2-a4fe-fe76eec50cbf}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERRORQuit'}
+METHOD PROTECTED sta_ERRORQuit : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		;
+	END_IF
+
+// -------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		IF (CIf.Job.bolAlmReset = TRUE) THEN
+			CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
+			CIf.Job.bolAlmReset := FALSE;
+		END_IF
+		
+		// State Change Condition
+		IF (CIf.Job.bolAlmReset = FALSE) THEN
+			// Needs reconnect for socket after an error!	
+			me.StateMachine.intStateNext := TCP_CmdState.cSTA_CloseBusy;
+		END_IF
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="getCmdState" Id="{ca134720-35a0-4cc7-b397-1701408cae06}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
+METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime	
+	IF (bolState=FALSE) THEN
+		// States's
+		CASE intCmdState OF
+			TCP_CmdState.cCMD_Connect: 
+				getCmdState := 'cCMD_CONNECT';
+			TCP_CmdState.cCMD_Close: 
+				getCmdState := 'cCMD_CLOSE';
+
+		END_CASE;
+	ELSE
+		// States's
+		CASE intCmdState OF
+			TCP_CmdState.cSTA_Close: 
+				getCmdState := 'cSTA_CLOSE';
+			TCP_CmdState.cSTA_CloseBusy: 
+				getCmdState := 'cSTA_CLOSEBusy';
+			TCP_CmdState.cSTA_Connect: 
+				getCmdState := 'cSTA_CONNECT';
+			TCP_CmdState.cSTA_ConnectBusy: 
+				getCmdState := 'cSTA_CONNECTBusy';			
+		END_CASE;
+	END_IF 
+END_IF 
+]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="CtrlInit" Id="{d3032c55-8d3a-4753-8283-b1aeab934c50}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'CtrlInit'}
+METHOD CtrlInit : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// one time first cyclic call
+// The socket is closed
+SUPER^.CtrlInit();
+
+me.StateMachine.intStateNext := TCP_CmdState.cSTA_Close;]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="CycleStartDuty" Id="{e5befbef-7a13-4c15-81d6-9234fa61bb5a}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'CycleStartDuty'}
+METHOD PROTECTED CycleStartDuty : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[SUPER^.CycleStartDuty();
+
+ReceiveDataSequence();]]></ST>
+      </Implementation>
+      <ObjectProperties />
+    </Method>
+    <Method Name="M_Pop" Id="{ec84a9f0-340d-48b3-8bd3-8828de31544b}">
       <Declaration><![CDATA[{attribute 'object_name' := 'M_Pop'}
 METHOD M_Pop : BOOL
 VAR_OUTPUT
@@ -695,96 +810,7 @@ ELSE
 END_IF
 ]]></ST>
       </Implementation>
-    </Method>
-    <Method Name="sta_CONNECT" Id="{d7f6c8ce-02fd-4f71-9581-9dfe3507fd7d}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'sta_CONNECT'}
-METHOD sta_CONNECT : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-// --------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-
-		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_TCP.SocketConnectionLost,0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
-	END_IF
-
-// --------------------------------------------------------------------------------------
-// Cyclic action
-	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		// check if connection has been lost
-		IF (fbClientConnection.eState <> TC2_TCPIP.E_SocketConnectionState.eSOCKET_CONNECTED) THEN 
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_TCP.SocketConnectionLost,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			
-			IF SIf.Cfg.bolAutoReconnectEnable THEN
-				me.StateMachine.intStateNext := TCP_CmdState.cSTA_CloseBusy;
-			ELSE	
-				me.StateMachine.intStateNext := BASE_PLC.cSTA_ERROR;
-			END_IF
-		END_IF
-		
-		CASE me.intCmd OF
-			TCP_CmdState.cCMD_Close:
-				me.StateMachine.intStateNext := TCP_CmdState.cSTA_CloseBusy;
-		END_CASE
-	END_IF
-
-// --------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="StateMachine" Id="{f2133979-1fe3-45a1-9ab3-4f339aafd790}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
-METHOD PROTECTED StateMachine : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[SUPER^.StateMachine();
-
-// main statemachine of base controller
-CASE me.StateMachine.intState OF
-	TCP_CmdState.cSTA_Close:
-		THIS^.sta_CLOSE();
-    TCP_CmdState.cSTA_ConnectBusy:
-		THIS^.sta_CONNECTBusy();
-	TCP_CmdState.cSTA_Connect:
-		THIS^.sta_CONNECT();
-	TCP_CmdState.cSTA_CloseBusy:
-		THIS^.sta_CLOSEBusy();
-END_CASE;]]></ST>
-      </Implementation>
-    </Method>
-    <Method Name="Always" Id="{fc3391cb-5a9c-4b2a-8774-24189cbe3cc2}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'Always'}
-METHOD PROTECTED Always : BOOL
-]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// not inherite from base !!!  special behaviour for this TCP driver
-// SUPER^.Always();
-
-// Conditions Always
-IF (me.bolChangeBackToAUTO=TRUE) THEN // switch mode to automatic switch off controller
-	//me.StateMachine.intStateNext := cSTA_OFFBusy;
-	me.bolChangeBackToAUTO := FALSE;
-END_IF
-
-IF (CIf.SwCfg.bolExist=FALSE) THEN // hardware of controller does not exist
-	me.StateMachine.intStateNext := cSTA_SINGLE_ANSWER;
-ELSE
-	;
-END_IF
-
-// ----------------------------------------------------------------------------------
-// cyclic actions outside of statemachine
-IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
-	
-	// Cyclic call of the client connection
-	fbClientConnection();	
-END_IF]]></ST>
-      </Implementation>
+      <ObjectProperties />
     </Method>
     <ObjectProperties />
   </POU>

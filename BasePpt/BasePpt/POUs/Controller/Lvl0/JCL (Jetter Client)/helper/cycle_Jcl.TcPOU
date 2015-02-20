@@ -1,10 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <POU Name="cycle_Jcl" Id="{0619ad29-d99a-4dbf-91df-434d08bb1bec}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <POU Name="cycle_Jcl" Id="{e1368e2a-546b-4757-bdfe-0bdb53746099}">
     <Declaration><![CDATA[FUNCTION cycle_Jcl : BOOL
 VAR_INPUT
 	pJcl: POINTER TO T_JCL;
-END_VAR]]></Declaration>
+END_VAR
+]]></Declaration>
     <Implementation>
       <ST><![CDATA[pJcl^.ctrl.fbJcl_Tcp();
 

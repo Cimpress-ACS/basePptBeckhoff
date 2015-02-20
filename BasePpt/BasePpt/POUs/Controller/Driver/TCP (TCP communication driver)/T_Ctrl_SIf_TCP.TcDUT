@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_Ctrl_SIf_TCP" Id="{bd807549-55a2-4ba3-a676-9c20ba2bc191}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+  <DUT Name="T_Ctrl_SIf_TCP" Id="{31d6a5c0-0d72-4129-828d-b5b3b77fea5f}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_TCP :
 STRUCT
 	/// configuration

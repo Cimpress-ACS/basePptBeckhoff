@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="E_ALM_TCP" Id="{f836299a-6fde-4c28-8245-b3ccb02f077f}">
+  <DUT Name="E_ALM_TCP" Id="{8097488a-8c0c-497f-b1bc-2b49aa4c9ff8}">
     <Declaration><![CDATA[TYPE E_ALM_TCP :
 (
 	SocketConnectionLost := 1,
@@ -17,7 +17,8 @@
 	FubErrorReceiveData := 12,
 	MAX_E_ALM_TCP
 ) UINT;
-END_TYPE]]></Declaration>
+END_TYPE
+]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>
