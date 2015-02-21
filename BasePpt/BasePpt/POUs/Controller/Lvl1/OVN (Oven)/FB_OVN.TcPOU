@@ -1157,11 +1157,7 @@ END_VAR]]></Declaration>
 			// WAITPAPER
 			// ------------------------------------------------------------------------
 			OVN_CmdState.cSUB_WAITPAPER:
-				udiCoolDownTime_ms := 	(		SIf.Cfg.uiNumberOfModules*SIf.Cfg.diModuleLength_mm
-											+	SIf.Cfg.diDistanceBeforeOven_mm
-											+	SIf.Cfg.diDistanceAfterOven_mm
-										)	/	SIf.Par.diSpeed_mm_min
-											*	60*1000;
+				udiCoolDownTime_ms := (SIf.Cfg.uiNumberOfModules*SIf.Cfg.diModuleLength_mm+SIf.Cfg.diDistanceBeforeOven_mm+SIf.Cfg.diDistanceAfterOven_mm)*60*1000/SIf.Par.diSpeed_mm_min;
 				IF (me.StateMachine.udiTimeInState_ms>udiCoolDownTime_ms) THEN
 					me.SubStateMachine.intStateNext := OVN_CmdState.cSUB_DONE;
 				END_IF
