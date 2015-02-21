@@ -62,7 +62,6 @@ METHOD PROTECTED sta_CALIBRATION : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="HandleReceiveData" Id="{14886497-9176-40e4-9628-33e3ecb94a1c}">
       <Declaration><![CDATA[{attribute 'object_name' := 'HandleReceiveData'}
@@ -139,7 +138,6 @@ IF bPop THEN // something has been recieved
 	
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_RUNBusy" Id="{2694237d-33bc-49ed-a28f-b2a7d5fff52d}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_RUNBusy'}
@@ -147,8 +145,7 @@ METHOD PROTECTED sta_RUNBusy : BOOL
 VAR
 	stNextCommand: T_JCL_Command;
 	pNextCommand: POINTER TO T_JCL_Command;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 // --------------------------------------------------------------------------------------
@@ -199,7 +196,6 @@ END_VAR
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="CtrlInit" Id="{29d80980-b59f-4156-9c0a-5668c590a8e3}">
       <Declaration><![CDATA[{attribute 'object_name' := 'CtrlInit'}
@@ -215,7 +211,6 @@ me.StateMachine.intStateNext := JCL_CmdState.cSTA_ConnectBusy;
 // get child if
 pTCP_CIF 	:= AddChild(p_fbTCP^);]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_CLEANINGBusy" Id="{29e34ece-3c27-4d90-9fd5-fab6049792db}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_CLEANINGBusy'}
@@ -282,7 +277,6 @@ END_VAR
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_OFF" Id="{40d55a40-6e80-490d-8d95-b920a7fa31ab}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFF'}
@@ -320,7 +314,6 @@ METHOD PROTECTED sta_OFF : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_STANDBY" Id="{4a9529ef-d6bd-43cf-9ed5-f5288cf07fff}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_STANDBY'}
@@ -357,7 +350,6 @@ METHOD PROTECTED sta_STANDBY : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_CONNECTBusy" Id="{52465829-7462-4636-aa99-a613adc547b9}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_CONNECTBusy'}
@@ -426,7 +418,6 @@ END_VAR
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_PONBusy" Id="{5393620d-b342-4254-905e-b5132c7c700b}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_PONBusy'}
@@ -531,7 +522,6 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 	;
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="checkChildAlmClass" Id="{6df74c03-338a-4fe3-be56-a6b61617ca22}">
       <Declaration><![CDATA[{attribute 'object_name' := 'checkChildAlmClass'}
@@ -546,7 +536,6 @@ IF (pTCP_CIF^.Job.eMe_ActivAlmClass >= E_AlmClass.TSTOP) THEN
 	me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_STANDBYBusy" Id="{6f3177fc-750e-4d24-8768-1e6e3ed85167}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_STANDBYBusy'}
@@ -620,7 +609,6 @@ END_VAR
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_OFFBusy" Id="{70ffa97f-f14d-4f56-abac-da5fee702602}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFFBusy'}
@@ -628,58 +616,57 @@ METHOD PROTECTED sta_OFFBusy : BOOL
 VAR
 	stNextCommand: T_JCL_Command;
 	pNextCommand: POINTER TO T_JCL_Command;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 // --------------------------------------------------------------------------------------
 // Entry action
-IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-	
-	IF (CIf.SwCfg.bolSimulation) THEN 
-		SIf.Cur.bolReadyForProduction:= TRUE;			
-		SIf.Cur.bolRunning:= FALSE;		
-		SIf.Cur.bolNeedsAttention:= FALSE;			
-		SIf.Cur.bolError:= FALSE;			
-		SIf.Cur.bolCleaningIncomplete:= FALSE;			
-		SIf.Cur.bolIsLocalControlled:= FALSE;		
-		SIf.Cur.bolIsRemoteControlled:= TRUE;
-		SIf.Cur.intJETState := BASE_PLC.cSTA_OFF;
-	ELSE 
-		// -----------------------------------------
-		// Prepare telegram for off
-		// -----------------------------------------
-		// Define header
-		stNextCommand.stHeader.uinMsgId := JCL_MsgId_Command;
-		stNextCommand.stHeader.udiMsgSize := SIZEOF(T_JCL_Command) - SIZEOF(ST_Header);
-		// Set jetter CMD
-		stNextCommand.usiCommand := JCL_CMD_Off;
-		// Push telegram to send buffer
-		pNextCommand := ADR(stNextCommand);
-		p_fbTCP^.M_Push(paPushMsg := pNextCommand);	
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		IF (CIf.SwCfg.bolSimulation) THEN 
+			SIf.Cur.bolReadyForProduction:= TRUE;			
+			SIf.Cur.bolRunning:= FALSE;		
+			SIf.Cur.bolNeedsAttention:= FALSE;			
+			SIf.Cur.bolError:= FALSE;			
+			SIf.Cur.bolCleaningIncomplete:= FALSE;			
+			SIf.Cur.bolIsLocalControlled:= FALSE;		
+			SIf.Cur.bolIsRemoteControlled:= TRUE;
+			SIf.Cur.intJETState := BASE_PLC.cSTA_OFF;
+		ELSE 
+			// -----------------------------------------
+			// Prepare telegram for off
+			// -----------------------------------------
+			// Define header
+			stNextCommand.stHeader.uinMsgId := JCL_MsgId_Command;
+			stNextCommand.stHeader.udiMsgSize := SIZEOF(T_JCL_Command) - SIZEOF(ST_Header);
+			// Set jetter CMD
+			stNextCommand.usiCommand := JCL_CMD_Off;
+			// Push telegram to send buffer
+			pNextCommand := ADR(stNextCommand);
+			p_fbTCP^.M_Push(paPushMsg := pNextCommand);	
+		END_IF
 	END_IF
-	
-END_IF
+
 
 // --------------------------------------------------------------------------------------
 // Cyclic action
-IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-	
-	// Wait for feedback -> OFF
-	IF (SIf.Cur.intJETState = BASE_PLC.cSTA_OFF) THEN
-		me.StateMachine.intStateNext := cSTA_OFF;
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		
+		// Wait for feedback -> OFF
+		IF (SIf.Cur.intJETState = BASE_PLC.cSTA_OFF) THEN
+			me.StateMachine.intStateNext := cSTA_OFF;
+		END_IF
+		
 	END_IF
-	
-END_IF
+
 
 // --------------------------------------------------------------------------------------
 // Exit action
-IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-	;
-END_IF]]></ST>
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Property Name="TCP" Id="{84bc78df-7dc4-493d-b729-20a9c886d4bc}">
       <Declaration><![CDATA[PROPERTY TCP : POINTER TO FB_TCP
@@ -689,16 +676,13 @@ END_IF]]></ST>
         <Implementation>
           <ST><![CDATA[TCP := p_fbTCP;]]></ST>
         </Implementation>
-        <ObjectProperties />
       </Get>
       <Set Name="Set" Id="{d0026357-782d-460c-98a2-bb7489a77bea}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
           <ST><![CDATA[p_fbTCP := TCP;]]></ST>
         </Implementation>
-        <ObjectProperties />
       </Set>
-      <ObjectProperties />
     </Property>
     <Method Name="StateMachine" Id="{89f0039a-3a5a-406f-829c-ecdf7e794ca5}">
       <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
@@ -729,7 +713,6 @@ CASE me.StateMachine.intState OF
 		THIS^.sta_CALIBRATION();
 END_CASE]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_CALIBRATIONBusy" Id="{9be5ba67-7610-4700-8f21-a4100b3b90f0}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_CALIBRATIONBusy'}
@@ -795,12 +778,10 @@ END_VAR
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_ERROR" Id="{9e6ff1cd-668f-43fa-9ce4-4de61bb7e9a5}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
-METHOD PROTECTED sta_ERROR : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_ERROR : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 // --------------------------------------------------------------------------------------
@@ -808,9 +789,9 @@ METHOD PROTECTED sta_ERROR : BOOL
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
 	END_IF
 
+	
 // --------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
@@ -821,27 +802,26 @@ METHOD PROTECTED sta_ERROR : BOOL
 		END_IF
 	END_IF
 
+	
 // --------------------------------------------------------------------------------------
 // Exit action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_ERRORQuit" Id="{a93174c2-3bd8-4eca-a524-2bfb42fe33b6}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERRORQuit'}
-METHOD PROTECTED sta_ERRORQuit : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_ERRORQuit : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 // --------------------------------------------------------------------------------------
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
 	END_IF
 
+	
 // --------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
@@ -870,13 +850,13 @@ METHOD PROTECTED sta_ERRORQuit : BOOL
 		END_IF
 	END_IF
 
+	
 // --------------------------------------------------------------------------------------
 // Exit action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="getCtrlSIf" Id="{b3cc9bf7-e773-4c3a-8b67-b308a78d8947}">
       <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
@@ -885,7 +865,6 @@ METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_JCL
       <Implementation>
         <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="getCmdState" Id="{b444cd0e-2d29-40aa-8958-478b9b426456}">
       <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
@@ -939,7 +918,6 @@ IF (getCmdState='') THEN // global not defined get local
 	END_IF 
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="RequestState" Id="{c35cf892-47c2-442d-a9da-180fe616e141}">
       <Declaration><![CDATA[{attribute 'object_name' := 'RequestState'}
@@ -959,7 +937,6 @@ IF NOT (CIf.SwCfg.bolSimulation) THEN
 	p_fbTCP^.M_Push(paPushMsg := pNextCommand);		
 END_IF	]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="FB_init" Id="{c859cf02-60cc-4c4c-876a-145b458b8fa4}">
       <Declaration><![CDATA[{attribute 'object_name' := 'FB_init'}
@@ -1020,8 +997,8 @@ CIf.Info.strType := 'FB_JCL';
 CIf.Info.strFullName := 'Jetter Client';
 
 // set alarm class
-SIf.Alm[E_ALM_JCL.none].eAlmClass := E_AlmClass.TSTOP;
-SIf.Alm[E_ALM_JCL.none].strText := ''; 
+SIf.Alm[E_ALM_JCL.JetterNotRun].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[E_ALM_JCL.JetterNotRun].strText := 'Jetter is not in RUN'; 
 
 
 // *******************************************************************************
@@ -1065,33 +1042,38 @@ SIf.Cur.intJETState:= 0;  // current state not yet known
 
 	]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_RUN" Id="{d4d47749-8b18-4208-afb7-baf90d92abb7}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_RUN'}
-METHOD PROTECTED sta_RUN : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_RUN : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 // --------------------------------------------------------------------------------------
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
 	END_IF
 
+	
 // --------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
-		CASE me.intCmd OF
-			Base_PLC.cCMD_RUN:
-				me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;	
-			JCL_CmdState.cCMD_CleanPrintHeads:
-				me.StateMachine.intStateNext := JCL_CmdState.cSTA_CleanPrintHeadsBusy;
-			JCL_CmdState.cCMD_Standby, Base_PLC.cCMD_STOP:
-				me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;
-		END_CASE
+		IF (SIf.Cur.intJETState <> cSTA_RUN) THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterNotRun,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+		END_IF
+		
+		IF (me.StateMachine.intStateNext<>Base_PLC.cSTA_ERROR) THEN
+			CASE me.intCmd OF
+				Base_PLC.cCMD_RUN:
+					me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;
+				JCL_CmdState.cCMD_CleanPrintHeads:
+					me.StateMachine.intStateNext := JCL_CmdState.cSTA_CleanPrintHeadsBusy;
+				JCL_CmdState.cCMD_Standby, Base_PLC.cCMD_STOP:
+					me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;
+			END_CASE
+		END_IF
 		
 	END_IF
 	
@@ -1102,7 +1084,6 @@ METHOD PROTECTED sta_RUN : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="sta_CLEANING" Id="{d8b5640e-bd2c-4070-834f-c22b1a969501}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_CLEANING'}
@@ -1135,7 +1116,6 @@ METHOD PROTECTED sta_CLEANING : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="ResetAlarms" Id="{da8a737d-f6e9-4e01-8af5-c3968eb71df8}">
       <Declaration><![CDATA[{attribute 'object_name' := 'ResetAlarms'}
@@ -1155,7 +1135,6 @@ IF NOT (CIf.SwCfg.bolSimulation) THEN
 	p_fbTCP^.M_Push(paPushMsg := pNextCommand);		
 END_IF	]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Property Name="CtrlSIf" Id="{dac26a61-5c60-4339-9775-30e5287fd9f3}">
       <Declaration><![CDATA[PROPERTY CtrlSIf : POINTER TO T_Ctrl_SIf_JCL
@@ -1165,9 +1144,7 @@ END_IF	]]></ST>
         <Implementation>
           <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
         </Implementation>
-        <ObjectProperties />
       </Get>
-      <ObjectProperties />
     </Property>
     <Method Name="sta_PON" Id="{f03bc0b2-5ce0-412e-ba2f-2cfed3d8f9fd}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_PON'}
@@ -1205,7 +1182,6 @@ METHOD PROTECTED sta_PON : BOOL
 		;
 	END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <Method Name="Always" Id="{fddfc156-8f6c-4f79-9567-627b9f9a1187}">
       <Declaration><![CDATA[{attribute 'object_name' := 'Always'}
@@ -1291,7 +1267,6 @@ IF (((me.Alarm.eActivAlmClass=E_AlmClass.EOFF) OR (me.Alarm.eActivAlmClass=E_Alm
 	me.StateMachine.intStateNext := cSTA_OFFBusy;
 END_IF]]></ST>
       </Implementation>
-      <ObjectProperties />
     </Method>
     <ObjectProperties />
   </POU>

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <DUT Name="T_Ctrl_SIf_OVN_Par" Id="{8b0526c2-c659-4685-a2db-21c1fba552d3}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_OVN_Par EXTENDS T_Ctrl_SIf_MOD_Par :
 STRUCT
@@ -27,7 +27,6 @@ STRUCT
 	adiAirBand2_p: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
 	/// Airflow Timeout in ms 
 	audiAirTimeout_ms: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF UDINT;
-	udiTimeoutOffBusyReaction_ms: UDINT;
 	udiTimeoutOffBusy_ms: UDINT;
 	udiTimeoutRunBusyReaction_ms: UDINT;
 	udiTimeoutRunBusyInBand_ms: UDINT;

@@ -254,8 +254,7 @@ METHOD PROTECTED getCmdState : STRING
 VAR_INPUT
 	intCmdState: INT;
 	bolState: BOOL;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
 
@@ -365,8 +364,7 @@ METHOD PROTECTED sta_RUN : BOOL
 VAR
 	pItem: POINTER TO T_IdBase_DCH;
 	bolSaberStopDestack		: BOOL;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------

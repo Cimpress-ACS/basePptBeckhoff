@@ -105,7 +105,7 @@ METHOD PROTECTED sta_WaitPaper : BOOL]]></Declaration>
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 //		Log Message ---------------------
-		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'%s','sta_WaitPaper');
+//		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'%s','sta_WaitPaper');
 //		---------------------------------
 	END_IF
 
@@ -281,7 +281,7 @@ METHOD PROTECTED sta_TurnPaperBusy : BOOL
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 //		Log Message ---------------------
-		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'%s','sta_TurnPaperBusy');
+//		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'%s','sta_TurnPaperBusy');
 //		---------------------------------
 		(*p_fbMalteser^.CtrlSIf^.Par.*)intTurnDirection := SIf.Cur.rInOutPosition.eDirection;
 		(*p_fbMalteser^.CtrlSIf^.Par.*)uinPositionToGo := SIf.Cur.rInOutPosition.uinOutput;
@@ -814,8 +814,7 @@ METHOD PROTECTED sta_OFF : BOOL
     </Method>
     <Method Name="sta_RUN" Id="{73d92433-8a02-4e03-b79a-2b3880ff02f4}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_RUN'}
-METHOD PROTECTED sta_RUN : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_RUN : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
@@ -1035,8 +1034,7 @@ END_IF]]></ST>
     </Method>
     <Method Name="sta_TurnEmptyBusy" Id="{adb0932f-4f2e-4c0e-b38f-44f9e9562984}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_TurnEmptyBusy'}
-METHOD PROTECTED sta_TurnEmptyBusy : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_TurnEmptyBusy : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
@@ -1044,7 +1042,7 @@ METHOD PROTECTED sta_TurnEmptyBusy : BOOL
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 //		Log Message ---------------------
-		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'%s','sta_TurnEmptyBusy');
+//		TC2_SYSTEM.ADSLOGSTR(ADSLOG_MSGTYPE_LOG,'%s','sta_TurnEmptyBusy');
 //		---------------------------------
 		(*p_fbMalteser^.CtrlSIf^.Par.*)intTurnDirection := E_TURN_DIRECTION.AUTOMATIC;
 		(*p_fbMalteser^.CtrlSIf^.Par.*)uinPositionToGo := SIf.Cur.rInOutPosition.uinInput;

@@ -573,7 +573,6 @@ SIf.Par.diSpeed_mm_min := SIf.Cfg.diMinSpeed_mm_min;
 SIf.Par.diSpeedBand1_mm_min := 100;
 SIf.Par.diSpeedBand2_mm_min := 200;
 SIf.Par.udiSpeedTimeout_ms := 5000;
-SIf.Par.udiTimeoutOffBusyReaction_ms := 1000;
 SIf.Par.udiTimeoutOffBusy_ms := 2000;
 SIf.Par.udiTimeoutRunBusyReaction_ms := 1000;
 SIf.Par.udiTimeoutRunBusyInBand_ms := 1*60*1000;
@@ -774,8 +773,7 @@ METHOD PROTECTED getCmdState : STRING
 VAR_INPUT
 	intCmdState: INT;
 	bolState: BOOL;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
 
@@ -796,6 +794,12 @@ IF (getCmdState='') THEN // global not defined get local
 				getCmdState := 'BELTONLY';
 			OVN_CmdState.cSTA_BELTONLYbusy: 
 				getCmdState := 'BELTONLYbusy';
+			OVN_CmdState.cSUB_WAITOFF: 
+				getCmdState := 'WAITOFF';
+			OVN_CmdState.cSUB_WAITPAPER: 
+				getCmdState := 'WAITPAPER';
+			OVN_CmdState.cSUB_DONE: 
+				getCmdState := 'DONE';
 		ELSE
 			getCmdState := 'State not defined';
 		END_CASE;
@@ -1095,6 +1099,7 @@ VAR
 	bReady: BOOL;
 	iErrorNumber: INT;
 	uiIdx: UINT;
+	udiCoolDownTime_ms: UDINT;
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
@@ -1104,6 +1109,8 @@ END_VAR]]></Declaration>
 	IF (me.StateMachine.intState <> me.StateMachine.intStateLastCycle) THEN
 		// state changed since last cycle
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		me.SubStateMachine.intState 	:= OVN_CmdState.cSUB_WAITOFF;
+		me.SubStateMachine.intStateNext := OVN_CmdState.cSUB_WAITOFF;
 		
 		// Set Outputs
 		p_fbIBH^.setOff();
@@ -1118,6 +1125,9 @@ END_VAR]]></Declaration>
 
 	// Simulation
 	IF (CIf.SwCfg.bolSimulation) THEN
+		me.SubStateMachine.intState 	:= OVN_CmdState.cSUB_DONE;
+		me.SubStateMachine.intStateNext := OVN_CmdState.cSUB_DONE;	
+	
 		In_bOff := TRUE;
 		In_iStatus := 1;
 		
@@ -1132,30 +1142,51 @@ END_VAR]]></Declaration>
 		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
 	END_IF
 	
-	// check timeouts
-	IF me.StateMachine.udiTimeInState_ms>SIf.Par.udiTimeoutOffBusy_ms THEN
-		iErrorNumber := 100*me.StateMachine.intState+In_iStatus;
-		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UDINT(E_ALM_OVN.TimeoutError),iErrorNumber,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-		me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
-	ELSIF me.StateMachine.udiTimeInState_ms>SIf.Par.udiTimeoutOffBusyReaction_ms THEN
-		IF NOT In_bOff OR NOT ((In_iStatus=1) OR (In_iStatus=6)) THEN
-			iErrorNumber := 100*me.StateMachine.intState+In_iStatus;
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UDINT(E_ALM_OVN.TimeoutError),iErrorNumber,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
-		END_IF
-	END_IF
-	
-	// check if ready
-	bReady := TRUE;
-	IF NOT In_bOff OR NOT ((In_iStatus=1) OR (In_iStatus=6)) THEN
-		bReady := FALSE;
-	END_IF
+	CASE me.SubStateMachine.intState OF
+			// WAITOFF
+			// ------------------------------------------------------------------------
+			OVN_CmdState.cSUB_WAITOFF:
+				IF (In_bOff AND ((In_iStatus=1) OR (In_iStatus=6))) THEN
+					me.SubStateMachine.intStateNext := OVN_CmdState.cSUB_WAITPAPER;
+				ELSIF (me.StateMachine.udiTimeInState_ms>SIf.Par.udiTimeoutOffBusy_ms) THEN
+					iErrorNumber := 100*me.StateMachine.intState+In_iStatus;
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UDINT(E_ALM_OVN.TimeoutError),iErrorNumber,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+					me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+				END_IF
+				
+			// WAITPAPER
+			// ------------------------------------------------------------------------
+			OVN_CmdState.cSUB_WAITPAPER:
+				udiCoolDownTime_ms := 	(		SIf.Cfg.uiNumberOfModules*SIf.Cfg.diModuleLength_mm
+											+	SIf.Cfg.diDistanceBeforeOven_mm
+											+	SIf.Cfg.diDistanceAfterOven_mm
+										)	/	SIf.Par.diSpeed_mm_min
+											*	60*1000;
+				IF (me.StateMachine.udiTimeInState_ms>udiCoolDownTime_ms) THEN
+					me.SubStateMachine.intStateNext := OVN_CmdState.cSUB_DONE;
+				END_IF
+				
+			// DONE
+			// ------------------------------------------------------------------------
+			OVN_CmdState.cSUB_DONE:
+				;
+	END_CASE
 	
 	// State Change Condition
 	IF (me.StateMachine.intStateNext <> Base_PLC.cSTA_ERROR) THEN
-		IF bReady THEN
-			me.StateMachine.intStateNext := Base_PLC.cCMD_OFF;
-		END_IF
+		CASE me.intCmd OF
+			// RUN
+			Base_PLC.cCMD_RUN:
+				me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;
+			// BELTONLY
+			OVN_CmdState.cCMD_BELTONLY:
+				me.StateMachine.intStateNext := OVN_CmdState.cSTA_BELTONLYBusy;
+		ELSE
+			// DEFAULT
+			IF (me.SubStateMachine.intState=OVN_CmdState.cSUB_DONE) THEN
+				me.StateMachine.intStateNext := Base_PLC.cCMD_OFF;
+			END_IF
+		END_CASE
 	END_IF
 
 
