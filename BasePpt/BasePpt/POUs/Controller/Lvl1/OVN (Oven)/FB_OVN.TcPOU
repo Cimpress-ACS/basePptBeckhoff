@@ -567,6 +567,7 @@ SIf.Cfg.diMinTemp_dc := 0;
 SIf.Cfg.diMaxTemp_dc := 2000;
 SIf.Cfg.bAutoContinueAfterConnectionError := FALSE;
 SIf.Cfg.bolDataChannelEnable := FALSE;
+SIf.Cfg.bIgnoreOffBusyWaitPaper := FALSE;
 
 // Parameter
 SIf.Par.diSpeed_mm_min := SIf.Cfg.diMinSpeed_mm_min;
@@ -1157,8 +1158,8 @@ END_VAR]]></Declaration>
 			// WAITPAPER
 			// ------------------------------------------------------------------------
 			OVN_CmdState.cSUB_WAITPAPER:
-				udiCoolDownTime_ms := (SIf.Cfg.uiNumberOfModules*SIf.Cfg.diModuleLength_mm+SIf.Cfg.diDistanceBeforeOven_mm+SIf.Cfg.diDistanceAfterOven_mm)*60*1000/SIf.Par.diSpeed_mm_min;
-				IF (me.StateMachine.udiTimeInState_ms>udiCoolDownTime_ms) THEN
+				udiCoolDownTime_ms := DINT_TO_UDINT((SIf.Cfg.uiNumberOfModules*SIf.Cfg.diModuleLength_mm+SIf.Cfg.diDistanceBeforeOven_mm+SIf.Cfg.diDistanceAfterOven_mm)*60*1000/SIf.Par.diSpeed_mm_min);
+				IF (me.StateMachine.udiTimeInState_ms>udiCoolDownTime_ms) OR SIf.Cfg.bIgnoreOffBusyWaitPaper THEN
 					me.SubStateMachine.intStateNext := OVN_CmdState.cSUB_DONE;
 				END_IF
 				

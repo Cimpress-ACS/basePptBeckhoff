@@ -7,6 +7,7 @@ STRUCT
 	Out_intConveyorBelt: REFERENCE TO INT;
 	Out_intPowderVibrator: REFERENCE TO INT;
 	Out_intConveyorVibrator: REFERENCE TO INT;
+	Out_intAnalogValue: REFERENCE TO INT;
 	Out_uinFilterClearingCycleTime_min: REFERENCE TO UINT;
 	Out_bolToggleBitGrr: REFERENCE TO BOOL;
 	In_bolSystemOk: REFERENCE TO BOOL;
@@ -16,6 +17,7 @@ STRUCT
 	In_bolAutoMode: REFERENCE TO BOOL;
 	In_intState: REFERENCE TO INT;
 	In_bolToggleBitGrn: REFERENCE TO BOOL;
+	In_intMainPressure: REFERENCE TO INT;
 END_STRUCT
 END_TYPE]]></Declaration>
     <ObjectProperties />

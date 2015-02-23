@@ -13,13 +13,15 @@ pGrr^.ctrl.fbGrr.In_bolPowderLowWarning		:= pGrr^.io.In_bolPowderLowWarning;
 pGrr^.ctrl.fbGrr.In_bolSystemOk				:= pGrr^.io.In_bolSystemOk;
 pGrr^.ctrl.fbGrr.In_intState				:= pGrr^.io.In_intState;
 pGrr^.ctrl.fbGrr.In_bolToggleBitGrn			:= pGrr^.io.In_bolToggleBitGrn;
+pGrr^.ctrl.fbGrr.In_intMainPressure			:= pGrr^.io.In_intMainPressure;
 pGrr^.ctrl.fbGrr();
 pGrr^.io.Out_intCommand						:= pGrr^.ctrl.fbGrr.Out_intCommand;
 pGrr^.io.Out_intConveyorBelt				:= pGrr^.ctrl.fbGrr.Out_intConveyorBelt;
 pGrr^.io.Out_intConveyorVibrator			:= pGrr^.ctrl.fbGrr.Out_intConveyorVibrator;
 pGrr^.io.Out_intPowderVibrator				:= pGrr^.ctrl.fbGrr.Out_intPowderVibrator;
 pGrr^.io.Out_uinFilterClearingCycleTime_min	:= pGrr^.ctrl.fbGrr.Out_uinFilterClearingCycleTime_min;
-pGrr^.io.Out_bolToggleBitGrr				:= pGrr^.ctrl.fbGrr.Out_bolToggleBitGrr;]]></ST>
+pGrr^.io.Out_bolToggleBitGrr				:= pGrr^.ctrl.fbGrr.Out_bolToggleBitGrr;
+pGrr^.io.Out_intAnalogValue					:= pGrr^.ctrl.fbGrr.Out_intAnalogValue;]]></ST>
     </Implementation>
     <ObjectProperties />
   </POU>

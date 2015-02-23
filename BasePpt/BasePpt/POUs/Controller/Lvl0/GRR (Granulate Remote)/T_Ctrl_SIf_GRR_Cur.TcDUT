@@ -3,6 +3,7 @@
   <DUT Name="T_Ctrl_SIf_GRR_Cur" Id="{870c1da3-b9c3-4c46-8548-558c22626437}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_GRR_Cur :
 STRUCT
+	intMainPressure: INT;
 END_STRUCT
 END_TYPE]]></Declaration>
     <ObjectProperties />

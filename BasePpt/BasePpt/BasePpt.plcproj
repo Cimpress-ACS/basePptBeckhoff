@@ -14,11 +14,13 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.56</ProjectVersion>
+    <ProjectVersion>0.0.0.57</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.56	- fixed OVN.OFFBusy time calculation
+    <Description>0.0.0.57	- option to not wait for paper in OVN.OFFBusy
+	- support AnalogValue on GRR
+0.0.0.56	- fixed OVN.OFFBusy time calculation
 0.0.0.55	- JCL check Jetter state in RUN
 	- latest BaseConcept and BaseElements
 	- OVN wait in OFFBusy until sheets are out

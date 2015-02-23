@@ -6,6 +6,7 @@ STRUCT
 	rConveyorBelt_Hz: REAL;
 	rPowderVibrator_Hz: REAL;
 	rConveyorVibrator_Hz: REAL;
+	rAnalogValue_p: REAL;
 	uinFilterClearingCycleTime_min: UINT;
 END_STRUCT
 END_TYPE]]></Declaration>

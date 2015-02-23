@@ -3,13 +3,14 @@
   <DUT Name="T_Ctrl_SIf_GRR_In" Id="{22254ce4-f556-4683-82d2-1ce64b03f1a1}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_GRR_In :
 STRUCT
-	bolSystemOk: T_Ctrl_IoBool;
-	bolMainPressureError: T_Ctrl_IoBool;
-	bolEoffOrFuseOk: T_Ctrl_IoBool;
-	bolPowderLowWarning: T_Ctrl_IoBool;
-	bolAutoMode: T_Ctrl_IoBool;
-	intState: T_Ctrl_IoInt;
-	bolToggleBitGrn: T_Ctrl_IoBool;
+	bolSystemOk				: T_Ctrl_IoBool;
+	bolMainPressureError	: T_Ctrl_IoBool;
+	bolEoffOrFuseOk			: T_Ctrl_IoBool;
+	bolPowderLowWarning		: T_Ctrl_IoBool;
+	bolAutoMode				: T_Ctrl_IoBool;
+	intState				: T_Ctrl_IoInt;
+	bolToggleBitGrn			: T_Ctrl_IoBool;
+	intMainPressure			: T_Ctrl_IoInt;
 END_STRUCT
 END_TYPE]]></Declaration>
     <ObjectProperties />
