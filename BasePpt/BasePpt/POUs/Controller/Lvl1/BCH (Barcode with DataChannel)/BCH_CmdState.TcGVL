@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <GVL Name="BCH_CmdState" Id="{b8925484-9faa-45e8-aa34-8e1c034521d6}">
+  <GVL Name="BCH_CmdState" Id="{3736a2d1-418b-4cfc-bffd-175ee3c4e6cf}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	cCMD_READ: INT := 200;
 	cSUB_WAITPAPER: INT := 300;

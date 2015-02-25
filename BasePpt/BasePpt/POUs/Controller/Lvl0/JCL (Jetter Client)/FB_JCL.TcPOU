@@ -1095,7 +1095,8 @@ METHOD PROTECTED sta_CLEANING : BOOL
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		;
+
+		SIf.Cur.bolNeedsCleaning:= FALSE;			
 	END_IF
 
 // --------------------------------------------------------------------------------------

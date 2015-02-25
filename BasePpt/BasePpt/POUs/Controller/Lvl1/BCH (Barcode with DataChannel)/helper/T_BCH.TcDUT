@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_BCH" Id="{db4ebda9-2810-4491-a080-f1efb648f9e5}">
+  <DUT Name="T_BCH" Id="{0c998de9-8cc7-4a56-ba39-b614c627e184}">
     <Declaration><![CDATA[TYPE T_BCH :
 STRUCT
 	io: T_BCH_IO;

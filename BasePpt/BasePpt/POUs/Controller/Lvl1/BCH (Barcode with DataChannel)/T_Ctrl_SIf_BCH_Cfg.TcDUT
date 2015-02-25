@@ -1,10 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_Ctrl_SIf_BCH_Cfg" Id="{53bba5b5-ee08-4160-85af-bcf489aa16c1}">
+  <DUT Name="T_Ctrl_SIf_BCH_Cfg" Id="{ac3e6021-ef1c-4b6a-ad74-2fede8d8c180}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCH_Cfg :
 STRUCT
 	/// TRUE = Enable Data Channel; False = Disable DataChannel
-	bolEnableDataChannel: BOOL;
+	bolEnableDataChannel			: BOOL;
+	// TRUE = Negative Trigger Signal, FALSE = Positive Trigger Signal
+	bolNegativeTriggerSignal 		: BOOL;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

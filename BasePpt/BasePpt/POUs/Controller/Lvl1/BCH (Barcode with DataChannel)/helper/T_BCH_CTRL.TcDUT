@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_BCH_CTRL" Id="{6d46a953-4402-4fa3-b66e-d8b63216333c}">
+  <DUT Name="T_BCH_CTRL" Id="{3a096a84-2bad-4e20-8736-1d2ea8669c0c}">
     <Declaration><![CDATA[TYPE T_BCH_CTRL :
 STRUCT
 	fbBch: FB_BCH;

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_BCH_IO" Id="{f70ae7c2-6376-49a0-8f8c-4e148833cb8b}">
+  <DUT Name="T_BCH_IO" Id="{3cfb8697-5a9e-49e1-8d52-caa6bddf5c1b}">
     <Declaration><![CDATA[TYPE T_BCH_IO :
 STRUCT
 	In_bolSensorTrigScan: REFERENCE TO BOOL;

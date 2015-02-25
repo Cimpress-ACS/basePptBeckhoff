@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="cycle_Bch" Id="{4ce72381-dd30-4c2d-82b1-5cbd91b20937}">
+  <POU Name="cycle_Bch" Id="{964d7c0c-b99e-4179-8ed6-8486a6ed8032}">
     <Declaration><![CDATA[FUNCTION cycle_Bch : BOOL
 VAR_INPUT
 	pBch: POINTER TO T_BCH;
