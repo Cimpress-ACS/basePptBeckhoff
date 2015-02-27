@@ -6,12 +6,13 @@
 	PaperTransport := 1,
 	BufferFull := 2,
 	BufferEmpty := 3,
-	DoublePaper := 4,
+	DoublePaperError := 4,
 	DataChannelBufferFull := 5,
 	DataChannelSend := 6,
 	PaperInject := 7,
 	PaperInjectRetry := 8,
 	DoNotReleaseItems := 9,
+	DoublePaperWarning := 10,
 	MAX_E_ALM_PBC
 );
 END_TYPE

@@ -396,10 +396,11 @@ END_IF
 // Cyclic action
 IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 	IF (SIf.In.bolDoublePaperDetection.intern) THEN
-		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoublePaper),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-		
 		IF SIf.Par.bolEnableDoublePaperDetection THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoublePaperError),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+		ELSE
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoublePaperWarning),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 		END_IF
 	ELSE	
 		CASE me.SubStateMachine.intState OF
@@ -742,8 +743,7 @@ END_CASE;]]></ST>
     </Method>
     <Method Name="sta_ERRORQuit" Id="{934096ed-e0e9-4740-b0df-757e9ba976b8}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERRORQuit'}
-METHOD PROTECTED sta_ERRORQuit : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_ERRORQuit : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
@@ -785,6 +785,8 @@ METHOD PROTECTED sta_ERRORQuit : BOOL
 						me.StateMachine.intStateNext := cSTA_STOPBusy;
 					BASE_PLC.cSTA_RUN:
 						me.StateMachine.intStateNext := PBC_CmdState.cSTA_INITbusy;
+				ELSE
+					me.StateMachine.intStateNext := cSTA_OFFBusy;
 				END_CASE
 			END_CASE
 		END_IF
@@ -1047,8 +1049,8 @@ SIf.Alm[E_ALM_PBC.BufferFull].eAlmClass := E_AlmClass.TSTOP;
 SIf.Alm[E_ALM_PBC.BufferFull].strText := 'Buffer reached capacity limit';
 SIf.Alm[E_ALM_PBC.PaperTransport].eAlmClass := E_AlmClass.TSTOP;
 SIf.Alm[E_ALM_PBC.PaperTransport].strText := 'Possible Paper Jam';
-SIf.Alm[E_ALM_PBC.DoublePaper].eAlmClass := E_AlmClass.TSTOP;
-SIf.Alm[E_ALM_PBC.DoublePaper].strText := 'Double paper detected';
+SIf.Alm[E_ALM_PBC.DoublePaperError].eAlmClass := E_AlmClass.TSTOP;
+SIf.Alm[E_ALM_PBC.DoublePaperError].strText := 'Double paper detected';
 SIf.Alm[E_ALM_PBC.DataChannelBufferFull].eAlmClass := E_AlmClass.WARNING;
 SIf.Alm[E_ALM_PBC.DataChannelBufferFull].strText := 'Data Channel buffer is full';
 SIf.Alm[E_ALM_PBC.DataChannelSend].eAlmClass := E_AlmClass.WARNING;
@@ -1059,6 +1061,8 @@ SIf.Alm[E_ALM_PBC.PaperInjectRetry].eAlmClass := E_AlmClass.WARNING;
 SIf.Alm[E_ALM_PBC.PaperInjectRetry].strText := 'Paper transport retry';
 SIf.Alm[E_ALM_PBC.DoNotReleaseItems].eAlmClass := E_AlmClass.INFO;
 SIf.Alm[E_ALM_PBC.DoNotReleaseItems].strText := 'Currently not releasing items';
+SIf.Alm[E_ALM_PBC.DoublePaperWarning].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[E_ALM_PBC.DoublePaperWarning].strText := 'Double paper detected';
 
 //*******************************************************************************
 // initial values
