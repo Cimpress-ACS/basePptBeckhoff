@@ -20,8 +20,7 @@ STRUCT
 	/// Total Paper Counter / Also used to signal a new Barcode read.			
 	udiBarcodeChanged: UDINT;
 END_STRUCT
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

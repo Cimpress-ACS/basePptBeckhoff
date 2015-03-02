@@ -28,6 +28,7 @@ VAR
 	m_uinPaperHight_mm: UINT := 460;
 	m_uinPaperWidth_mm: UINT := 320;
 	m_intRetry: INT := 0;
+	udiBufferEmptyTimer_ms: UDINT;
 END_VAR
 VAR CONSTANT
 	cPAPERPOSITION_TOLERANCE_mm: UINT := 200;
@@ -186,15 +187,24 @@ METHOD PROTECTED Always : BOOL
 VAR
 	pItem: POINTER TO T_IdBase_DCH;
 	bResult: BOOL;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[SUPER^.Always();
 
 // ----------------------------------------------------------------------------------
 // cyclic actions outside of statemachine
 IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
-	;
+	
+	IF NOT SIf.In.bolPaperAvailableEntry.intern AND NOT SIf.In.bolPaperAvailableExit.intern THEN
+		udiBufferEmptyTimer_ms := udiBufferEmptyTimer_ms + me.FUBInfo.udiSample_ms;
+		IF udiBufferEmptyTimer_ms > 3000 THEN
+			SIf.Cur.uinPaperInBufferCount := 0;
+		END_IF
+	ELSE
+		udiBufferEmptyTimer_ms := 0;
+		SIf.Cur.uinPaperInBufferCount := -1;
+	END_IF
+
 END_IF
 
 // ----------------------------------------------------------------------------------
