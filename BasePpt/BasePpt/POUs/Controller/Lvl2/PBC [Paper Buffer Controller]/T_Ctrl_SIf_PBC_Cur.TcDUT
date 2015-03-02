@@ -4,7 +4,7 @@
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PBC_Cur :
 STRUCT
 	/// How many papers are in the buffer. -1 = Paper count unknown
-	uinPaperInBufferCount: UINT;
+	intPaperInBufferCount: INT;
 	/// Last Paper to eject count parameter
 	uinPaperToEjectParameter: UINT;
 	/// Actual count of the paper ejected 
