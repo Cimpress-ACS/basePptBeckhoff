@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.62</ProjectVersion>
+    <ProjectVersion>0.0.0.63</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.62	- PBC: changed buffer counter to int
+    <Description>0.0.0.63	- GRR only showing 1 error when connection lost
+0.0.0.62	- PBC: changed buffer counter to int
 0.0.0.61	- DeStacker checks if empty
 0.0.0.60	- when DoubleSheet only Warning when turned off on DeStacker
 0.0.0.59	- BCH can go back to RUN from ERROR
