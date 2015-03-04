@@ -24,6 +24,7 @@
 	cSTA_MaintenanceBusy: INT := 208;
 	cSTA_MaintenanceInWork: INT := 209;
 	cSTA_MaintenanceDone: INT := 210;
+	cSTA_MANUALMODE: INT := 212;
 	/// sub states
 	cSUB_WaitingForConnection: INT := 300;
 	cSUB_WaitingForState: INT := 301;

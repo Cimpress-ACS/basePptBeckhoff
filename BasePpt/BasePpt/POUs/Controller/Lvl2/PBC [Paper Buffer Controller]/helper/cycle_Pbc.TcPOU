@@ -7,10 +7,10 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_bolEmoOk 				:= pPbc^.io.In_bolPtbDeStacker_Umc_EmoOk;
-pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_uinStatus 				:= pPbc^.io.In_uinPtbDeStacker_Umc_Status;
+      <ST><![CDATA[pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_uinStatus 				:= pPbc^.io.In_uinPtbDeStacker_Umc_Status;
 pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_intMotorActualSpeed 	:= pPbc^.io.In_uinPtbDeStacker_Umc_ActualSpeed;
 pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_uinMotorSetSpeed 		:= pPbc^.io.In_uinPtbDeStacker_Umc_SetSpeed;
+pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_uinIOData				:= pPbc^.io.In_uinPtbDeStacker_Umc_IOData1;
 pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_uinECATState 			:= pPbc^.io.In_uinPtbDeStacker_Umc_ECatState;
 pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_strNetId 				:= pPbc^.io.In_strPtbDeStacker_Umc_ECatNetId;
 pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_uintPort 				:= pPbc^.io.In_uinPtbDeStacker_Umc_ECatPort;
@@ -20,10 +20,10 @@ pPbc^.io.Out_uinPtbDeStacker_Umc_Control 					:= pPbc^.ctrl.fbPbc_PtbDeStacker_U
 
 pPbc^.ctrl.fbPbc_PtbDeStacker();
 
-pPbc^.ctrl.fbPbc_PtbBelt_Umc.In_bolEmoOk 					:= pPbc^.io.In_bolPtbBelt_Umc_EmoOk;
 pPbc^.ctrl.fbPbc_PtbBelt_Umc.In_uinStatus 					:= pPbc^.io.In_uinPtbBelt_Umc_Status;
 pPbc^.ctrl.fbPbc_PtbBelt_Umc.In_intMotorActualSpeed 		:= pPbc^.io.In_uinPtbBelt_Umc_ActualSpeed;
 pPbc^.ctrl.fbPbc_PtbBelt_Umc.In_uinMotorSetSpeed 			:= pPbc^.io.In_uinPtbBelt_Umc_SetSpeed;
+pPbc^.ctrl.fbPbc_PtbBelt_Umc.In_uinIOData					:= pPbc^.io.In_uinPtbBelt_Umc_IOData1;
 pPbc^.ctrl.fbPbc_PtbBelt_Umc.In_uinECATState 				:= pPbc^.io.In_uinPtbBelt_Umc_ECatState;
 pPbc^.ctrl.fbPbc_PtbBelt_Umc.In_strNetId 					:= pPbc^.io.In_strPtbBelt_Umc_ECatNetId;
 pPbc^.ctrl.fbPbc_PtbBelt_Umc.In_uintPort 					:= pPbc^.io.In_uinPtbBelt_Umc_ECatPort;

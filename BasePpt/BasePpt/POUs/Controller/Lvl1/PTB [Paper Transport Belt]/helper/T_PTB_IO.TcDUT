@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <DUT Name="T_PTB_IO" Id="{e18177eb-a229-4348-81bc-3ab051c328a0}">
     <Declaration><![CDATA[TYPE T_PTB_IO :
 STRUCT
@@ -14,6 +14,7 @@ STRUCT
 	In_uinUmc_Status: REFERENCE TO UINT;
 	In_uinUmc_ActualSpeed: REFERENCE TO UINT;
 	In_uinUmc_SetSpeed: REFERENCE TO UINT;
+	In_uinUmc_IOData1: REFERENCE TO WORD;
 	In_uinUmc_ECatState: REFERENCE TO UINT;
 	In_strUmc_ECatNetId: REFERENCE TO AMSNETID;
 	In_uinUmc_ECatPort: REFERENCE TO WORD;

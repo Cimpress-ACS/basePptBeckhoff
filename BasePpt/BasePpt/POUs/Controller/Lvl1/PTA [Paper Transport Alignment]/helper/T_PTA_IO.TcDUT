@@ -1,15 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <DUT Name="T_PTA_IO" Id="{19da3a1e-982a-47c2-b345-9bf78e8c390c}">
     <Declaration><![CDATA[TYPE T_PTA_IO :
 STRUCT
 	In_bolInputSensor: REFERENCE TO BOOL;
 	In_bolOutputSensor: REFERENCE TO BOOL;
 	
-	In_bolUmc_EmoOk: REFERENCE TO BOOL;
 	In_uinUmc_Status: REFERENCE TO UINT;
 	In_uinUmc_ActualSpeed: REFERENCE TO UINT;
 	In_uinUmc_SetSpeed: REFERENCE TO UINT;
+	In_uinUmc_IOData1: REFERENCE TO WORD;
 	In_uinUmc_ECatState: REFERENCE TO UINT;
 	In_strUmc_ECatNetId: REFERENCE TO AMSNETID;
 	In_uinUmc_ECatPort: REFERENCE TO WORD;

@@ -6,10 +6,10 @@ VAR_INPUT
 	pPst: POINTER TO T_PST;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[pPst^.ctrl.fbPst_Ptb_Umc.In_bolEmoOk 				:= pPst^.io.In_bolPtb_Umc_EmoOk;
-pPst^.ctrl.fbPst_Ptb_Umc.In_uinStatus 				:= pPst^.io.In_uinPtb_Umc_Status;
+      <ST><![CDATA[pPst^.ctrl.fbPst_Ptb_Umc.In_uinStatus 				:= pPst^.io.In_uinPtb_Umc_Status;
 pPst^.ctrl.fbPst_Ptb_Umc.In_intMotorActualSpeed 	:= pPst^.io.In_uinPtb_Umc_ActualSpeed;
 pPst^.ctrl.fbPst_Ptb_Umc.In_uinMotorSetSpeed 		:= pPst^.io.In_uinPtb_Umc_SetSpeed;
+pPst^.ctrl.fbPst_Ptb_Umc.In_uinIOData				:= pPst^.io.In_uinPtb_Umc_IOData1;
 pPst^.ctrl.fbPst_Ptb_Umc.In_uinECATState 			:= pPst^.io.In_uinPtb_Umc_ECatState;
 pPst^.ctrl.fbPst_Ptb_Umc.In_strNetId 				:= pPst^.io.In_strPtb_Umc_ECatNetId;
 pPst^.ctrl.fbPst_Ptb_Umc.In_uintPort 				:= pPst^.io.In_uinPtb_Umc_ECatPort;

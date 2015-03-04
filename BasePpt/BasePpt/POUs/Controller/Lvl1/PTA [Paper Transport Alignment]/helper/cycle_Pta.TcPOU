@@ -1,15 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="cycle_Pta" Id="{46c7fe0b-d881-487c-b6a7-dcf8432446c8}">
     <Declaration><![CDATA[FUNCTION cycle_Pta : BOOL
 VAR_INPUT
 	pPta: POINTER TO T_PTA;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[pPta^.ctrl.fbPta_Umc.In_bolEmoOk				:= pPta^.io.In_bolUmc_EmoOk;
-pPta^.ctrl.fbPta_Umc.In_uinStatus 				:= pPta^.io.In_uinUmc_Status;
+      <ST><![CDATA[pPta^.ctrl.fbPta_Umc.In_uinStatus 				:= pPta^.io.In_uinUmc_Status;
 pPta^.ctrl.fbPta_Umc.In_intMotorActualSpeed 	:= pPta^.io.In_uinUmc_ActualSpeed;
 pPta^.ctrl.fbPta_Umc.In_uinMotorSetSpeed 		:= pPta^.io.In_uinUmc_SetSpeed;
+pPta^.ctrl.fbPta_Umc.In_uinIOData				:= pPta^.io.In_uinUmc_IOData1;
 pPta^.ctrl.fbPta_Umc.In_uinECATState 			:= pPta^.io.In_uinUmc_ECatState;
 pPta^.ctrl.fbPta_Umc.In_strNetId 				:= pPta^.io.In_strUmc_ECatNetId;
 pPta^.ctrl.fbPta_Umc.In_uintPort 				:= pPta^.io.In_uinUmc_ECatPort;

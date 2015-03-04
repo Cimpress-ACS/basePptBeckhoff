@@ -1,15 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="cycle_Ptb" Id="{3372afe3-7bac-48c1-8590-ff62db918e56}">
     <Declaration><![CDATA[FUNCTION cycle_Ptb : BOOL
 VAR_INPUT
 	pPtb: POINTER TO T_PTB;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[pPtb^.ctrl.fbPtb_Umc.In_bolEmoOk				:= pPtb^.io.In_bolUmc_EmoOk;
-pPtb^.ctrl.fbPtb_Umc.In_uinStatus 				:= pPtb^.io.In_uinUmc_Status;
+      <ST><![CDATA[pPtb^.ctrl.fbPtb_Umc.In_uinStatus 				:= pPtb^.io.In_uinUmc_Status;
 pPtb^.ctrl.fbPtb_Umc.In_intMotorActualSpeed 	:= pPtb^.io.In_uinUmc_ActualSpeed;
 pPtb^.ctrl.fbPtb_Umc.In_uinMotorSetSpeed 		:= pPtb^.io.In_uinUmc_SetSpeed;
+pPtb^.ctrl.fbPtb_Umc.In_uinIOData				:= pPtb^.io.In_uinUmc_IOData1;
 pPtb^.ctrl.fbPtb_Umc.In_uinECATState 			:= pPtb^.io.In_uinUmc_ECatState;
 pPtb^.ctrl.fbPtb_Umc.In_strNetId 				:= pPtb^.io.In_strUmc_ECatNetId;
 pPtb^.ctrl.fbPtb_Umc.In_uintPort 				:= pPtb^.io.In_uinUmc_ECatPort;

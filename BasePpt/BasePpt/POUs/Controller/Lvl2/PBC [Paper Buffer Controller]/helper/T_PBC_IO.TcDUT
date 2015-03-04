@@ -11,22 +11,25 @@ STRUCT
 	In_bolDoublePaperSensor: REFERENCE TO BOOL;
 	In_bolAirPressureOk: REFERENCE TO BOOL;
 	Out_bolAirPressureOn: REFERENCE TO BOOL;
+
 	In_bolPtbBelt_Vpc_VacuumSensor: REFERENCE TO BOOL;
 	In_bolPtbBelt_Vpc_PumpOk: REFERENCE TO BOOL;
 	Out_bolPtbBelt_Vpc_PumpOn: REFERENCE TO BOOL;
-	In_bolPtbBelt_Umc_EmoOk: REFERENCE TO BOOL;
+
 	In_uinPtbBelt_Umc_Status: REFERENCE TO UINT;
 	In_uinPtbBelt_Umc_ActualSpeed: REFERENCE TO UINT;
 	In_uinPtbBelt_Umc_SetSpeed: REFERENCE TO UINT;
+	In_uinPtbBelt_Umc_IOData1: REFERENCE TO WORD;
 	In_uinPtbBelt_Umc_ECatState: REFERENCE TO UINT;
 	In_strPtbBelt_Umc_ECatNetId: REFERENCE TO AMSNETID;
 	In_uinPtbBelt_Umc_ECatPort: REFERENCE TO WORD;
 	Out_uinPtbBelt_Umc_Control: REFERENCE TO UINT;
 	Out_uinPtbBelt_Umc_SetSpeed: REFERENCE TO UINT;
-	In_bolPtbDeStacker_Umc_EmoOk: REFERENCE TO BOOL;
+
 	In_uinPtbDeStacker_Umc_Status: REFERENCE TO UINT;
 	In_uinPtbDeStacker_Umc_ActualSpeed: REFERENCE TO UINT;
 	In_uinPtbDeStacker_Umc_SetSpeed: REFERENCE TO UINT;
+	In_uinPtbDeStacker_Umc_IOData1: REFERENCE TO WORD;
 	In_uinPtbDeStacker_Umc_ECatState: REFERENCE TO UINT;
 	In_strPtbDeStacker_Umc_ECatNetId: REFERENCE TO AMSNETID;
 	In_uinPtbDeStacker_Umc_ECatPort: REFERENCE TO WORD;

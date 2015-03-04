@@ -6,10 +6,10 @@ VAR_INPUT
 	pPts: POINTER TO T_PTS;
 END_VAR]]></Declaration>
     <Implementation>
-      <ST><![CDATA[pPts^.ctrl.fbPts_Ptb_Umc.In_bolEmoOk 				:= pPts^.io.In_bolPtb_Umc_EmoOk;
-pPts^.ctrl.fbPts_Ptb_Umc.In_uinStatus 				:= pPts^.io.In_uinPtb_Umc_Status;
+      <ST><![CDATA[pPts^.ctrl.fbPts_Ptb_Umc.In_uinStatus 				:= pPts^.io.In_uinPtb_Umc_Status;
 pPts^.ctrl.fbPts_Ptb_Umc.In_intMotorActualSpeed		:= pPts^.io.In_uinPtb_Umc_ActualSpeed;
 pPts^.ctrl.fbPts_Ptb_Umc.In_uinMotorSetSpeed		:= pPts^.io.In_uinPtb_Umc_SetSpeed;
+pPts^.ctrl.fbPts_Ptb_Umc.In_uinIOData				:= pPts^.io.In_uinPtb_Umc_IOData1;
 pPts^.ctrl.fbPts_Ptb_Umc.In_uinECATState 			:= pPts^.io.In_uinPtb_Umc_ECatState;
 pPts^.ctrl.fbPts_Ptb_Umc.In_strNetId 				:= pPts^.io.In_strPtb_Umc_ECatNetId;
 pPts^.ctrl.fbPts_Ptb_Umc.In_uintPort 				:= pPts^.io.In_uinPtb_Umc_ECatPort;
@@ -23,10 +23,10 @@ pPts^.ctrl.fbPts_Ptb_Vpc();
 pPts^.io.Out_bolPtb_Vpc_PumpOn 						:= pPts^.ctrl.fbPts_Ptb_Vpc.Out_bolVaccumPumpOn;
 
 IF (pPts^.ctrl.fbPts.CtrlSIf^.Cfg.bolRaxEnable = FALSE) THEN
-	pPts^.ctrl.fbPts_Mdc_Umc.In_bolEmoOk 				:= pPts^.io.In_bolMdc_Umc_EmoOk;
 	pPts^.ctrl.fbPts_Mdc_Umc.In_uinStatus 				:= pPts^.io.In_uinMdc_Umc_Status;
 	pPts^.ctrl.fbPts_Mdc_Umc.In_intMotorActualSpeed		:= pPts^.io.In_uinMdc_Umc_ActualSpeed;
 	pPts^.ctrl.fbPts_Mdc_Umc.In_uinMotorSetSpeed 		:= pPts^.io.In_uinMdc_Umc_SetSpeed;
+	pPts^.ctrl.fbPts_Mdc_Umc.In_uinIOData				:= pPts^.io.In_uinMdc_Umc_IOData1;
 	pPts^.ctrl.fbPts_Mdc_Umc.In_uinECATState 			:= pPts^.io.In_uinMdc_Umc_ECatState;
 	pPts^.ctrl.fbPts_Mdc_Umc.In_strNetId 				:= pPts^.io.In_strMdc_Umc_ECatNetId;
 	pPts^.ctrl.fbPts_Mdc_Umc.In_uintPort 				:= pPts^.io.In_uinMdc_Umc_ECatPort;
