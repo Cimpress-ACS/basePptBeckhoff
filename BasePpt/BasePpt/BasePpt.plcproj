@@ -14,11 +14,13 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.64</ProjectVersion>
+    <ProjectVersion>0.0.0.65</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.64	- Added new BaseElements
+    <Description>0.0.0.65	- Added new BaseElements
+	- better DeStacker error msg
+0.0.0.64	- Added new BaseElements
 	- Added Manual State to JCL
 	- Adapted UMC usage in all controllers
 0.0.0.63	- GRR only showing 1 error when connection lost
@@ -93,7 +95,7 @@
     <AssemblyName>MyApplication</AssemblyName>-->
   </PropertyGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.1.45,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.1.46,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
     <LibraryReference Include="Base_PLC,0.3.5.9,Vistaprint">

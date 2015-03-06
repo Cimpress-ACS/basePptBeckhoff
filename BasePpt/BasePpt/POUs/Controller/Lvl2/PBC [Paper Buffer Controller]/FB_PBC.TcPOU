@@ -90,8 +90,7 @@ METHOD PROTECTED sta_PON : BOOL
     </Method>
     <Method Name="sta_RUNbusy" Id="{045a7728-ee01-4fff-9106-f4e993712fa4}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_RUNbusy'}
-METHOD PROTECTED sta_RUNbusy : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_RUNbusy : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
@@ -195,6 +194,7 @@ END_VAR]]></Declaration>
 // cyclic actions outside of statemachine
 IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	
+	// check if DeStacker is empty
 	IF NOT SIf.In.bolPaperAvailableEntry.intern AND NOT SIf.In.bolPaperAvailableExit.intern THEN
 		udiBufferEmptyTimer_ms := udiBufferEmptyTimer_ms + me.FUBInfo.udiSample_ms;
 		IF udiBufferEmptyTimer_ms > 3000 THEN
@@ -221,8 +221,7 @@ END_IF
     </Method>
     <Method Name="sta_ERROR" Id="{2368fd86-1499-440e-abaa-806c761a8e17}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
-METHOD PROTECTED sta_ERROR : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_ERROR : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
@@ -232,6 +231,9 @@ METHOD PROTECTED sta_ERROR : BOOL
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 		pDeStackerCIf^.Job.intACmd 	:= BASE_PLC.cCMD_STOP;
 		//pBeltCIf^.Job.intACmd 		:= BASE_PLC.cCMD_STOP;
+		
+		// clear alarm
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
 	END_IF
 
 
@@ -323,8 +325,7 @@ END_IF]]></ST>
     </Property>
     <Method Name="sta_STOPbusy" Id="{3eaeb462-9a31-435f-aedc-94d0dcbc7e60}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_STOPbusy'}
-METHOD PROTECTED sta_STOPbusy : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_STOPbusy : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
@@ -335,7 +336,9 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 	pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
 	
 	// set alarm
-	pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(SIf.Alm),E_AlmState.SET,CIf.Job.eMe_ActivAlmClass);
+	IF (NOT SIf.Par.bolAutomaticMode) THEN
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(SIf.Alm),E_AlmState.SET,CIf.Job.eMe_ActivAlmClass);
+	END_IF
 END_IF
 
 
@@ -604,8 +607,7 @@ END_IF]]></ST>
     </Method>
     <Method Name="sta_OFFBusy" Id="{565fd178-f8f6-45b6-9fb5-4c8856fdb848}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_OFFBusy'}
-METHOD PROTECTED sta_OFFBusy : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_OFFBusy : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
@@ -877,8 +879,7 @@ METHOD PROTECTED sta_OFF : BOOL
     </Property>
     <Method Name="sta_STOP" Id="{cdd76f16-a5d8-4049-ae0b-d22932690fcf}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_STOP'}
-METHOD PROTECTED sta_STOP : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_STOP : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 //--------------------------------------------------------------------------------------
@@ -1070,7 +1071,7 @@ SIf.Alm[E_ALM_PBC.PaperInject].strText := 'Paper is not transported to the front
 SIf.Alm[E_ALM_PBC.PaperInjectRetry].eAlmClass := E_AlmClass.WARNING;
 SIf.Alm[E_ALM_PBC.PaperInjectRetry].strText := 'Paper transport retry';
 SIf.Alm[E_ALM_PBC.DoNotReleaseItems].eAlmClass := E_AlmClass.INFO;
-SIf.Alm[E_ALM_PBC.DoNotReleaseItems].strText := 'Currently not releasing items';
+SIf.Alm[E_ALM_PBC.DoNotReleaseItems].strText := 'Currently not releasing items because in manual mode';
 SIf.Alm[E_ALM_PBC.DoublePaperWarning].eAlmClass := E_AlmClass.WARNING;
 SIf.Alm[E_ALM_PBC.DoublePaperWarning].strText := 'Double paper detected';
 
