@@ -189,7 +189,7 @@ METHOD PROTECTED sta_EOFF : BOOL]]></Declaration>
 // --------------------------------------------------------------------------------------
 // Exit action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterEOff,0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
 	END_IF]]></ST>
       </Implementation>
     </Method>
@@ -937,15 +937,15 @@ METHOD PROTECTED sta_EOFFBusy : BOOL]]></Declaration>
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterEOff,0,ADR(SIf.Alm),E_AlmState.SET,CIf.Job.eMe_ActivAlmClass);
 	END_IF
 
 
 // --------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		
 		me.StateMachine.intStateNext := cSTA_EOFF;
-		
 	END_IF
 
 
@@ -1441,7 +1441,6 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	// EOFF and MANUAL
 	IF (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy) AND (me.StateMachine.intState>cSTA_PON) THEN
 		IF (SIf.Cur.intJETState = cSTA_EOFF) OR (SIf.Cur.intJETState = cSTA_EOFFBusy) THEN
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterEOff,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext := cSTA_EOFFBusy;
 		ELSIF (SIf.Cur.bolIsLocalControlled) AND (me.StateMachine.intState<>cSTA_MANUALMODE) AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) THEN
 			me.StateMachine.intStateNext := cSTA_MANUALMODE;
