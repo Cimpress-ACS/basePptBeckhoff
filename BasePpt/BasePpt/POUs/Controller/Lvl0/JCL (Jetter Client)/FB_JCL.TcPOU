@@ -1441,6 +1441,7 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	// EOFF and MANUAL
 	IF (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy) AND (me.StateMachine.intState>cSTA_PON) THEN
 		IF (SIf.Cur.intJETState = cSTA_EOFF) OR (SIf.Cur.intJETState = cSTA_EOFFBusy) THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterEOff,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext := cSTA_EOFFBusy;
 		ELSIF (SIf.Cur.bolIsLocalControlled) AND (me.StateMachine.intState<>cSTA_MANUALMODE) AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) THEN
 			me.StateMachine.intStateNext := cSTA_MANUALMODE;
