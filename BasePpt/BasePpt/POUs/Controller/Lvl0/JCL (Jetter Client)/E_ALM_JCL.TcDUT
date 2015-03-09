@@ -5,10 +5,12 @@
 (
 	NONE := 1,
 	JetterNotRun := 2,
+	JetterManualWarning := 3,
+	JetterManualError := 4,
+	JetterEOff := 5,
 	MAX_E_ALM_JCL
 ) UINT;
-END_TYPE
-]]></Declaration>
+END_TYPE]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>
