@@ -981,9 +981,9 @@ IF (getCmdState='') THEN // global not defined get local
 		// States's
 		CASE intCmdState OF
 			JCL_CmdState.cCMD_Standby: 
-				getCmdState := 'cCMD_Standby';
+				getCmdState := 'Standby';
 			JCL_CmdState.cCMD_CleanPrintHeads: 
-				getCmdState := 'cCMD_CleanPrintHeads';		
+				getCmdState := 'CleanPrintHeads';		
 				
 		END_CASE;
 	ELSE
@@ -1233,11 +1233,11 @@ END_VAR]]></Declaration>
 					cSTA_PON:
 						me.StateMachine.intStateNext := cSTA_PONBusy;
 					cSTA_OFF:
-						me.StateMachine.intStateHistory := cSTA_OFFBusy;
+						me.StateMachine.intStateNext := cSTA_OFFBusy;
 					cSTA_RUN:
-						me.StateMachine.intStateHistory := cSTA_RUNBusy;
+						me.StateMachine.intStateNext := cSTA_RUNBusy;
 				ELSE
-					me.StateMachine.intStateHistory := cSTA_OFFBusy;
+					me.StateMachine.intStateNext := cSTA_OFFBusy;
 				END_CASE
 			END_IF
 		END_IF
