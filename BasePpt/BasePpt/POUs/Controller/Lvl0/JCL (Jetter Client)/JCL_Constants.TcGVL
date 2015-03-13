@@ -11,6 +11,7 @@
 	/// Jetter CMD (valid for jetter TCP server protocol)	
 	JCL_CMD_PowerOn: USINT := 2;
 	JCL_CMD_Off: USINT := 6;
+	JCL_STA_Standby: USINT := 202;
 	JCL_CMD_Standby: USINT := 202;
 	JCL_CMD_Run: USINT := 10;
 	JCL_CMD_CleanPrintHeads: USINT := 206;

@@ -190,6 +190,7 @@ METHOD PROTECTED sta_EOFF : BOOL]]></Declaration>
 // Exit action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterEOff,0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
+		CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
 	END_IF]]></ST>
       </Implementation>
     </Method>
@@ -904,19 +905,34 @@ METHOD PROTECTED sta_ERRORQuit : BOOL]]></Declaration>
 		
 		// State Change Condition
 		IF (pTCP_CIF^.Job.bolAlmReset = FALSE) THEN
-	
-			// If the error was triggered because of an TCP connection problem to the server
-			IF (bolServerConnectionError) AND (pTCP_CIF^.Job.eMe_ActivAlmClass = E_AlmClass.NONE) THEN
-				bolServerConnectionError:= FALSE;
-				// Try to reopen the connection to server
-				me.StateMachine.intStateNext := JCL_CmdState.cSTA_ConnectBusy;
+			IF pTCP_CIF^.Job.intState = TCP_CmdState.cSTA_Connect THEN
+				IF SIf.Cur.bolIsLocalControlled THEN
+					me.StateMachine.intStateNext := JCL_CmdState.cSTA_MANUALMODE;
+				ELSE
+					CASE me.intCmd OF
+						BASE_PLC.cCMD_OFF:
+							me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
+						BASE_PLC.cCMD_RUN:
+							me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
+						BASE_PLC.cCMD_STOP:
+							me.StateMachine.intStateNext := BASE_PLC.cSTA_STOPBusy;
+					ELSE
+						CASE SIf.Cur.intJETState OF
+							cSTA_OFF, JCL_Constants.JCL_STA_Standby, cSTA_RUN:
+								me.StateMachine.intStateNext := SIf.Cur.intJETState-1;
+						ELSE
+							me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
+						END_CASE
+					END_CASE
+				END_IF
+			ELSE
+				// If the error was triggered because of an TCP connection problem to the server
+				IF (bolServerConnectionError) AND (pTCP_CIF^.Job.eMe_ActivAlmClass = E_AlmClass.NONE) THEN
+					bolServerConnectionError:= FALSE;
+					// Try to reopen the connection to server
+					me.StateMachine.intStateNext := JCL_CmdState.cSTA_ConnectBusy;
+				END_IF
 			END_IF
-		
-			CASE me.intCmd OF
-				BASE_PLC.cCMD_OFF:
-					me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
-			END_CASE
-			
 		END_IF
 	END_IF
 
@@ -1439,7 +1455,8 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	END_IF
 	
 	// EOFF and MANUAL
-	IF (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy) AND (me.StateMachine.intState>cSTA_PON) THEN
+	IF (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy) AND (me.StateMachine.intState>cSTA_PON)
+	  AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)  THEN
 		IF (SIf.Cur.intJETState = cSTA_EOFF) OR (SIf.Cur.intJETState = cSTA_EOFFBusy) THEN
 			me.StateMachine.intStateNext := cSTA_EOFFBusy;
 		ELSIF (SIf.Cur.bolIsLocalControlled) AND (me.StateMachine.intState<>cSTA_MANUALMODE) AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) THEN
