@@ -24,10 +24,6 @@ STRUCT
 	strDTOfLastCleaningCycle: STRING := '';
 	/// Jetter state
 	intJETState: INT;
-	/// variables for receiving msgs
-	naNextMsg: ARRAY[0..MAX_DATASET_SIZE] OF BYTE;
-	paNextMsg: POINTER TO ARRAY[0..MAX_DATASET_SIZE] OF BYTE;
-	puNextMsg: POINTER TO U_JCL_Message;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

@@ -11,6 +11,10 @@ VAR
 	fbStateLookup: FB_LookupTable;
 	fbCommandLookup: FB_LookupTable;
 	bolServerConnectionError: BOOL;
+	/// variables for receiving msgs
+	m_naNextMsg: ARRAY[0..MAX_DATASET_SIZE] OF BYTE;
+	m_paNextMsg: POINTER TO ARRAY[0..MAX_DATASET_SIZE] OF BYTE;
+	m_puNextMsg: POINTER TO U_JCL_Message;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -73,10 +77,10 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// get next message
-p_fbTCP^.M_Pop(naPopMsg => SIf.Cur.naNextMsg, bPop => bPop);
+p_fbTCP^.M_Pop(naPopMsg => m_naNextMsg, bPop => bPop);
 
 IF bPop THEN // something has been recieved
-	CASE SIf.Cur.puNextMsg^.State.stHeader.uinMsgId OF
+	CASE m_puNextMsg^.State.stHeader.uinMsgId OF
 
 		// -----------------------------------------------
 		// Handle received state
@@ -85,7 +89,7 @@ IF bPop THEN // something has been recieved
 		JCL_MsgId_State:
 			
 			// Update the main state
-			fbStateLookup.A_LookupByValue(iLookupValue := SIf.Cur.puNextMsg^.State.usiMainState, iFoundKey => SIf.Cur.intJETState);
+			fbStateLookup.A_LookupByValue(iLookupValue := m_puNextMsg^.State.usiMainState, iFoundKey => SIf.Cur.intJETState);
 	
 			// Prepare additional states
 			(*
@@ -101,13 +105,13 @@ IF bPop THEN // something has been recieved
 			IsRemoteControlled	7		Remote control active. Commands from Client are accepted
 			*)
 	
-			SIf.Cur.bolReadyForProduction:= SIf.Cur.puNextMsg^.State.usiAddState.0;			
-			SIf.Cur.bolRunning:= SIf.Cur.puNextMsg^.State.usiAddState.1;		
-			SIf.Cur.bolNeedsAttention:= SIf.Cur.puNextMsg^.State.usiAddState.2;			
-			SIf.Cur.bolError:= SIf.Cur.puNextMsg^.State.usiAddState.3;			
-			SIf.Cur.bolCleaningIncomplete:= SIf.Cur.puNextMsg^.State.usiAddState.4;			
-			SIf.Cur.bolIsLocalControlled:= SIf.Cur.puNextMsg^.State.usiAddState.6;		
-			SIf.Cur.bolIsRemoteControlled:= SIf.Cur.puNextMsg^.State.usiAddState.7;
+			SIf.Cur.bolReadyForProduction:= m_puNextMsg^.State.usiAddState.0;			
+			SIf.Cur.bolRunning:= m_puNextMsg^.State.usiAddState.1;		
+			SIf.Cur.bolNeedsAttention:= m_puNextMsg^.State.usiAddState.2;			
+			SIf.Cur.bolError:= m_puNextMsg^.State.usiAddState.3;			
+			SIf.Cur.bolCleaningIncomplete:= m_puNextMsg^.State.usiAddState.4;			
+			SIf.Cur.bolIsLocalControlled:= m_puNextMsg^.State.usiAddState.6;		
+			SIf.Cur.bolIsRemoteControlled:= m_puNextMsg^.State.usiAddState.7;
 			
 		// -----------------------------------------------
 		// Handle received print info (print done)
@@ -127,7 +131,7 @@ IF bPop THEN // something has been recieved
 		JCL_MsgId_ReqCleaning:
 				
 			SIf.Cur.bolNeedsCleaning:= TRUE;			
-			SIf.Cur.strDTOfLastCleaningCycle:= SIf.Cur.puNextMsg^.ReqCleaning.strDTLastClean;
+			SIf.Cur.strDTOfLastCleaningCycle:= m_puNextMsg^.ReqCleaning.strDTLastClean;
 		
 		// nothing received	
 		0:
@@ -1155,8 +1159,8 @@ fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_MaintenanceInWork, iAddValue:= 
 fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_MaintenanceDone, iAddValue:= 210);
 
 // prepare to recieve data
-SIf.Cur.paNextMsg := ADR(SIf.Cur.naNextMsg);
-SIf.Cur.puNextMsg := SIf.Cur.paNextMsg;
+m_paNextMsg := ADR(m_naNextMsg);
+m_puNextMsg := m_paNextMsg;
 
 SIf.Cur.bolNeedsCleaning:= FALSE;	
 SIf.Cur.intJETState:= 0;  // current state not yet known
