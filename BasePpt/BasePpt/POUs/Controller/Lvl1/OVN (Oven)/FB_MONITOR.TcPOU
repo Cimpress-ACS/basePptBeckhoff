@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
   <POU Name="FB_MONITOR" Id="{9ba8aa89-3053-4a0a-ba63-b4a5dc74a0cd}">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_MONITOR
 VAR_INPUT
@@ -7,7 +7,7 @@ VAR_INPUT
 	diTargetValue: DINT;
 	diBand1: DINT;
 	diBand2: DINT;
-	udiTimeout_ms: UDINT;
+	udiTimeoutBand1_ms: UDINT;
 	udiSampleTime_ms: UDINT := 0;
 END_VAR
 VAR_OUTPUT
@@ -15,9 +15,9 @@ VAR_OUTPUT
 	bError: BOOL;
 END_VAR
 VAR
-	udiTimeOutOfBand_ms: UDINT := 0;
-END_VAR
-]]></Declaration>
+	udiTimeOutOfBand1_ms: UDINT := 0;
+	udiTimeOutOfBand2_ms: UDINT := 0;
+END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[bError := FALSE;
 bOutOfBand := FALSE;
@@ -25,23 +25,29 @@ bOutOfBand := FALSE;
 // Band 1
 IF (ABS(diCurrentValue - diTargetValue) > ABS(diBand1)) THEN
 	bOutOfBand := TRUE;
-	udiTimeOutOfBand_ms := udiTimeOutOfBand_ms + udiSampleTime_ms;
-	IF (udiTimeOutOfBand_ms > udiTimeout_ms) THEN
+	udiTimeOutOfBand1_ms := udiTimeOutOfBand1_ms + udiSampleTime_ms;
+	IF (udiTimeOutOfBand1_ms > udiTimeoutBand1_ms) THEN
 		bError := TRUE;
 	END_IF
 ELSE
-	udiTimeOutOfBand_ms := 0;
+	udiTimeOutOfBand1_ms := 0;
 END_IF
 
 // Band 2
 IF (ABS(diCurrentValue - diTargetValue) > ABS(diBand2)) THEN
 	bOutOfBand := TRUE;
-	bError := TRUE;
+	udiTimeOutOfBand2_ms := udiTimeOutOfBand2_ms + udiSampleTime_ms;
+	IF (udiTimeOutOfBand2_ms > 2*udiSampleTime_ms) THEN
+		bError := TRUE;
+	END_IF
+ELSE
+	udiTimeOutOfBand2_ms := 0;
 END_IF]]></ST>
     </Implementation>
     <Action Name="resetTime" Id="{f0b1c5c7-a5c5-43fb-a30c-fdac48190dc0}">
       <Implementation>
-        <ST><![CDATA[THIS^.udiTimeOutOfBand_ms := 0;]]></ST>
+        <ST><![CDATA[THIS^.udiTimeOutOfBand1_ms := 0;
+THIS^.udiTimeOutOfBand2_ms := 0;]]></ST>
       </Implementation>
     </Action>
     <ObjectProperties />

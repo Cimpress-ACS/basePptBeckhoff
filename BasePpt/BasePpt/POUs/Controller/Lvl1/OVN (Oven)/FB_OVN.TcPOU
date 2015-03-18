@@ -246,7 +246,7 @@ END_VAR]]></Declaration>
 									diTargetValue		:= THIS^.SIf.Par.adiTemp_dc[uiIdx],
 									diBand1				:= THIS^.SIf.Par.adiTempBand1_dc[uiIdx],
 									diBand2				:= THIS^.SIf.Par.adiTempBand2_dc[uiIdx],
-									udiTimeout_ms		:= THIS^.SIf.Par.audiTempTimeout_ms[uiIdx],
+									udiTimeoutBand1_ms	:= THIS^.SIf.Par.audiTempTimeout_ms[uiIdx],
 									udiSampleTime_ms	:= me.FUBInfo.udiSample_ms,
 									bOutOfBand			=> bOutOfBand,
 									bError				=> bError);
@@ -261,7 +261,7 @@ END_VAR]]></Declaration>
 									diTargetValue		:= THIS^.SIf.Par.adiAir_p[uiIdx],
 									diBand1				:= THIS^.SIf.Par.adiAirBand1_p[uiIdx],
 									diBand2				:= THIS^.SIf.Par.adiAirBand2_p[uiIdx],
-									udiTimeout_ms		:= THIS^.SIf.Par.audiAirTimeout_ms[uiIdx],
+									udiTimeoutBand1_ms	:= THIS^.SIf.Par.audiAirTimeout_ms[uiIdx],
 									udiSampleTime_ms	:= me.FUBInfo.udiSample_ms,
 									bOutOfBand			=> bOutOfBand,
 									bError				=> bError);
@@ -275,7 +275,7 @@ END_VAR]]></Declaration>
 						diTargetValue		:= THIS^.SIf.Par.diSpeed_mm_min,
 						diBand1				:= THIS^.SIf.Par.diSpeedBand1_mm_min,
 						diBand2				:= THIS^.SIf.Par.diSpeedBand2_mm_min,
-						udiTimeout_ms		:= THIS^.SIf.Par.udiSpeedTimeout_ms,
+						udiTimeoutBand1_ms	:= THIS^.SIf.Par.udiSpeedTimeout_ms,
 						udiSampleTime_ms	:= me.FUBInfo.udiSample_ms,
 						bOutOfBand			=> bOutOfBand,
 						bError				=> bError);

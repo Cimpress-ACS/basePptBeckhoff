@@ -1237,6 +1237,7 @@ METHOD PROTECTED sta_RUN : BOOL]]></Declaration>
 			IF (SIf.Cur.intJETState <> cSTA_RUN) THEN
 				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterNotRun,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 				me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+			END_IF
 				
 			IF SIf.Cur.bolIsLocalControlled THEN
 				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterManualError,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
