@@ -3,6 +3,8 @@
   <DUT Name="T_Ctrl_SIf_JCL_Cfg" Id="{bc2756b9-3d77-454e-bdcb-aa8805cfca7a}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_JCL_Cfg :
 STRUCT
+	// FALSE = Do not allow manual mode, go to error if Jetter goes to manual / TRUE = Allow manual mode and stay in the last state 
+	bolJetterManualModeAllowed		: BOOL;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

@@ -58,6 +58,12 @@ METHOD PROTECTED sta_CALIBRATION : BOOL
 			JCL_CmdState.cCMD_Standby, Base_PLC.cCMD_STOP:
 				me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;			
 		END_CASE
+
+		IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterCommunicationLost,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+		END_IF
+
 	END_IF
 
 // --------------------------------------------------------------------------------------
@@ -237,6 +243,11 @@ END_VAR]]></Declaration>
 			me.StateMachine.intStateNext := BASE_PLC.cSTA_RUN;
 		END_IF
 		
+		IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterCommunicationLost,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+		END_IF
+
 	END_IF
 
 // --------------------------------------------------------------------------------------
@@ -307,6 +318,11 @@ END_VAR]]></Declaration>
 			me.StateMachine.intStateNext := JCL_CmdState.cSTA_CleanPrintHeads;
 		END_IF
 		
+		IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterCommunicationLost,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+		END_IF
+
 	END_IF
 
 // --------------------------------------------------------------------------------------
@@ -341,6 +357,11 @@ METHOD PROTECTED sta_OFF : BOOL]]></Declaration>
 				me.StateMachine.intStateNext := JCL_CmdState.cSTA_CleanPrintHeadsBusy;
 		END_CASE
 		
+		IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterCommunicationLost,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+		END_IF
+
 	END_IF
 
 
@@ -378,6 +399,12 @@ METHOD PROTECTED sta_STANDBY : BOOL
 			JCL_CmdState.cCMD_Calibration: 				
 				me.StateMachine.intStateNext := JCL_CmdState.cSTA_CalibrationBusy;	
 		END_CASE
+
+		IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterCommunicationLost,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+		END_IF
+
 	END_IF
 
 // --------------------------------------------------------------------------------------
@@ -659,6 +686,11 @@ END_VAR]]></Declaration>
 			me.StateMachine.intStateNext := JCL_CmdState.cSTA_Standby;
 		END_IF
 		
+		IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterCommunicationLost,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+		END_IF
+
 	END_IF
 
 // --------------------------------------------------------------------------------------
@@ -702,6 +734,11 @@ METHOD PROTECTED sta_OFFBusy : BOOL]]></Declaration>
 			me.StateMachine.intStateNext := cSTA_OFF;
 		END_IF
 		
+		IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterCommunicationLost,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+		END_IF
+
 	END_IF
 
 
@@ -845,6 +882,12 @@ END_VAR
 			me.StateMachine.intStateNext := JCL_CmdState.cSTA_Calibration;
 		END_IF
 		
+		IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterCommunicationLost,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+		END_IF
+
+		
 	END_IF
 
 // --------------------------------------------------------------------------------------
@@ -910,17 +953,18 @@ METHOD PROTECTED sta_ERRORQuit : BOOL]]></Declaration>
 		// State Change Condition
 		IF (pTCP_CIF^.Job.bolAlmReset = FALSE) THEN
 			IF pTCP_CIF^.Job.intState = TCP_CmdState.cSTA_Connect THEN
-				IF SIf.Cur.bolIsLocalControlled THEN
-					me.StateMachine.intStateNext := JCL_CmdState.cSTA_MANUALMODE;
-				ELSE
-					CASE me.intCmd OF
-						BASE_PLC.cCMD_OFF:
-							me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
-						BASE_PLC.cCMD_STOP:
-							me.StateMachine.intStateNext := BASE_PLC.cSTA_STOPBusy;
+				IF SIf.Cfg.bolJetterManualModeAllowed THEN
+					IF SIf.Cur.bolIsLocalControlled THEN
+						me.StateMachine.intStateNext := JCL_CmdState.cSTA_MANUALMODE;
 					ELSE
 						me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
-					END_CASE
+					END_IF
+				ELSE
+					IF SIf.Cur.bolIsLocalControlled THEN
+						me.StateMachine.intStateNext := JCL_CmdState.cSTA_MANUALMODE;
+					ELSE
+						me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
+					END_IF
 				END_IF
 			ELSE
 				// If the error was triggered because of an TCP connection problem to the server
@@ -1118,6 +1162,8 @@ SIf.Alm[E_ALM_JCL.JetterManualError].eAlmClass := E_AlmClass.OFF;
 SIf.Alm[E_ALM_JCL.JetterManualError].strText := 'Manual Operation';
 SIf.Alm[E_ALM_JCL.JetterEOff].eAlmClass := E_AlmClass.OFF;
 SIf.Alm[E_ALM_JCL.JetterEOff].strText := 'Jetter in EOFF';
+SIf.Alm[E_ALM_JCL.JetterCommunicationLost].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[E_ALM_JCL.JetterCommunicationLost].strText := 'Jetter Communication Lost';
 
 
 // *******************************************************************************
@@ -1157,7 +1203,7 @@ m_puNextMsg := m_paNextMsg;
 
 SIf.Cur.bolNeedsCleaning:= FALSE;	
 SIf.Cur.intJETState:= 0;  // current state not yet known
-
+SIf.Cfg.bolJetterManualModeAllowed := FALSE;
 
 	]]></ST>
       </Implementation>
@@ -1178,15 +1224,32 @@ METHOD PROTECTED sta_RUN : BOOL]]></Declaration>
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
-		IF (SIf.Cur.intJETState <> cSTA_RUN) THEN
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterNotRun,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
-		ELSIF SIf.Cur.bolIsLocalControlled THEN
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterManualError,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+		IF (SIf.Cfg.bolJetterManualModeAllowed) THEN
+			IF SIf.Cur.bolIsLocalControlled THEN
+				me.StateMachine.intStateNext := JCL_CmdState.cSTA_MANUALMODE;
+			END_IF			
+			
+			IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterCommunicationLost,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+			END_IF
+		ELSE
+			IF (SIf.Cur.intJETState <> cSTA_RUN) THEN
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterNotRun,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+				
+			IF SIf.Cur.bolIsLocalControlled THEN
+				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterManualError,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+			END_IF
 		END_IF
 		
-		IF (me.StateMachine.intStateNext<>Base_PLC.cSTA_ERROR) THEN
+		IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterCommunicationLost,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+		END_IF
+
+		IF (me.StateMachine.intStateNext<>Base_PLC.cSTA_ERROR) AND (me.StateMachine.intStateNext<>JCL_CmdState.cSTA_MANUALMODE)THEN
 			CASE me.intCmd OF
 				Base_PLC.cCMD_RUN:
 					me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;
@@ -1228,29 +1291,20 @@ END_VAR]]></Declaration>
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
-		// Wait for REMOTE MODE
-		IF (SIf.Cur.bolIsRemoteControlled) THEN
-			IF me.intCmd <> cCMD_DONE THEN
-				CASE me.intCmd OF
-					cCMD_PON:
-						me.StateMachine.intStateNext := cSTA_PONBusy;
-					cCMD_OFF:
-						me.StateMachine.intStateNext := cSTA_OFFBusy;
-				ELSE
-					me.StateMachine.intStateNext := cSTA_OFFBusy;
-				END_CASE
-			ELSE
-				CASE me.StateMachine.intStateHistory OF
-					cSTA_PON:
-						me.StateMachine.intStateNext := cSTA_PONBusy;
-					cSTA_OFF:
-						me.StateMachine.intStateNext := cSTA_OFFBusy;
-				ELSE
-					me.StateMachine.intStateNext := cSTA_OFFBusy;
-				END_CASE
+		IF SIf.Cfg.bolJetterManualModeAllowed THEN
+			IF SIf.Cur.bolIsRemoteControlled THEN
+				me.StateMachine.intStateNext := cSTA_OFFBusy;
 			END_IF
+		ELSE
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterManualError,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
 		END_IF
 		
+		IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterCommunicationLost,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+		END_IF
+
 	END_IF
 
 
@@ -1288,6 +1342,12 @@ METHOD PROTECTED sta_CLEANING : BOOL
 			JCL_CmdState.cCMD_Standby, Base_PLC.cCMD_STOP:
 				me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;			
 		END_CASE
+
+		IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterCommunicationLost,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+		END_IF
+
 	END_IF
 
 // --------------------------------------------------------------------------------------

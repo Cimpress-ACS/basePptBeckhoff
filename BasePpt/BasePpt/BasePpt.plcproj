@@ -19,6 +19,7 @@
     <Released>True</Released>
     <Company>Vistaprint</Company>
     <Description>0.0.0.70	- PBC: Different SheetToSheet times for Auto &amp; Manual Mode
+	- JCL: Rework Manual behavior
 0.0.0.69	- JCL: Take the message buffer out of the CUR
 0.0.0.68	- JCL: Error Exit Error fixed
 0.0.0.67	- JCL: Fix for Manual Mode Exit

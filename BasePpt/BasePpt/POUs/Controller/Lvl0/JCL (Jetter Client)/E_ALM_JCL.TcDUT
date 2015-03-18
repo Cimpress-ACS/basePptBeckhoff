@@ -8,6 +8,7 @@
 	JetterManualWarning := 3,
 	JetterManualError := 4,
 	JetterEOff := 5,
+	JetterCommunicationLost := 6,
 	MAX_E_ALM_JCL
 ) UINT;
 END_TYPE]]></Declaration>
