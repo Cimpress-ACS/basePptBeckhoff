@@ -7,8 +7,10 @@ STRUCT
 	udiPaperTransportTime: UDINT;
 	/// Sheet to output with one run command.  0 = endless until stop
 	udiSheetToEject: UDINT;
-	/// [ms] Time from sheet to sheet ejection in multi eject mode.
+	/// [ms] Time from sheet to sheet ejection in multi eject mode in Auto Mode.
 	udiSheetToSheetTime: UDINT;
+	/// [ms] Time from sheet to sheet ejection in multi eject mode in Manual Mode.
+	udiManualSheetToSheetTime_ms: UDINT;
 	/// [ms] Paper transport time simulation
 	udiSimPaperTransportTime: UDINT;
 	/// [ms] Paper to paper transport time simulation

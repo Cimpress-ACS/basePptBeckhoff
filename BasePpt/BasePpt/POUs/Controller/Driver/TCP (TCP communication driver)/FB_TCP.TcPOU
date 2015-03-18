@@ -85,6 +85,8 @@ METHOD sta_CONNECT : BOOL
 		CASE me.intCmd OF
 			TCP_CmdState.cCMD_Close:
 				me.StateMachine.intStateNext := TCP_CmdState.cSTA_CloseBusy;
+			TCP_CmdState.cCMD_Connect:
+				me.StateMachine.intStateNext := TCP_CmdState.cSTA_CloseBusy;
 		END_CASE
 	END_IF
 

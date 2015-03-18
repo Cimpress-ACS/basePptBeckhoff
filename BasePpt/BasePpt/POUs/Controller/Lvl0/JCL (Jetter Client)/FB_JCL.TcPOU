@@ -916,17 +916,10 @@ METHOD PROTECTED sta_ERRORQuit : BOOL]]></Declaration>
 					CASE me.intCmd OF
 						BASE_PLC.cCMD_OFF:
 							me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
-						BASE_PLC.cCMD_RUN:
-							me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
 						BASE_PLC.cCMD_STOP:
 							me.StateMachine.intStateNext := BASE_PLC.cSTA_STOPBusy;
 					ELSE
-						CASE SIf.Cur.intJETState OF
-							cSTA_OFF, JCL_Constants.JCL_STA_Standby, cSTA_RUN:
-								me.StateMachine.intStateNext := SIf.Cur.intJETState-1;
-						ELSE
-							me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
-						END_CASE
+						me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
 					END_CASE
 				END_IF
 			ELSE
@@ -1243,8 +1236,6 @@ END_VAR]]></Declaration>
 						me.StateMachine.intStateNext := cSTA_PONBusy;
 					cCMD_OFF:
 						me.StateMachine.intStateNext := cSTA_OFFBusy;
-					cCMD_RUN:
-						me.StateMachine.intStateNext := cSTA_RUNBusy;
 				ELSE
 					me.StateMachine.intStateNext := cSTA_OFFBusy;
 				END_CASE
@@ -1254,8 +1245,6 @@ END_VAR]]></Declaration>
 						me.StateMachine.intStateNext := cSTA_PONBusy;
 					cSTA_OFF:
 						me.StateMachine.intStateNext := cSTA_OFFBusy;
-					cSTA_RUN:
-						me.StateMachine.intStateNext := cSTA_RUNBusy;
 				ELSE
 					me.StateMachine.intStateNext := cSTA_OFFBusy;
 				END_CASE
@@ -1417,7 +1406,8 @@ ELSE
 		AND (me.StateMachine.intState<>cSTA_PONBusy) AND (me.StateMachine.intState<>cSTA_PON)
 		AND (me.StateMachine.intState<>cSTA_OFFBusy) AND (me.StateMachine.intState<>cSTA_OFF)
 		AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) 
-		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy) THEN
+		AND (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy)
+		AND (me.StateMachine.intState<>JCL_CmdState.cSTA_MANUALMODE) THEN
 		me.StateMachine.intStateNext := cSTA_OFFBusy;
 	END_IF
 END_IF

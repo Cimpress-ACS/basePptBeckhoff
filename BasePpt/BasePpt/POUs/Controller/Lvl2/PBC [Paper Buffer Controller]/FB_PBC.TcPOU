@@ -506,7 +506,8 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 					OR (SIf.Par.bolAutomaticMode AND NOT bolSaberStopDestack)) THEN 
 					// Make a delay from sheet to sheet if it is not the first sheet
 					IF SIf.In.bolPaperAvailableExit.intern THEN
-						IF   (SIf.Cur.uinSheetToSheetTime > SIf.Par.udiSheetToSheetTime) 
+						IF   ((SIf.Cur.uinSheetToSheetTime > SIf.Par.udiSheetToSheetTime) AND SIf.Par.bolAutomaticMode)
+						  OR ((SIf.Cur.uinSheetToSheetTime > SIf.Par.udiManualSheetToSheetTime_ms) AND NOT SIf.Par.bolAutomaticMode)
 						  OR ((SIf.Cur.uinPaperToEjectCount = SIf.Cur.uinPaperToEjectParameter) AND NOT SIf.Par.bolAutomaticMode) THEN
 							SIf.Cur.uinSheetToSheetTime := 0;
 							me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_EJECTSTARTbusy;
@@ -1095,7 +1096,8 @@ SIf.Par.bolAutomaticMode := FALSE;
 SIf.Par.bolStopReleaseItems := FALSE;
 SIf.Par.udiPaperTransportTime := 3000;
 SIf.Par.udiSheetToEject := 0;
-SIf.Par.udiSheetToSheetTime := 5600;
+SIf.Par.udiSheetToSheetTime := 22800;
+SIf.Par.udiManualSheetToSheetTime_ms := 22800;
 SIf.Par.udiPaperInjectRetryPauseTime_ms := 400;
 SIf.Par.udiPaperInjectRetries := 3;
 SIf.Par.udiDoublePaperDebounceTime_ms := 500;
