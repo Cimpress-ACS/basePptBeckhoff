@@ -11,7 +11,7 @@ VAR
 	fbReceive: TC2_TCPIP.FB_SocketReceive;
 	/// buffer for received messages
 	fbReceiveBuffer: FB_DataSetFifo;
-	/// buffer for messages to be sendt
+	/// buffer for messages to be sent
 	fbSendBuffer: FB_DataSetFifo;
 	stNextHead: ST_Header;
 	bReceivedAck: BOOL;
