@@ -156,8 +156,6 @@
     <Folder Include="POUs\Controller\Lvl0\" />
     <Folder Include="POUs\Controller\Lvl0\GRR %28Granulate Remote%29" />
     <Folder Include="POUs\Controller\Lvl0\GRR %28Granulate Remote%29\helper" />
-    <Folder Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29" />
-    <Folder Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\helper" />
     <Folder Include="POUs\Controller\Lvl0\RAX%28Rotative Axis%29\" />
     <Folder Include="POUs\Controller\Lvl1\" />
     <Folder Include="POUs\Controller\Lvl1\BCH %28Barcode with DataChannel%29\" />
