@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_JCL" Id="{7568ee02-ec83-4109-ac32-b5feb88f54eb}">
+  <DUT Name="T_JCL" Id="{deba1ac3-57ec-4a28-9daf-015244a7c190}">
     <Declaration><![CDATA[TYPE T_JCL :
 STRUCT
 	io: T_JCL_IO;

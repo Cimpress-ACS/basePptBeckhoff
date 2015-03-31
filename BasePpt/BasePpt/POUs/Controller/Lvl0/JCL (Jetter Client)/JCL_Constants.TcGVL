@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <GVL Name="JCL_Constants" Id="{3adb7ff8-d4d7-4730-90d7-cece380967ef}">
+  <GVL Name="JCL_Constants" Id="{3fe6c60f-dddf-454d-ab8f-67efeaf9a481}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	/// MsgID (valid for jetter TCP server protocol)
 	JCL_MsgId_Command: UINT := 1;

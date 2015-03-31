@@ -68,6 +68,16 @@ VAR
 	anReadBuffer: ARRAY[0..(READ_BUFFER_LENGTH - 1)] OF BYTE;
 	/// data to write 
 	anWriteBuffer: ARRAY[0..(WRITE_BUFFER_LENGTH - 1)] OF BYTE;
+	
+	// simulation
+	iSimStatus: INT;
+	bSimOff: BOOL;
+	bSimBeltOn: BOOL;
+	bSimManual: BOOL;
+	bSimRun: BOOL;
+	adiSimTemp_dc: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
+	adiSimAir_p: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
+	diSimSpeed_mm_min: DINT;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[(*__________________________________________________________________________________________________
@@ -167,8 +177,7 @@ METHOD PROTECTED sta_PON : BOOL
     </Method>
     <Method Name="CtrlInit" Id="{0accaec6-7a10-4d05-90a8-2093259b81bc}">
       <Declaration><![CDATA[{attribute 'object_name' := 'CtrlInit'}
-METHOD CtrlInit : BOOL
-]]></Declaration>
+METHOD CtrlInit : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[SUPER^.CtrlInit();
 
@@ -182,11 +191,13 @@ METHOD setTemp
 VAR_INPUT
 	/// Temperature in deci °C 
 	In_adiTemp_dc: ARRAY[1..MAX_NUMBER_OF_OVEN_MODULES] OF DINT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[adiTemp_dc := In_adiTemp_dc;
-bIncrementSetParam := TRUE;]]></ST>
+bIncrementSetParam := TRUE;
+
+// simulation
+adiSimTemp_dc := In_adiTemp_dc;]]></ST>
       </Implementation>
     </Method>
     <Method Name="FB_init" Id="{1e98861f-0bc6-4fd1-8c68-a6e91c74e1a0}">
@@ -257,6 +268,18 @@ diSpeed_mm_min := 0;
 iAckError := 0;
 bIncrementSetParam := FALSE;
 bRememberIncrementSetParam := FALSE;
+
+// simulation
+iSimStatus := 1;
+bSimOff := TRUE;
+bSimBeltOn := FALSE;
+bSimManual := FALSE;
+bSimRun := FALSE;
+FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
+	adiSimTemp_dc[uiIdx] := 0;
+	adiSimAir_p[uiIdx] := 0;
+END_FOR
+diSimSpeed_mm_min := 0;
 
 // Configuration
 SIf.Cfg.tIpAddress						:= '192.168.0.50';
@@ -373,8 +396,7 @@ METHOD bitAccess : BOOL
 VAR_INPUT
 	in_byte: BYTE;
 	in_bit: UINT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[CASE in_bit OF
 	0: bitAccess := in_byte.0;
@@ -464,8 +486,7 @@ VAR
 	bBusy: BOOL;
 	bError: BOOL;
 	udiErrID: UDINT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 
@@ -727,7 +748,14 @@ METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_IBH]]></Declaration>
 	iRun := 0;
 END_IF
 
-iRun := iRun + 1;]]></ST>
+iRun := iRun + 1;
+
+// simulation
+iSimStatus := 4;
+bSimOff := FALSE;
+bSimBeltOn := FALSE;
+bSimManual := FALSE;
+bSimRun := TRUE;]]></ST>
       </Implementation>
     </Action>
     <Method Name="sta_READ" Id="{75bf96e5-4d01-4337-b000-089b7dd4522e}">
@@ -742,7 +770,6 @@ END_VAR]]></Declaration>
 // Entry action
 //--------------------------------------------------------------------------------------
 	IF (me.StateMachine.intState <> me.StateMachine.intStateLastCycle) THEN
-		// state changed since last cycle
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 	END_IF
 
@@ -750,61 +777,71 @@ END_VAR]]></Declaration>
 // Cyclic action
 //--------------------------------------------------------------------------------------	
 	
-	// Analyse Read Buffer
-	// !!!ATTENTION!!!
-	// Motorola: Big-Endien: Most Significant Bits First (Siemens)
-	// Intel: Little-Endien: Least Significant Bits First (Beckhoff)
-	THIS^.Out_iStatus :=		SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iStatus+0]),1*8)
-							+	SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iStatus+1]),0*8);
-	THIS^.Out_bOff		:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bOff]		,SIf.Cfg.uiBitOffset_rd_bOff);
-	THIS^.Out_bBeltOn	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bBeltOn]		,SIf.Cfg.uiBitOffset_rd_bBeltOn);
-	THIS^.Out_bManual	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bManual]		,SIf.Cfg.uiBitOffset_rd_bManual);
-	THIS^.Out_bRun		:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bRun]		,SIf.Cfg.uiBitOffset_rd_bRun);
-	THIS^.Out_bSetParam	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bSetParam]	,SIf.Cfg.uiBitOffset_rd_bSetParam);
-	THIS^.Out_bGetParam	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bGetParam]	,SIf.Cfg.uiBitOffset_rd_bGetParam);
-	THIS^.Out_bAckError	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bAckError]	,SIf.Cfg.uiBitOffset_rd_bAckError);
-	FOR uiIdx:=0 TO SIf.Cfg.uiNumberOfModules BY 1 DO
-		THIS^.Out_adiTemp_dc[uiIdx] :=		SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiTemp_mc+0 + uiIdx*4]),3*8)
-										+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiTemp_mc+1 + uiIdx*4]),2*8)
-										+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiTemp_mc+2 + uiIdx*4]),1*8)
-										+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiTemp_mc+3 + uiIdx*4]),0*8);
-	END_FOR
-	FOR uiIdx:=0 TO SIf.Cfg.uiNumberOfModules BY 1 DO
-		THIS^.Out_adiAir_p[uiIdx] :=		SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiAir_p+0 + uiIdx*4]),3*8)
-										+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiAir_p+1 + uiIdx*4]),2*8)
-										+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiAir_p+2 + uiIdx*4]),1*8)
-										+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiAir_p+3 + uiIdx*4]),0*8);
-	END_FOR
-	THIS^.Out_diSpeed_mm_min :=		SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_diSpeed_mm_min+0]),3*8)
-								+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_diSpeed_mm_min+1]),2*8)
-								+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_diSpeed_mm_min+2]),1*8)
-								+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_diSpeed_mm_min+3]),0*8);
-	THIS^.Out_iErrorLevel :=		SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iErrorLevel+0]),1*8)
-								+	SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iErrorLevel+1]),0*8);
-	THIS^.Out_iErrorID :=			SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iErrorID+0]),1*8)
-								+	SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iErrorID+1]),0*8);
-	
 	// Simulation
 	IF (CIf.SwCfg.bolSimulation) THEN
-		THIS^.Out_iStatus	:= 1;
-		THIS^.Out_bOff		:= TRUE;
-		THIS^.Out_bBeltOn	:= FALSE;
-		THIS^.Out_bManual	:= FALSE;
-		THIS^.Out_bRun		:= FALSE;
+		THIS^.Out_iStatus	:= iSimStatus;
+		THIS^.Out_bOff		:= bSimOff;
+		THIS^.Out_bBeltOn	:= bSimBeltOn;
+		THIS^.Out_bManual	:= bSimManual;
+		THIS^.Out_bRun		:= bSimRun;
 		THIS^.Out_bSetParam	:= FALSE;
 		THIS^.Out_bGetParam	:= FALSE;
 		THIS^.Out_bAckError	:= FALSE;
-		FOR uiIdx:=0 TO SIf.Cfg.uiNumberOfModules BY 1 DO
-			THIS^.Out_adiTemp_dc[uiIdx] := 0;
-		END_FOR
-		FOR uiIdx:=0 TO SIf.Cfg.uiNumberOfModules BY 1 DO
-			THIS^.Out_adiAir_p[uiIdx] := 0;
-		END_FOR
-		THIS^.Out_diSpeed_mm_min :=	0;
+		
+		IF bSimRun THEN
+			Out_adiTemp_dc := adiSimTemp_dc;
+			Out_adiAir_p := adiSimAir_p;
+		ELSE
+			FOR uiIdx:=0 TO SIf.Cfg.uiNumberOfModules BY 1 DO
+				THIS^.Out_adiTemp_dc[uiIdx] := 0;
+				THIS^.Out_adiAir_p[uiIdx] := 0;
+			END_FOR
+		END_IF
+		
+		IF bSimRun OR bSimBeltOn THEN
+			Out_diSpeed_mm_min := diSimSpeed_mm_min;
+		ELSE
+			THIS^.Out_diSpeed_mm_min :=	0;
+		END_IF
+		
 		THIS^.Out_iErrorLevel := 0;
 		THIS^.Out_iErrorID := 0;
+	ELSE
+		// Analyse Read Buffer
+		// !!!ATTENTION!!!
+		// Motorola: Big-Endien: Most Significant Bits First (Siemens)
+		// Intel: Little-Endien: Least Significant Bits First (Beckhoff)
+		THIS^.Out_iStatus :=		SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iStatus+0]),1*8)
+								+	SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iStatus+1]),0*8);
+		THIS^.Out_bOff		:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bOff]		,SIf.Cfg.uiBitOffset_rd_bOff);
+		THIS^.Out_bBeltOn	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bBeltOn]		,SIf.Cfg.uiBitOffset_rd_bBeltOn);
+		THIS^.Out_bManual	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bManual]		,SIf.Cfg.uiBitOffset_rd_bManual);
+		THIS^.Out_bRun		:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bRun]		,SIf.Cfg.uiBitOffset_rd_bRun);
+		THIS^.Out_bSetParam	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bSetParam]	,SIf.Cfg.uiBitOffset_rd_bSetParam);
+		THIS^.Out_bGetParam	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bGetParam]	,SIf.Cfg.uiBitOffset_rd_bGetParam);
+		THIS^.Out_bAckError	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bAckError]	,SIf.Cfg.uiBitOffset_rd_bAckError);
+		FOR uiIdx:=0 TO SIf.Cfg.uiNumberOfModules BY 1 DO
+			THIS^.Out_adiTemp_dc[uiIdx] :=		SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiTemp_mc+0 + uiIdx*4]),3*8)
+											+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiTemp_mc+1 + uiIdx*4]),2*8)
+											+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiTemp_mc+2 + uiIdx*4]),1*8)
+											+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiTemp_mc+3 + uiIdx*4]),0*8);
+		END_FOR
+		FOR uiIdx:=0 TO SIf.Cfg.uiNumberOfModules BY 1 DO
+			THIS^.Out_adiAir_p[uiIdx] :=		SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiAir_p+0 + uiIdx*4]),3*8)
+											+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiAir_p+1 + uiIdx*4]),2*8)
+											+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiAir_p+2 + uiIdx*4]),1*8)
+											+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_adiAir_p+3 + uiIdx*4]),0*8);
+		END_FOR
+		THIS^.Out_diSpeed_mm_min :=		SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_diSpeed_mm_min+0]),3*8)
+									+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_diSpeed_mm_min+1]),2*8)
+									+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_diSpeed_mm_min+2]),1*8)
+									+	SHL(BYTE_TO_DINT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_diSpeed_mm_min+3]),0*8);
+		THIS^.Out_iErrorLevel :=		SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iErrorLevel+0]),1*8)
+									+	SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iErrorLevel+1]),0*8);
+		THIS^.Out_iErrorID :=			SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iErrorID+0]),1*8)
+									+	SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iErrorID+1]),0*8);
 	END_IF
-	
+									
 	// State Change Condition
 	CASE me.intCmd OF
 		// OFF
@@ -1000,7 +1037,10 @@ VAR_INPUT
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[adiAir_p := In_adiAir_p;
-bIncrementSetParam := TRUE;]]></ST>
+bIncrementSetParam := TRUE;
+
+// simulation
+adiSimAir_p := In_adiAir_p;]]></ST>
       </Implementation>
     </Method>
     <Method Name="Always" Id="{ce678287-d0c0-4c11-aa96-f26232737c22}">
@@ -1011,14 +1051,6 @@ VAR
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// ----------------------------------------------------------------------------------
-// cyclic actions outside of statemachine
-IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
-	
-	; // always error supervision
-	// ---------------------------------------------------------------------------------
-END_IF
-
-// ----------------------------------------------------------------------------------
 // Conditions Always
 IF (me.bolChangeBackToAUTO=TRUE) THEN // switch mode to automatic switch off controller
 	me.StateMachine.intStateNext := cSTA_OFFBusy;
@@ -1048,13 +1080,6 @@ ELSE
 		me.StateMachine.intStateNext := cSTA_OFFBusy;
 	
 	END_IF
-END_IF
-
-//SUPER^.Always();	// TODO: remove code above and use this line, but deactivate automatic OFF on cCMD_OFF
-
-// ----------------------------------------------------------------------------------
-// cyclic actions outside of statemachine
-IF (me.StateMachine.intState <> cSTA_SINGLE_ANSWER) THEN
 	
 	IF		NOT CIf.SwCfg.bolEnable
 		AND (me.StateMachine.intState<>cSTA_OFF)
@@ -1087,7 +1112,14 @@ END_IF]]></ST>
 	iOff := 0;
 END_IF
 
-iOff := iOff + 1;]]></ST>
+iOff := iOff + 1;
+
+// simulation
+iSimStatus := 1;
+bSimOff := TRUE;
+bSimBeltOn := FALSE;
+bSimManual := FALSE;
+bSimRun := FALSE;]]></ST>
       </Implementation>
     </Action>
     <Method Name="setSpeed" Id="{e1ee721f-99f7-487d-be02-76937e33dab0}">
@@ -1096,11 +1128,13 @@ METHOD setSpeed
 VAR_INPUT
 	/// Belt speed in mm/min 
 	In_diSpeed_mm_min: DINT;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[diSpeed_mm_min := In_diSpeed_mm_min;
-bIncrementSetParam := TRUE;]]></ST>
+bIncrementSetParam := TRUE;
+
+// simulation
+diSimSpeed_mm_min := In_diSpeed_mm_min;]]></ST>
       </Implementation>
     </Method>
     <Action Name="setBeltOn" Id="{eb96f45a-ccbb-4b9d-b34a-02806c599568}">
@@ -1109,7 +1143,14 @@ bIncrementSetParam := TRUE;]]></ST>
 	iBeltOn := 0;
 END_IF
 
-iBeltOn := iBeltOn + 1;]]></ST>
+iBeltOn := iBeltOn + 1;
+
+// simulation
+iSimStatus := 2;
+bSimOff := FALSE;
+bSimBeltOn := TRUE;
+bSimManual := FALSE;
+bSimRun := FALSE;]]></ST>
       </Implementation>
     </Action>
     <Method Name="sta_CONNECT" Id="{ee8c16a5-8b81-47d9-b812-1c3e8e6f51a5}">
@@ -1158,7 +1199,14 @@ METHOD PROTECTED sta_CONNECT : BOOL]]></Declaration>
 	iManual := 0;
 END_IF
 
-iManual := iManual + 1;]]></ST>
+iManual := iManual + 1;
+
+// simulation
+iSimStatus := 3;
+bSimOff := FALSE;
+bSimBeltOn := FALSE;
+bSimManual := TRUE;
+bSimRun := FALSE;]]></ST>
       </Implementation>
     </Action>
     <Method Name="sta_DISCONNECTBusy" Id="{f12d780c-aad8-4f99-8cd6-b3f5cc2ebfc1}">

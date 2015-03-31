@@ -58,8 +58,6 @@ VAR
 	uiNewElementOld_2: UINT;
 	uiDeleteElementOld_1: UINT;
 	uiDeleteElementOld_2: UINT;
-	
-	bSimLastCycle: BOOL;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[(*__________________________________________________________________________________________________
@@ -125,21 +123,6 @@ END_VAR]]></Declaration>
 	
 // Cyclic action
 //--------------------------------------------------------------------------------------
-	// Simulation
-	IF (CIf.SwCfg.bolSimulation) THEN
-		THIS^.In_bDriverError := FALSE;
-		THIS^.In_bDriverConnected := TRUE;
-	
-		THIS^.In_diSpeed_mm_min := 0;
-		FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
-			THIS^.In_adiAir_p[uiIdx] := 0;
-			THIS^.In_adiTemp_dc[uiIdx] := 0;
-		END_FOR
-		
-		SIf.Cur.diSpeed_mm_min := THIS^.In_diSpeed_mm_min;
-		SIf.Cur.adiAir_p := THIS^.In_adiAir_p;
-		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
-	END_IF
 	
 	IF (p_fbIBH_CIf^.Job.intState = cSTA_OFF) THEN
 		// Start Driver
@@ -212,20 +195,6 @@ END_VAR]]></Declaration>
 	
 // Cyclic action
 //--------------------------------------------------------------------------------------
-
-	// Simulation
-	IF (CIf.SwCfg.bolSimulation) THEN
-		In_bRun := TRUE;
-		In_iStatus := 4;
-		
-		THIS^.In_diSpeed_mm_min := SIf.Par.diSpeed_mm_min;
-		THIS^.In_adiAir_p := SIf.Par.adiAir_p;
-		THIS^.In_adiTemp_dc := SIf.Par.adiTemp_dc;
-		
-		SIf.Cur.diSpeed_mm_min := THIS^.In_diSpeed_mm_min;
-		SIf.Cur.adiAir_p := THIS^.In_adiAir_p;
-		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
-	END_IF
 	
 	// check if parameters have changed
 	IF (TC2_SYSTEM.MEMCMP(pBuf1:=ADR(SIf.Par), pBuf2:=ADR(THIS^.lastSifPar), n:=SIZEOF(SIf.Par)) <> 0) THEN
@@ -384,22 +353,6 @@ END_VAR]]></Declaration>
 	
 // Cyclic action
 //--------------------------------------------------------------------------------------
-
-	// Simulation
-	IF (CIf.SwCfg.bolSimulation) THEN
-		In_bOff := TRUE;
-		In_iStatus := 1;
-		
-		THIS^.In_diSpeed_mm_min := 0;
-		FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
-			THIS^.In_adiAir_p[uiIdx] := 0;
-			THIS^.In_adiTemp_dc[uiIdx] := 0;
-		END_FOR
-		
-		SIf.Cur.diSpeed_mm_min := THIS^.In_diSpeed_mm_min;
-		SIf.Cur.adiAir_p := THIS^.In_adiAir_p;
-		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
-	END_IF
 	
 	IF NOT In_bOff OR NOT (In_iStatus=1 OR In_iStatus=6 OR In_iStatus=5) THEN
 		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UDINT(E_ALM_OVN.WrongMode),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
@@ -589,10 +542,7 @@ FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
 	SIf.Par.adiAirBand1_p[uiIdx] := 2;
 	SIf.Par.adiAirBand2_p[uiIdx] := 4;
 	SIf.Par.audiAirTimeout_ms[uiIdx] := 5000;
-END_FOR
-
-// others
-bSimLastCycle := CIf.SwCfg.bolSimulation;]]></ST>
+END_FOR]]></ST>
       </Implementation>
     </Method>
     <Method Name="chooseTesomaErrors" Id="{82894b6e-8205-4d89-aa41-938c35174021}">
@@ -733,11 +683,6 @@ METHOD PROTECTED sta_ERROR : BOOL]]></Declaration>
 // Cyclic action
 //--------------------------------------------------------------------------------------	
 	
-	// Simulation
-	IF (CIf.SwCfg.bolSimulation) THEN
-		;
-	END_IF
-	
 	// Mark all tracked item as trash
 	fbTracker.markAllTrash();
 	
@@ -840,20 +785,6 @@ END_VAR]]></Declaration>
 	
 // Cyclic action
 //--------------------------------------------------------------------------------------
-
-	// Simulation 
-	IF (CIf.SwCfg.bolSimulation) THEN
-		In_bRun := TRUE;
-		In_iStatus := 4;
-		
-		THIS^.In_diSpeed_mm_min := SIf.Par.diSpeed_mm_min;
-		THIS^.In_adiAir_p := SIf.Par.adiAir_p;
-		THIS^.In_adiTemp_dc := SIf.Par.adiTemp_dc;
-		
-		SIf.Cur.diSpeed_mm_min := THIS^.In_diSpeed_mm_min;
-		SIf.Cur.adiAir_p := THIS^.In_adiAir_p;
-		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
-	END_IF
 	
 	// check if parameters have changed
 	IF (TC2_SYSTEM.MEMCMP(pBuf1:=ADR(SIf.Par), pBuf2:=ADR(THIS^.lastSifPar), n:=SIZEOF(SIf.Par)) <> 0) THEN
@@ -942,18 +873,6 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	
 	// copy number of modules to IBH driver
 	p_fbIBH^.getCtrlSIf()^.Cfg.uiNumberOfModules := SIf.Cfg.uiNumberOfModules;
-	
-	// Simulation
-	IF (CIf.SwCfg.bolSimulation) THEN
-		p_fbIBH^.CtrlCIf^.SwCfg.bolEnable := FALSE;
-	ELSE
-		p_fbIBH^.CtrlCIf^.SwCfg.bolEnable := TRUE;
-		IF bSimLastCycle THEN
-			me.StateMachine.intState := cSTA_PONBusy;
-			me.StateMachine.intStateNext := cSTA_PONBusy;
-		END_IF
-	END_IF
-	bSimLastCycle := CIf.SwCfg.bolSimulation;
 	
 	// check parameter from GUI
 	THIS^.checkParameter();
@@ -1064,19 +983,6 @@ END_VAR]]></Declaration>
 // Cyclic action
 //--------------------------------------------------------------------------------------
 	
-	// Simulation
-	IF (CIf.SwCfg.bolSimulation) THEN
-		THIS^.In_diSpeed_mm_min := 0;
-		FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
-			THIS^.In_adiAir_p[uiIdx] := 0;
-			THIS^.In_adiTemp_dc[uiIdx] := 0;
-		END_FOR
-		
-		SIf.Cur.diSpeed_mm_min := THIS^.In_diSpeed_mm_min;
-		SIf.Cur.adiAir_p := THIS^.In_adiAir_p;
-		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
-	END_IF
-	
 	// State Change Condition
 	IF (me.StateMachine.intStateNext <> Base_PLC.cSTA_ERROR) THEN
 		IF me.intCmd>Base_PLC.cCMD_PON THEN
@@ -1123,25 +1029,6 @@ END_VAR]]></Declaration>
 	
 // Cyclic action
 //--------------------------------------------------------------------------------------
-
-	// Simulation
-	IF (CIf.SwCfg.bolSimulation) THEN
-		me.SubStateMachine.intState 	:= OVN_CmdState.cSUB_DONE;
-		me.SubStateMachine.intStateNext := OVN_CmdState.cSUB_DONE;	
-	
-		In_bOff := TRUE;
-		In_iStatus := 1;
-		
-		THIS^.In_diSpeed_mm_min := 0;
-		FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
-			THIS^.In_adiAir_p[uiIdx] := 0;
-			THIS^.In_adiTemp_dc[uiIdx] := 0;
-		END_FOR
-		
-		SIf.Cur.diSpeed_mm_min := THIS^.In_diSpeed_mm_min;
-		SIf.Cur.adiAir_p := THIS^.In_adiAir_p;
-		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
-	END_IF
 	
 	CASE me.SubStateMachine.intState OF
 			// WAITOFF
@@ -1221,22 +1108,6 @@ END_VAR]]></Declaration>
 	
 // Cyclic action
 //--------------------------------------------------------------------------------------
-
-	// Simulation
-	IF CIf.SwCfg.bolSimulation THEN
-		In_bBeltOn := TRUE;
-		In_iStatus := 2;
-		
-		THIS^.In_diSpeed_mm_min := SIf.Par.diSpeed_mm_min;
-		FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
-			THIS^.In_adiAir_p[uiIdx] := 0;
-			THIS^.In_adiTemp_dc[uiIdx] := 0;
-		END_FOR
-		
-		SIf.Cur.diSpeed_mm_min := THIS^.In_diSpeed_mm_min;
-		SIf.Cur.adiAir_p := THIS^.In_adiAir_p;
-		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
-	END_IF
 	
 	// check if parameters have changed
 	IF (TC2_SYSTEM.MEMCMP(pBuf1:=ADR(SIf.Par), pBuf2:=ADR(THIS^.lastSifPar), n:=SIZEOF(SIf.Par)) <> 0) THEN
@@ -1322,11 +1193,6 @@ METHOD PROTECTED sta_ERRORQuit : BOOL]]></Declaration>
 // Cyclic action
 //--------------------------------------------------------------------------------------	
 	
-	// Simulation
-	IF (CIf.SwCfg.bolSimulation) THEN
-		;
-	END_IF
-	
 	// State Change Condition
 	CASE me.StateMachine.intStateHistory OF
 		// RUN
@@ -1376,21 +1242,6 @@ END_VAR]]></Declaration>
 	
 // Cyclic action
 //--------------------------------------------------------------------------------------
-
-	IF CIf.SwCfg.bolSimulation THEN
-		In_bBeltOn := TRUE;
-		In_iStatus := 2;
-		
-		THIS^.In_diSpeed_mm_min := SIf.Par.diSpeed_mm_min;
-		FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
-			THIS^.In_adiAir_p[uiIdx] := 0;
-			THIS^.In_adiTemp_dc[uiIdx] := 0;
-		END_FOR
-		
-		SIf.Cur.diSpeed_mm_min := THIS^.In_diSpeed_mm_min;
-		SIf.Cur.adiAir_p := THIS^.In_adiAir_p;
-		SIf.Cur.adiTemp_dc := THIS^.In_adiTemp_dc;
-	END_IF
 
 	// check if parameters have changed
 	IF (TC2_SYSTEM.MEMCMP(pBuf1:=ADR(SIf.Par), pBuf2:=ADR(THIS^.lastSifPar), n:=SIZEOF(SIf.Par)) <> 0) THEN

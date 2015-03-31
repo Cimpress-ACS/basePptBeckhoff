@@ -14,11 +14,15 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.74</ProjectVersion>
+    <ProjectVersion>0.0.0.75</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.74	- new BaseConcept and BaseElements
+    <Description>0.0.0.75	- new BaseConcept and BaseElements
+	- add full simulation to IBH
+	- remove simulation from OVN
+	- JCL clears Cleaning request in OFFbusy and MaintenanceMode
+0.0.0.74	- new BaseConcept and BaseElements
 0.0.0.73	- new BaseConcept and BaseElements
 0.0.0.72	- new BaseElements
 0.0.0.71	- JCL fix, Oven tracking band2 must be off for 3 cycles
@@ -108,7 +112,7 @@
     <LibraryReference Include="Base_Elements,0.0.1.50,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Base_PLC,0.3.5.11,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.5.12,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.3.0,Beckhoff Automation GmbH">

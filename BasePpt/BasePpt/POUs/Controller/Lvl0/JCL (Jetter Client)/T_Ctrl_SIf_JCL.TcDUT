@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_Ctrl_SIf_JCL" Id="{6d352c31-8ad4-437f-aa11-16a71c806951}">
+  <DUT Name="T_Ctrl_SIf_JCL" Id="{f7e7c82b-01b4-493d-8a9c-45d8ec1b6473}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_JCL :
 STRUCT
 	/// configuration

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="init_Jcl" Id="{4b8e48ba-258d-4263-b533-26f2ba3cb1df}">
+  <POU Name="init_Jcl" Id="{5bd12865-b25c-4d1a-93af-a72749daa79d}">
     <Declaration><![CDATA[FUNCTION init_Jcl : BOOL
 VAR_INPUT
 	pJcl: POINTER TO T_JCL;

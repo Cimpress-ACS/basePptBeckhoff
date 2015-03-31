@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="E_ALM_JCL" Id="{f927ca22-587d-4b5e-96a5-0a30f361a0af}">
+  <DUT Name="E_ALM_JCL" Id="{b853a26a-b5c1-44a1-8eff-dcf7412d0d10}">
     <Declaration><![CDATA[TYPE E_ALM_JCL :
 (
 	NONE := 1,
@@ -11,7 +11,8 @@
 	JetterCommunicationLost := 6,
 	MAX_E_ALM_JCL
 ) UINT;
-END_TYPE]]></Declaration>
+END_TYPE
+]]></Declaration>
     <ObjectProperties />
   </DUT>
 </TcPlcObject>

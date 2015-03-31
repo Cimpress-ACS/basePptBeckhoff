@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_Ctrl_SIf_JCL_Cfg" Id="{bc2756b9-3d77-454e-bdcb-aa8805cfca7a}">
+  <DUT Name="T_Ctrl_SIf_JCL_Cfg" Id="{5e340ff8-de4a-41a4-b959-28c982227007}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_JCL_Cfg :
 STRUCT
-	// FALSE = Do not allow manual mode, go to error if Jetter goes to manual / TRUE = Allow manual mode and stay in the last state 
-	bolJetterManualModeAllowed		: BOOL;
+	/// FALSE = Do not allow manual mode, go to error if Jetter goes to manual / TRUE = Allow manual mode and stay in the last state 
+	bolJetterManualModeAllowed: BOOL;
 END_STRUCT
 END_TYPE
 ]]></Declaration>
