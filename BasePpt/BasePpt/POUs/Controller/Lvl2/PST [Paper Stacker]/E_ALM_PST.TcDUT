@@ -11,7 +11,7 @@
 	NewPaperDetectedDuringEjecting := 6,
 	NewPaperDetectedWhileBarcodeReading := 7,
 	MAX_E_ALM_PST
-);
+)UDINT;
 END_TYPE
 ]]></Declaration>
     <ObjectProperties />
