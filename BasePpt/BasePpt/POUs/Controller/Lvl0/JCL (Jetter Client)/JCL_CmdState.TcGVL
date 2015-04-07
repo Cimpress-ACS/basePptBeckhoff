@@ -31,6 +31,9 @@
 	cSUB_WaitingSocketClosed: INT := 302;
 	cSUB_SendPon: INT := 303;
 	cSUB_Done: INT := 999;
+	
+	cSUB_WaitForCleaningToStart					: INT := 304;
+	cSUB_CleaningBusy							: INT := 305;
 END_VAR]]></Declaration>
     <ObjectProperties />
   </GVL>

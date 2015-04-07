@@ -9,6 +9,7 @@
 	JetterManualError := 4,
 	JetterEOff := 5,
 	JetterCommunicationLost := 6,
+	CleaningError,
 	MAX_E_ALM_JCL
 ) UINT;
 END_TYPE
