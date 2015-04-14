@@ -17,18 +17,21 @@ VAR
 	/// Specific interface struct for public access
 	/// -------------------------------------------------------
 	SIf: T_Ctrl_SIf_PBC;
+	
 	///Sub Controller Pointer
 	/// -------------------------------------------------------
 	p_fbDeStacker: POINTER TO FB_PTB;
 	pDeStackerCIf: POINTER TO BASE_PLC.T_Ctrl_CIf;
 	p_fbBelt: POINTER TO FB_PTB;
 	pBeltCIf: POINTER TO BASE_PLC.T_Ctrl_CIf;
+	
 	/// Other localy used variables
 	/// -------------------------------------------------------
 	m_uinPaperHight_mm: UINT := 460;
 	m_uinPaperWidth_mm: UINT := 320;
 	m_intRetry: INT := 0;
 	udiBufferEmptyTimer_ms: UDINT;
+	m_eStopReason			: E_STOPREASON;
 END_VAR
 VAR CONSTANT
 	cPAPERPOSITION_TOLERANCE_mm: UINT := 200;
@@ -338,6 +341,18 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 	// set alarm
 	IF (NOT SIf.Par.bolAutomaticMode) THEN
 		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(SIf.Alm),E_AlmState.SET,CIf.Job.eMe_ActivAlmClass);
+	END_IF
+	
+	IF me.intCmd = Base_PLC.cCMD_STOP THEN
+		m_eStopReason := E_STOPREASON.StopByCommand;
+	ELSE
+		IF NOT SIf.Par.bolAutomaticMode THEN
+			m_eStopReason := E_STOPREASON.StopByManual;
+		END_IF
+		
+		IF SIf.Par.bolStopReleaseItems AND SIf.Cfg.bolEnableSaberStopDeStack THEN
+			m_eStopReason := E_STOPREASON.StopBySaber;
+		END_IF
 	END_IF
 END_IF
 
@@ -662,6 +677,7 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 	END_IF
 
 	SIf.Out.bolAirOn.intern := TRUE;
+	m_eStopReason := E_STOPREASON.None;
 	
 	pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
 	pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
@@ -975,19 +991,27 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 	CASE me.SubStateMachine.intState OF
 		PBC_CmdState.cSUB_WAITPAPER,
 		PBC_CmdState.cSUB_READYEJECT:
-			IF me.intCmd = PBC_CmdState.cCMD_SINGLE THEN
-				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
-			END_IF
-		
-			IF ((me.intCmd = BASE_PLC.cCMD_RUN) AND (NOT SIf.Par.bolStopReleaseItems AND SIf.Cfg.bolEnableSaberStopDeStack))
-				OR ((me.intCmd = BASE_PLC.cCMD_RUN) AND NOT SIf.Cfg.bolEnableSaberStopDeStack) THEN
-				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
-			END_IF
+			CASE m_eStopReason OF
+				E_STOPREASON.None:
+				E_STOPREASON.StopByCommand:
+					IF (me.intCmd = BASE_PLC.cCMD_RUN) THEN
+						me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
+					END_IF
+				E_STOPREASON.StopByManual:
+					IF me.intCmd = PBC_CmdState.cCMD_SINGLE THEN
+						me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
+					END_IF
 
-			IF (SIf.Par.bolAutomaticMode AND (NOT SIf.Par.bolStopReleaseItems AND SIf.Cfg.bolEnableSaberStopDeStack))
-				OR (SIf.Par.bolAutomaticMode AND NOT SIf.Cfg.bolEnableSaberStopDeStack) THEN
-				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
-			END_IF
+					IF (SIf.Par.bolAutomaticMode AND (NOT SIf.Par.bolStopReleaseItems AND SIf.Cfg.bolEnableSaberStopDeStack))
+						OR (SIf.Par.bolAutomaticMode AND NOT SIf.Cfg.bolEnableSaberStopDeStack) THEN
+						me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
+					END_IF
+				E_STOPREASON.StopBySaber:
+					IF ((me.intCmd = BASE_PLC.cCMD_RUN) AND (NOT SIf.Par.bolStopReleaseItems AND SIf.Cfg.bolEnableSaberStopDeStack))
+						OR ((me.intCmd = BASE_PLC.cCMD_RUN) AND NOT SIf.Cfg.bolEnableSaberStopDeStack) THEN
+						me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
+					END_IF
+			END_CASE
 	END_CASE
 END_IF
 
@@ -1104,7 +1128,8 @@ SIf.Par.udiDoublePaperDebounceTime_ms := 500;
 SIf.Par.bolEnableDoublePaperDetection := FALSE;
 SIf.Par.udiSimPaperTransportTime := SIf.Par.udiPaperTransportTime / 2;
 SIf.Par.udiSimPaperToPaperTransportTime := SIf.Par.udiPaperTransportTime / 20;
-]]></ST>
+
+m_eStopReason := E_STOPREASON.None;]]></ST>
       </Implementation>
     </Method>
     <Property Name="Belt" Id="{ebfda3d5-863b-4ca7-928a-5ed00cd56382}">

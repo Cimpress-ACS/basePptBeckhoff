@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.78</ProjectVersion>
+    <ProjectVersion>0.0.0.79</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.78     - new BaseElements
+    <Description>0.0.0.79     - [RP-1646] - Fix for PBC Stop
+0.0.0.78     - new BaseElements
 0.0.0.77     - RP-1681 - Jetter Automaintenance failure handling
 0.0.0.76	- IBH simulation improvements
 0.0.0.75	- new BaseConcept and BaseElements
@@ -643,6 +644,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\E_ALM_PBC.TcDUT">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\E_STOPREASON.TcDUT">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\FB_PBC.TcPOU">
