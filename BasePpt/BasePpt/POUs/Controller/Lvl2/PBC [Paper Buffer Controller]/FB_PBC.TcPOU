@@ -677,7 +677,7 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 	END_IF
 
 	SIf.Out.bolAirOn.intern := TRUE;
-	m_eStopReason := E_STOPREASON.StopByNone;
+	m_eStopReason := E_STOPREASON.None;
 	
 	pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
 	pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
@@ -992,7 +992,7 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		PBC_CmdState.cSUB_WAITPAPER,
 		PBC_CmdState.cSUB_READYEJECT:
 			CASE m_eStopReason OF
-				E_STOPREASON.StopByNone:
+				E_STOPREASON.None:
 				E_STOPREASON.StopByCommand:
 					IF (me.intCmd = BASE_PLC.cCMD_RUN) THEN
 						me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
@@ -1129,7 +1129,7 @@ SIf.Par.bolEnableDoublePaperDetection := FALSE;
 SIf.Par.udiSimPaperTransportTime := SIf.Par.udiPaperTransportTime / 2;
 SIf.Par.udiSimPaperToPaperTransportTime := SIf.Par.udiPaperTransportTime / 20;
 
-m_eStopReason := E_STOPREASON.StopByNone;]]></ST>
+m_eStopReason := E_STOPREASON.None;]]></ST>
       </Implementation>
     </Method>
     <Property Name="Belt" Id="{ebfda3d5-863b-4ca7-928a-5ed00cd56382}">

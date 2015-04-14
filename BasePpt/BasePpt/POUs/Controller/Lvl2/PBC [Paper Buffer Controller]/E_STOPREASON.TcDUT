@@ -3,7 +3,7 @@
   <DUT Name="E_STOPREASON" Id="{265c92cb-f90d-4512-b400-7fc9bf762399}">
     <Declaration><![CDATA[TYPE E_STOPREASON :
 (
-	StopByNone,
+	None,
 	StopByCommand,
 	StopBySaber,
 	StopByManual,
