@@ -346,9 +346,7 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 	IF me.intCmd = Base_PLC.cCMD_STOP THEN
 		m_eStopReason := E_STOPREASON.StopByCommand;
 	ELSE
-		IF NOT SIf.Par.bolAutomaticMode THEN
-			m_eStopReason := E_STOPREASON.StopByManual;
-		END_IF
+		m_eStopReason := E_STOPREASON.StopByManual;
 		
 		IF SIf.Par.bolStopReleaseItems AND SIf.Cfg.bolEnableSaberStopDeStack THEN
 			m_eStopReason := E_STOPREASON.StopBySaber;
@@ -997,7 +995,8 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 					IF (me.intCmd = BASE_PLC.cCMD_RUN) THEN
 						me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
 					END_IF
-				E_STOPREASON.StopByManual:
+				E_STOPREASON.StopByManual,
+				E_STOPREASON.StopBySaber:
 					IF me.intCmd = PBC_CmdState.cCMD_SINGLE THEN
 						me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
 					END_IF
@@ -1006,7 +1005,7 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 						OR (SIf.Par.bolAutomaticMode AND NOT SIf.Cfg.bolEnableSaberStopDeStack) THEN
 						me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
 					END_IF
-				E_STOPREASON.StopBySaber:
+
 					IF ((me.intCmd = BASE_PLC.cCMD_RUN) AND (NOT SIf.Par.bolStopReleaseItems AND SIf.Cfg.bolEnableSaberStopDeStack))
 						OR ((me.intCmd = BASE_PLC.cCMD_RUN) AND NOT SIf.Cfg.bolEnableSaberStopDeStack) THEN
 						me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
