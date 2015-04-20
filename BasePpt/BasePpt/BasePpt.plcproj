@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.80</ProjectVersion>
+    <ProjectVersion>0.0.0.81</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.80     - new BaseElements
+    <Description>0.0.0.81     - [RP-1730] Added a test state the BCH to trigger the Barcode Read endlessly.
+0.0.0.80     - new BaseElements
 0.0.0.79     - [RP-1646] - Fix for PBC Stop
 0.0.0.78     - new BaseElements
 0.0.0.77     - RP-1681 - Jetter Automaintenance failure handling

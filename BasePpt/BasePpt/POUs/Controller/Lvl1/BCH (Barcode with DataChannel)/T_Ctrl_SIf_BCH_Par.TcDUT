@@ -3,6 +3,10 @@
   <DUT Name="T_Ctrl_SIf_BCH_Par" Id="{fbd68351-195b-4387-bad7-5fe83db55493}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_BCH_Par :
 STRUCT
+	// [ms] Delay after the barcode has be read and the paper sensor signals that the paper is gone
+	udiPaperGoneDelay_ms			: UDINT;
+	// [ms] Test Read Cycle Time
+	udiTestReadCylceTime_ms			: UDINT;
 END_STRUCT
 END_TYPE
 ]]></Declaration>
