@@ -97,7 +97,7 @@ IF (getCmdState='') THEN // global not defined get local
 			BCH_CmdState.cCMD_READ: 
 				getCmdState := 'READ';
 			BCH_CmdState.cCMD_TESTSEQUENCE: 
-				getCmdState := 'READ';
+				getCmdState := 'TESTSEQUENCE';
 		END_CASE;
 	ELSE
 		// States's
@@ -145,7 +145,7 @@ sub_BarcodeReading(TRUE);
 
 IF me.SubStateMachine.intState = BCH_CmdState.cSUB_WAITPAPER THEN
 	IF me.intCmd = cCMD_RUN THEN
-		me.StateMachine.intStateNext := cSTA_RUN;
+		me.StateMachine.intStateNext := cSTA_RUNBusy;
 	END_IF
 END_IF
 
