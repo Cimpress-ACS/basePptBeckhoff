@@ -105,7 +105,7 @@ IF (getCmdState='') THEN // global not defined get local
 			BCH_CmdState.cSTA_TESTSEQUENCE: 
 				getCmdState := 'TESTSEQUENCE';
 			BCH_CmdState.cSUB_BARCODEREADstart: 
-				getCmdState := 'BARCODEREADstar';
+				getCmdState := 'BARCODEREADstart';
 			BCH_CmdState.cSUB_BARCODREREAD: 
 				getCmdState := 'BARCODREREAD';
 			BCH_CmdState.cSUB_BARCODREREADbusy: 
