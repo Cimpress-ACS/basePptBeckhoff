@@ -96,8 +96,68 @@ IF (getCmdState='') THEN // global not defined get local
 		CASE intCmdState OF
 			BCH_CmdState.cCMD_READ: 
 				getCmdState := 'READ';
+			BCH_CmdState.cCMD_TESTSEQUENCE: 
+				getCmdState := 'TESTSEQUENCE';
+		END_CASE;
+	ELSE
+		// States's
+		CASE intCmdState OF
+			BCH_CmdState.cSTA_TESTSEQUENCE: 
+				getCmdState := 'TESTSEQUENCE';
+			BCH_CmdState.cSUB_BARCODEREADstart: 
+				getCmdState := 'BARCODEREADstart';
+			BCH_CmdState.cSUB_BARCODREREAD: 
+				getCmdState := 'BARCODREREAD';
+			BCH_CmdState.cSUB_BARCODREREADbusy: 
+				getCmdState := 'BARCODREREADbusy';
+			BCH_CmdState.cSUB_WAITPAPER: 
+				getCmdState := 'WAITPAPER';
+			BCH_CmdState.cSUB_WAITPAPERGONE: 
+				getCmdState := 'WAITPAPERGONE';
+			BCH_CmdState.cSUB_WAITPAPERGONEDELAY: 
+				getCmdState := 'WAITPAPERGONEDELAY';
 		END_CASE;
 	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_TestSequence" Id="{298e2b24-404f-44bf-bd24-f8ef62d0ca59}">
+      <Declaration><![CDATA[METHOD PROTECTED sta_TestSequence : BOOL
+VAR_INPUT
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+	me.StateMachine.intStateLastCycle := me.StateMachine.intState;	
+
+	me.SubStateMachine.intState		:= BCH_CmdState.cSUB_WAITPAPER;
+	me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_WAITPAPER;
+END_IF
+
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+
+sub_BarcodeReading(TRUE);
+
+IF me.SubStateMachine.intState = BCH_CmdState.cSUB_WAITPAPER THEN
+	IF me.intCmd = cCMD_RUN THEN
+		me.StateMachine.intStateNext := cSTA_RUNBusy;
+	END_IF
+END_IF
+
+IF me.intCmd=Base_PLC.cCMD_OFF THEN
+	me.StateMachine.intStateNext := Base_PLC.cSTA_OFFBusy;
+END_IF
+
+
+// --------------------------------------------------------------------------------------
+// Exit action
+IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+	;
 END_IF]]></ST>
       </Implementation>
     </Method>
@@ -232,7 +292,10 @@ CIf.SwCfg.bolEnable := TRUE;
 CIf.SwCfg.bolSimulation :=  FALSE;
 
 SIf.Cfg.bolEnableDataChannel := FALSE;
-SIf.Cfg.bolNegativeTriggerSignal := FALSE;]]></ST>
+SIf.Cfg.bolNegativeTriggerSignal := FALSE;
+
+SIf.Par.udiPaperGoneDelay_ms := 500;
+SIf.Par.udiTestReadCylceTime_ms := 3600;]]></ST>
       </Implementation>
     </Method>
     <Method Name="Always" Id="{8a4ccd7c-9661-4c75-bb2e-e32fdc0f2ee0}">
@@ -318,111 +381,40 @@ END_CASE]]></ST>
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_RUN'}
 METHOD PROTECTED sta_RUN : BOOL
 VAR
-	uliBarcode: ULINT;
-	pItem: POINTER TO T_IdBase_DCH;
 END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 // --------------------------------------------------------------------------------------
 // Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;	
+IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+	me.StateMachine.intStateLastCycle := me.StateMachine.intState;	
 
-		me.SubStateMachine.intState		:= BCH_CmdState.cSUB_WAITPAPER;
-		me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_WAITPAPER;
-	END_IF
+	me.SubStateMachine.intState		:= BCH_CmdState.cSUB_WAITPAPER;
+	me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_WAITPAPER;
+END_IF
 
 
 // --------------------------------------------------------------------------------------
 // Cyclic action
+sub_BarcodeReading(FALSE);
 
-	CASE me.SubStateMachine.intState OF
-		// Wait for the paper
-		// ------------------------------------------------------------------------
-		BCH_CmdState.cSUB_WAITPAPER:
-			IF SIf.In.bolSensorTrigScan.intern OR (me.intCmd = BCH_CmdState.cCMD_READ) THEN
-				IF (me.intCmd = BCH_CmdState.cCMD_READ) THEN
-					CIf.Job.intACmd := cCMD_DONE;			
-					CIf.Job.intMCmd := cCMD_DONE;			
-				END_IF
-
-				me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_BARCODEREADstart;
-			END_IF
-
-		// substate Start Reading Barcode
-		// ------------------------------------------------------------------------
-		BCH_CmdState.cSUB_BARCODEREADstart:
-			pBccCIf^.Job.intACmd := BCC_CmdState.cBCC_CMD_READ;
-	
-			CASE pBccCIf^.Job.intState OF
-				BCC_CmdState.cBCC_STA_READBusy:
-					me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_BARCODREREADbusy;
-				cSTA_ERROR:
-					me.StateMachine.intStateNext := cSTA_ERROR;
-			END_CASE
-	
-		// substate Busy Reading Barcode
-		// ------------------------------------------------------------------------
-		BCH_CmdState.cSUB_BARCODREREADbusy:
-			CASE pBccCIf^.Job.intState OF
-				BCC_CmdState.cBCC_STA_READ:
-					me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_BARCODREREAD;
-				cSTA_ERROR:
-					me.StateMachine.intStateNext := cSTA_ERROR;
-			END_CASE
-	
-		// substate Reading Barcode Done
-		// ------------------------------------------------------------------------
-		BCH_CmdState.cSUB_BARCODREREAD:
-			IF SIf.Cfg.bolEnableDataChannel THEN
-				IF pBccSIf^.Cur.stData.uliBarCode > 0 THEN
-					uliBarcode := pBccSIf^.Cur.stData.uliBarCode;
-					Out_Barcode := uliBarcode;
-					Out_ChangeEvent := Out_ChangeEvent + 1;
-
-					IF (m_pDataChannel <> NULL) AND (SIf.Cfg.bolEnableDataChannel) THEN
-						IF UINT_TO_INT(m_pDataChannel^.ItemCount) >= m_pDataChannel^.MaxFifoSize THEN
-							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_BCH.DataChannelBufferFull,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-						ELSE
-							pItem := __NEW(T_IdBase_DCH);
-							pItem^.rBaseInfo.eHealth := E_ItemHealth.Healthy;
-							pItem^.rBaseInfo.uinModuleId := 1;
-							pItem^.rBaseInfo.uinActualPosition := 1;
-							pItem^.udiIdentification := pBccSIf^.Cur.stData.uliBarCode;
-							m_pDataChannel^.Push(pItem);					
-						END_IF
-					END_IF
-				END_IF
-
-				me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_WAITPAPERGONE;
-			END_IF
-			
-		// Wait Until the Paper is gone
-		// ------------------------------------------------------------------------
-		BCH_CmdState.cSUB_WAITPAPERGONE:
-			IF NOT SIf.In.bolSensorTrigScan.intern THEN
-				me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_WAITPAPERGONEDELAY;
-			END_IF
-
-		// Wait Until the Paper is gone
-		// ------------------------------------------------------------------------
-		BCH_CmdState.cSUB_WAITPAPERGONEDELAY:
-			IF me.SubStateMachine.udiTimeInState_ms > 500 THEN
-				me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_WAITPAPER;
-			END_IF
-	END_CASE
-
-	IF me.intCmd=Base_PLC.cCMD_OFF THEN
-		me.StateMachine.intStateNext := Base_PLC.cSTA_OFFBusy;
+IF me.SubStateMachine.intState = BCH_CmdState.cSUB_WAITPAPER THEN
+	IF me.intCmd = cCMD_TESTSEQUENCE THEN
+		me.StateMachine.intStateNext := cSTA_TESTSEQUENCE;
 	END_IF
+END_IF
+
+IF me.intCmd=Base_PLC.cCMD_OFF THEN
+	me.StateMachine.intStateNext := Base_PLC.cSTA_OFFBusy;
+END_IF
 
 
 // --------------------------------------------------------------------------------------
 // Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
+IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+	;
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_ERROR" Id="{dae2e508-4fbf-467c-aaaf-bc0034a3438a}">
@@ -488,6 +480,101 @@ METHOD PROTECTED sta_ERRORQuit : BOOL]]></Declaration>
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		;
 	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sub_BarcodeReading" Id="{e7906fc3-ca38-4b54-a38a-29d8239d4989}">
+      <Declaration><![CDATA[METHOD PROTECTED sub_BarcodeReading : BOOL
+VAR_INPUT
+	bolTestSequence				: BOOL;
+END_VAR
+VAR
+	uliBarcode: ULINT;
+	pItem: POINTER TO T_IdBase_DCH;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[CASE me.SubStateMachine.intState OF
+	// Wait for the paper
+	// ------------------------------------------------------------------------
+	BCH_CmdState.cSUB_WAITPAPER:
+		IF SIf.In.bolSensorTrigScan.intern OR (me.intCmd = BCH_CmdState.cCMD_READ) OR bolTestSequence THEN
+			IF (me.intCmd = BCH_CmdState.cCMD_READ) THEN
+				CIf.Job.intACmd := cCMD_DONE;			
+				CIf.Job.intMCmd := cCMD_DONE;			
+			END_IF
+
+			me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_BARCODEREADstart;
+		END_IF
+
+	// substate Start Reading Barcode
+	// ------------------------------------------------------------------------
+	BCH_CmdState.cSUB_BARCODEREADstart:
+		pBccCIf^.Job.intACmd := BCC_CmdState.cBCC_CMD_READ;
+
+		CASE pBccCIf^.Job.intState OF
+			BCC_CmdState.cBCC_STA_READBusy:
+				me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_BARCODREREADbusy;
+			cSTA_ERROR:
+				me.StateMachine.intStateNext := cSTA_ERROR;
+		END_CASE
+
+	// substate Busy Reading Barcode
+	// ------------------------------------------------------------------------
+	BCH_CmdState.cSUB_BARCODREREADbusy:
+		CASE pBccCIf^.Job.intState OF
+			BCC_CmdState.cBCC_STA_READ:
+				me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_BARCODREREAD;
+			cSTA_ERROR:
+				me.StateMachine.intStateNext := cSTA_ERROR;
+		END_CASE
+
+	// substate Reading Barcode Done
+	// ------------------------------------------------------------------------
+	BCH_CmdState.cSUB_BARCODREREAD:
+		IF SIf.Cfg.bolEnableDataChannel THEN
+			IF pBccSIf^.Cur.stData.uliBarCode > 0 THEN
+				uliBarcode := pBccSIf^.Cur.stData.uliBarCode;
+				Out_Barcode := uliBarcode;
+				Out_ChangeEvent := Out_ChangeEvent + 1;
+
+				IF (m_pDataChannel <> NULL) AND (SIf.Cfg.bolEnableDataChannel) THEN
+					IF UINT_TO_INT(m_pDataChannel^.ItemCount) >= m_pDataChannel^.MaxFifoSize THEN
+						pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_BCH.DataChannelBufferFull,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+					ELSE
+						pItem := __NEW(T_IdBase_DCH);
+						pItem^.rBaseInfo.eHealth := E_ItemHealth.Healthy;
+						pItem^.rBaseInfo.uinModuleId := 1;
+						pItem^.rBaseInfo.uinActualPosition := 1;
+						pItem^.udiIdentification := pBccSIf^.Cur.stData.uliBarCode;
+						m_pDataChannel^.Push(pItem);					
+					END_IF
+				END_IF
+			END_IF
+
+			me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_WAITPAPERGONE;
+		END_IF
+		
+	// Wait Until the Paper is gone
+	// ------------------------------------------------------------------------
+	BCH_CmdState.cSUB_WAITPAPERGONE:
+		IF NOT SIf.In.bolSensorTrigScan.intern OR bolTestSequence THEN
+			me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_WAITPAPERGONEDELAY;
+		END_IF
+
+	// Wait Until the Paper is gone
+	// ------------------------------------------------------------------------
+	BCH_CmdState.cSUB_WAITPAPERGONEDELAY:
+		IF bolTestSequence THEN
+			IF me.SubStateMachine.udiTimeInState_ms > SIf.Par.udiTestReadCylceTime_ms THEN
+				me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_WAITPAPER;
+			END_IF
+		ELSE
+			IF me.SubStateMachine.udiTimeInState_ms > SIf.Par.udiPaperGoneDelay_ms THEN
+				me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_WAITPAPER;
+			END_IF
+		END_IF
+END_CASE
+]]></ST>
       </Implementation>
     </Method>
     <Method Name="IoInBridge" Id="{f3be96ce-5b92-4429-8a5c-a03481bf0983}">
