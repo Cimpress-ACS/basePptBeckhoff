@@ -209,10 +209,12 @@ METHOD PROTECTED sta_OFF : BOOL
 // --------------------------------------------------------------------------------------
 // Cyclic action
 
-	IF me.intCmd=Base_PLC.cCMD_RUN THEN
-		me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;
-	END_IF
-
+	CASE me.intCmd OF
+		cCMD_RUN:
+			me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;
+		cCMD_TESTSEQUENCE:
+			me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;
+	END_CASE
 
 // --------------------------------------------------------------------------------------
 // Exit action
@@ -264,6 +266,10 @@ IF (iIdx < iLength) THEN
     iIdx := iIdx + 1;
 	CIf.Job.aCmdList[iIdx].intCmd := BCH_CmdState.cCMD_READ;
 	CIf.Job.aCmdList[iIdx].strName := 'READ'; 
+	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
+    iIdx := iIdx + 1;
+	CIf.Job.aCmdList[iIdx].intCmd := BCH_CmdState.cCMD_TESTSEQUENCE;
+	CIf.Job.aCmdList[iIdx].strName := 'Test Sequence'; 
 	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
     iIdx := iIdx + 1;
 ELSE
@@ -374,6 +380,8 @@ CASE me.StateMachine.intState OF
         THIS^.sta_RUNBusy();
 	cSTA_RUN: 
         THIS^.sta_RUN();
+	cSTA_TESTSEQUENCE: 
+        THIS^.sta_TestSequence();
 END_CASE]]></ST>
       </Implementation>
     </Method>
