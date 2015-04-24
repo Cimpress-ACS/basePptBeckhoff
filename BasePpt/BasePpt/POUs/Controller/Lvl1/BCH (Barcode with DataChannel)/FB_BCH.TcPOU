@@ -213,7 +213,7 @@ METHOD PROTECTED sta_OFF : BOOL
 		cCMD_RUN:
 			me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;
 		cCMD_TESTSEQUENCE:
-			me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;
+			me.StateMachine.intStateNext := cSTA_TESTSEQUENCE;
 	END_CASE
 
 // --------------------------------------------------------------------------------------
