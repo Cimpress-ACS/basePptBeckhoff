@@ -33,6 +33,7 @@ History:
 Version		Date			Author				Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		20.05.2014		AVME/DSC			Start history. Insert all basic functionalities.
+0.00.2		28.04.2015		VP/RE				Added bolMaintenanceInProgress.
 ___________________________________________________________________________________________________*)
 
 SUPER^();]]></ST>
@@ -1508,24 +1509,25 @@ IF bPop THEN // something has been recieved
 	
 			// Prepare additional states
 			(*
-			State				BIT		Description
+			State					BIT		Description
 			-------------------------------------------------------------------------------------------------
-			ReadyForProduction	0		Jetter ready for production
-			Running				1		Print running, in production
-			NeedsAttention		2		System needs attention. Info or warning active
-			Error				3		General error active
-			CleaningIncomplete	4		Cleaning cycle was aborted before finishing. Production not possible.
-			 -					5	 	-
-			IsLocalControlled	6		Local control active. Commands from Client are ignored
-			IsRemoteControlled	7		Remote control active. Commands from Client are accepted
+			ReadyForProduction		0		Jetter ready for production
+			Running					1		Print running, in production
+			NeedsAttention			2		System needs attention. Info or warning active
+			Error					3		General error active
+			CleaningIncomplete		4		Cleaning cycle was aborted before finishing. Production not possible.
+			MaintenanceInProgress	5	 	TRUE if a maintenance work is in progress. Independent if auto or manual maintenance is in progress.
+			IsLocalControlled		6		Local control active. Commands from Client are ignored
+			IsRemoteControlled		7		Remote control active. Commands from Client are accepted
 			*)
 	
 			SIf.Cur.bolReadyForProduction:= m_puNextMsg^.State.usiAddState.0;			
 			SIf.Cur.bolRunning:= m_puNextMsg^.State.usiAddState.1;		
 			SIf.Cur.bolNeedsAttention:= m_puNextMsg^.State.usiAddState.2;			
 			SIf.Cur.bolError:= m_puNextMsg^.State.usiAddState.3;			
-			SIf.Cur.bolCleaningIncomplete:= m_puNextMsg^.State.usiAddState.4;			
-			SIf.Cur.bolIsLocalControlled:= m_puNextMsg^.State.usiAddState.6;		
+			SIf.Cur.bolCleaningIncomplete:= m_puNextMsg^.State.usiAddState.4;
+			SIf.Cur.bolMaintenanceInProgress:= m_puNextMsg^.State.usiAddState.5;
+			SIf.Cur.bolIsLocalControlled:= m_puNextMsg^.State.usiAddState.6;
 			SIf.Cur.bolIsRemoteControlled:= m_puNextMsg^.State.usiAddState.7;
 			
 		// -----------------------------------------------

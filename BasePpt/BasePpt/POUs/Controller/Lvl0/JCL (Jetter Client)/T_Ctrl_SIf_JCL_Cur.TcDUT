@@ -6,22 +6,34 @@ STRUCT
 	/// Additional states from TCP server
 	/// Local control active. Commands from this client are ignored
 	bolIsLocalControlled: BOOL;
+	
 	/// Remote control active. Commands from this client are accepted
 	bolIsRemoteControlled: BOOL;
+	
 	/// Jetter ready for production
 	bolReadyForProduction: BOOL;
+	
+	// TRUE if a maintenance work is in progress. Independent if auto or manual maintenance is in progress.
+	bolMaintenanceInProgress: BOOL;
+	
 	/// Print running, in production
 	bolRunning: BOOL;
+	
 	/// System needs attention. Info or warning active
 	bolNeedsAttention: BOOL;
+	
 	/// General error active
 	bolError: BOOL;
+	
 	/// Cleaning cycle was aborted before finishing. Production not possible.
 	bolCleaningIncomplete: BOOL;
+	
 	/// Print head needs cleaning.
 	bolNeedsCleaning: BOOL;
+	
 	/// Timestamp of the last cleaning cycle. Format: YYYY-MM-DD-hh:mm:ss.xxx
 	strDTOfLastCleaningCycle: STRING := '';
+	
 	/// Jetter state
 	intJETState: INT;
 END_STRUCT
