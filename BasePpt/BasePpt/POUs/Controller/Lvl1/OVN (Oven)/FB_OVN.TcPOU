@@ -528,7 +528,7 @@ SIf.Par.diSpeedBand1_mm_min := 100;
 SIf.Par.diSpeedBand2_mm_min := 200;
 SIf.Par.udiSpeedTimeout_ms := 5000;
 SIf.Par.udiTimeoutOffBusy_ms := 2000;
-SIf.Par.udiTimeoutRunBusyReaction_ms := 1000;
+SIf.Par.udiTimeoutRunBusyReaction_ms := 2*1000;
 SIf.Par.udiTimeoutRunBusyInBand_ms := 1*60*1000;
 SIf.Par.udiTimeoutBeltOnlyReaction_ms := 1000;
 SIf.Par.udiTimeoutBeltOnlyBusy_ms := 10000;
@@ -1045,6 +1045,11 @@ END_VAR]]></Declaration>
 			// WAITPAPER
 			// ------------------------------------------------------------------------
 			OVN_CmdState.cSUB_WAITPAPER:
+				IF NOT In_bOff OR NOT (In_iStatus=1 OR In_iStatus=6 OR In_iStatus=5) THEN
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UDINT(E_ALM_OVN.WrongMode),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+					me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+				END_IF
+			
 				udiCoolDownTime_ms := DINT_TO_UDINT((SIf.Cfg.uiNumberOfModules*SIf.Cfg.diModuleLength_mm+SIf.Cfg.diDistanceBeforeOven_mm+SIf.Cfg.diDistanceAfterOven_mm)*60*1000/SIf.Par.diSpeed_mm_min);
 				IF (me.StateMachine.udiTimeInState_ms>udiCoolDownTime_ms) OR SIf.Cfg.bIgnoreOffBusyWaitPaper THEN
 					me.SubStateMachine.intStateNext := OVN_CmdState.cSUB_DONE;
