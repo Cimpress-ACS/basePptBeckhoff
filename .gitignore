@@ -4,3 +4,5 @@ _Libraries
 *.suo
 *.bak
 *.~u
+*.tclrs
+*.tclrq
