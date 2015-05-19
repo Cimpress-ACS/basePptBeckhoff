@@ -14,11 +14,12 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.85</ProjectVersion>
+    <ProjectVersion>0.0.0.86</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.85     - TwinCAT 3.1.4018.4
+    <Description>0.0.0.86     - [RP-1814] - Inlcude BaseElements V0.0.1.55
+0.0.0.85     - TwinCAT 3.1.4018.4
 0.0.0.84     - OVN: fix Timeout problem
 0.0.0.83     - [RP-1728] Added MaintenanceInProgress
 0.0.0.82     - [RP-1730] Fixes for the test sequence
@@ -119,7 +120,7 @@
     <AssemblyName>MyApplication</AssemblyName>-->
   </PropertyGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.1.54,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.1.55,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
     <LibraryReference Include="Base_PLC,0.3.5.13,Vistaprint">
@@ -883,8 +884,8 @@
   <ProjectExtensions>
     <PlcProjectOptions>
       <XmlArchive>
-  <Data>
-    <o xml:space="preserve" t="OptionKey">
+        <Data>
+          <o xml:space="preserve" t="OptionKey">
       <v n="Name">"&lt;ProjectRoot&gt;"</v>
       <d n="SubKeys" t="Hashtable" ckt="String" cvt="OptionKey">
         <v>{40450F57-0AA3-4216-96F3-5444ECB29763}</v>
@@ -899,13 +900,13 @@
       </d>
       <d n="Values" t="Hashtable" />
     </o>
-  </Data>
-  <TypeList>
-    <Type n="Hashtable">System.Collections.Hashtable</Type>
-    <Type n="OptionKey">{54dd0eac-a6d8-46f2-8c27-2f43c7e49861}</Type>
-    <Type n="String">System.String</Type>
-  </TypeList>
-</XmlArchive>
+        </Data>
+        <TypeList>
+          <Type n="Hashtable">System.Collections.Hashtable</Type>
+          <Type n="OptionKey">{54dd0eac-a6d8-46f2-8c27-2f43c7e49861}</Type>
+          <Type n="String">System.String</Type>
+        </TypeList>
+      </XmlArchive>
     </PlcProjectOptions>
   </ProjectExtensions>
   <!-- 
