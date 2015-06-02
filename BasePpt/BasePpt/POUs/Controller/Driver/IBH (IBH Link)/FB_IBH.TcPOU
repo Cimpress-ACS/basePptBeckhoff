@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_IBH" Id="{b0e34786-1945-4fbf-ba31-18ca8b1b1f1d}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_IBH" Id="{b0e34786-1945-4fbf-ba31-18ca8b1b1f1d}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_IBH EXTENDS FB_CtrlBase
 VAR_OUTPUT
 	/// Status 
@@ -36,18 +36,8 @@ END_VAR
 VAR
 	/// Specific interface struct for public access
 	SIf: T_Ctrl_SIf_IBH;
-	/// Turns oven off 
-	iOff: INT;
-	/// Turns belt on 
-	iBeltOn: INT;
-	/// Puts oven to manual  
-	iManual: INT;
-	/// Standart drying process 
-	iRun: INT;
-	/// Set Parameter 
-	iSetParam: INT;
-	/// Get Parameter 
-	iGetParam: INT;
+	/// Status
+	intLatestCmd: INT;
 	/// Temperature in deci °C 
 	adiTemp_dc: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
 	/// Airflow in % 
@@ -55,7 +45,7 @@ VAR
 	/// Belt speed in mm/min 
 	diSpeed_mm_min: DINT;
 	/// Try to reset error 
-	iAckError: INT;
+	bolAckError: BOOL;
 	bIncrementSetParam: BOOL;
 	bRememberIncrementSetParam: BOOL;
 	fbOpen: Tc2_S5S7Com.FB_NLinkOpen;
@@ -71,10 +61,6 @@ VAR
 	
 	// simulation
 	iSimStatus: INT;
-	bSimOff: BOOL;
-	bSimBeltOn: BOOL;
-	bSimManual: BOOL;
-	bSimRun: BOOL;
 END_VAR]]></Declaration>
     <Implementation>
       <ST><![CDATA[(*__________________________________________________________________________________________________
@@ -248,27 +234,18 @@ CIf.SwCfg.bolEnable := TRUE;
 CIf.SwCfg.bolSimulation := FALSE;
 
 // Internal Variables (Input)
-iOff := 0;
-iBeltOn := 0;
-iManual := 0;
-iRun := 0;
-iSetParam := 0;
-iGetParam := 0;
+intLatestCmd := 0;
 FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
 	adiTemp_dc[uiIdx] := 0;
 	adiAir_p[uiIdx] := 0;
 END_FOR
 diSpeed_mm_min := 0;
-iAckError := 0;
+bolAckError := FALSE;
 bIncrementSetParam := FALSE;
 bRememberIncrementSetParam := FALSE;
 
 // simulation
 iSimStatus := 1;
-bSimOff := TRUE;
-bSimBeltOn := FALSE;
-bSimManual := FALSE;
-bSimRun := FALSE;
 
 // Configuration
 SIf.Cfg.tIpAddress						:= '192.168.0.50';
@@ -283,8 +260,8 @@ SIf.Cfg.nReadStartAddress				:= 110;
 SIf.Cfg.uiByteOffset_rd_iStatus			:= 0;
 SIf.Cfg.uiByteOffset_rd_bOff			:= 10;
 SIf.Cfg.uiBitOffset_rd_bOff				:= 0;
-SIf.Cfg.uiByteOffset_rd_bBeltOn			:= 10;
-SIf.Cfg.uiBitOffset_rd_bBeltOn			:= 1;
+SIf.Cfg.uiByteOffset_rd_bBeltOnly		:= 10;
+SIf.Cfg.uiBitOffset_rd_bBeltOnly		:= 1;
 SIf.Cfg.uiByteOffset_rd_bManual			:= 10;
 SIf.Cfg.uiBitOffset_rd_bManual			:= 2;
 SIf.Cfg.uiByteOffset_rd_bRun			:= 10;
@@ -303,7 +280,7 @@ SIf.Cfg.uiByteOffset_rd_iErrorID		:= 100;
 SIf.Cfg.uiByteOffset_rd_iErrorValue		:= 102;
 
 SIf.Cfg.uiByteOffset_wr_iOff			:= 0;
-SIf.Cfg.uiByteOffset_wr_iBeltOn			:= 2;
+SIf.Cfg.uiByteOffset_wr_iBeltOnly		:= 2;
 SIf.Cfg.uiByteOffset_wr_iManual			:= 4;
 SIf.Cfg.uiByteOffset_wr_iRun			:= 6;
 SIf.Cfg.uiByteOffset_wr_iSetParam		:= 8;
@@ -492,20 +469,20 @@ END_VAR]]></Declaration>
 		// !!!ATTENTION!!!
 		// Motorola: Big-Endien: Most Significant Bits First (Siemens)
 		// Intel: Little-Endien: Least Significant Bits First (Beckhoff)
-		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iOff		+0]	:= INT_TO_BYTE(SHR( THIS^.iOff,		1*8));
-		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iOff		+1]	:= INT_TO_BYTE(SHR( THIS^.iOff,		0*8));
-		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iBeltOn	+0]	:= INT_TO_BYTE(SHR( THIS^.iBeltOn,	1*8));
-		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iBeltOn	+1]	:= INT_TO_BYTE(SHR( THIS^.iBeltOn,	0*8));
-		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iManual	+0]	:= INT_TO_BYTE(SHR( THIS^.iManual,	1*8));
-		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iManual	+1]	:= INT_TO_BYTE(SHR( THIS^.iManual,	0*8));
-		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iRun		+0]	:= INT_TO_BYTE(SHR( THIS^.iRun,		1*8));
-		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iRun		+1]	:= INT_TO_BYTE(SHR( THIS^.iRun,		0*8));
-		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iSetParam	+0]	:= INT_TO_BYTE(SHR( THIS^.iSetParam,	1*8));
-		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iSetParam	+1]	:= INT_TO_BYTE(SHR( THIS^.iSetParam,	0*8));
-		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iGetParam	+0]	:= INT_TO_BYTE(SHR( THIS^.iGetParam,	1*8));
-		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iGetParam	+1]	:= INT_TO_BYTE(SHR( THIS^.iGetParam,	0*8));
-		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iAckError	+0]	:= INT_TO_BYTE(SHR( THIS^.iAckError,	1*8));
-		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iAckError	+1]	:= INT_TO_BYTE(SHR( THIS^.iAckError,	0*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iOff		+0]	:= INT_TO_BYTE(SHR(0, 1*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iOff		+1]	:= INT_TO_BYTE(SHR(0, 0*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iBeltOnly	+0]	:= INT_TO_BYTE(SHR(0, 1*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iBeltOnly	+1]	:= INT_TO_BYTE(SHR(0, 0*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iManual	+0]	:= INT_TO_BYTE(SHR(0, 1*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iManual	+1]	:= INT_TO_BYTE(SHR(0, 0*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iRun		+0]	:= INT_TO_BYTE(SHR(0, 1*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iRun		+1]	:= INT_TO_BYTE(SHR(0, 0*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iSetParam	+0]	:= INT_TO_BYTE(SHR(0, 1*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iSetParam	+1]	:= INT_TO_BYTE(SHR(0, 0*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iGetParam	+0]	:= INT_TO_BYTE(SHR(0, 1*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iGetParam	+1]	:= INT_TO_BYTE(SHR(0, 0*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iAckError	+0]	:= INT_TO_BYTE(SHR(0, 1*8));
+		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iAckError	+1]	:= INT_TO_BYTE(SHR(0, 0*8));
 		FOR uiIdx:=0 TO SIf.Cfg.uiNumberOfModules-1 BY 1 DO
 			anWriteBuffer[SIf.Cfg.uiByteOffset_wr_adiTemp_mc+0 + uiIdx*4] := DINT_TO_BYTE(SHR( THIS^.adiTemp_dc[uiIdx], 3*8));
 			anWriteBuffer[SIf.Cfg.uiByteOffset_wr_adiTemp_mc+1 + uiIdx*4] := DINT_TO_BYTE(SHR( THIS^.adiTemp_dc[uiIdx], 2*8));
@@ -539,7 +516,7 @@ END_VAR]]></Declaration>
 		
 	CASE me.SubStateMachine.intState OF
 		
-		// 1
+		// 1: Write
 		IBH_CmdState.cSTA_SUB_1:
 			
 			// Write data
@@ -555,7 +532,7 @@ END_VAR]]></Declaration>
 					
 			me.SubStateMachine.intStateNext := IBH_CmdState.cSTA_SUB_2;
 			
-		// Wait and send 
+		// 2: Wait
 		IBH_CmdState.cSTA_SUB_2:
 			// check status of fbWrite
 			fbWrite(hLink := hLink, bExecute := FALSE, bBusy=>bBusy, bError=>bError, nErrID=>udiErrID);
@@ -568,25 +545,41 @@ END_VAR]]></Declaration>
 					me.StateMachine.intStateNext := IBH_CmdState.cSTA_DISCONNECTBusy;
 				ELSE
 					Out_bDriverError := FALSE;
-					IF bRememberIncrementSetParam THEN
-						me.SubStateMachine.intStateNext := IBH_CmdState.cSTA_SUB_3;
-					ELSE
-						me.SubStateMachine.intStateNext := IBH_CmdState.cSTA_SUB_5;
-					END_IF
+					me.SubStateMachine.intStateNext := IBH_CmdState.cSTA_SUB_3;
 				END_IF
 			END_IF
 			
-		// 3
+		// 3: Adapt Buffer and Write
 		IBH_CmdState.cSTA_SUB_3:
-			bRememberIncrementSetParam := FALSE;
-			IF (iSetParam = MAX_INT OR iSetParam < 0) THEN
-				iSetParam := 0;
-			END_IF
-			iSetParam := iSetParam + 1;
-		
+			
 			// Adapt Write Buffer
-			anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iSetParam	+0]	:= INT_TO_BYTE(SHR( THIS^.iSetParam,	1*8));
-			anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iSetParam	+1]	:= INT_TO_BYTE(SHR( THIS^.iSetParam,	0*8));
+			CASE intLatestCmd OF
+				1: // Off
+					anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iOff		+0]	:= INT_TO_BYTE(SHR(1, 1*8));
+					anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iOff		+1]	:= INT_TO_BYTE(SHR(1, 0*8));
+				2: // BeltOnly
+					anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iBeltOnly	+0]	:= INT_TO_BYTE(SHR(1, 1*8));
+					anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iBeltOnly	+1]	:= INT_TO_BYTE(SHR(1, 0*8));
+				3: // Manual
+					anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iManual	+0]	:= INT_TO_BYTE(SHR(1, 1*8));
+					anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iManual	+1]	:= INT_TO_BYTE(SHR(1, 0*8));
+				4: // Run
+					anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iRun		+0]	:= INT_TO_BYTE(SHR(1, 1*8));
+					anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iRun		+1]	:= INT_TO_BYTE(SHR(1, 0*8));
+			END_CASE
+			intLatestCmd := 0;
+			
+			IF (bRememberIncrementSetParam) THEN
+				bRememberIncrementSetParam := FALSE;
+				anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iSetParam	+0]	:= INT_TO_BYTE(SHR(1, 1*8));
+				anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iSetParam	+1]	:= INT_TO_BYTE(SHR(1, 0*8));
+			END_IF
+
+			IF (bolAckError) THEN
+				bolAckError := FALSE;
+				anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iAckError	+0]	:= INT_TO_BYTE(SHR(1, 1*8));
+				anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iAckError	+1]	:= INT_TO_BYTE(SHR(1, 0*8));
+			END_IF
 			
 			// Write data
 			fbWrite(hLink := hLink, bExecute := FALSE );
@@ -601,7 +594,7 @@ END_VAR]]></Declaration>
 			
 			me.SubStateMachine.intStateNext := IBH_CmdState.cSTA_SUB_4;
 			
-		// 4
+		// 4: Wait
 		IBH_CmdState.cSTA_SUB_4:
 			
 			// check status of fbWrite
@@ -619,7 +612,7 @@ END_VAR]]></Declaration>
 				END_IF
 			END_IF
 			
-		// 5
+		// 5: Done
 		IBH_CmdState.cSTA_SUB_5:
 			me.StateMachine.intStateNext := IBH_CmdState.cSTA_WRITE;
 			
@@ -717,13 +710,7 @@ METHOD PROTECTED sta_DISCONNECT : BOOL]]></Declaration>
     </Method>
     <Action Name="setAckError" Id="{44553939-dd9d-4573-96eb-714c3f62bf0d}">
       <Implementation>
-        <ST><![CDATA[IF (iAckError = MAX_INT OR iAckError < 0) THEN
-	iAckError := 0;
-END_IF
-
-IF NOT CIf.SwCfg.bolSimulation THEN
-	iAckError := iAckError + 1;
-END_IF]]></ST>
+        <ST><![CDATA[bolAckError := true;]]></ST>
       </Implementation>
     </Action>
     <Method Name="getCtrlSIf" Id="{5d62d1c6-ef1a-4acf-8a92-c1d071f8a399}">
@@ -733,22 +720,12 @@ METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_IBH]]></Declaration>
         <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
       </Implementation>
     </Method>
-    <Action Name="setRun" Id="{65c28abc-872d-4974-ac52-14b618da33da}">
+    <Action Name="setCmdRun" Id="{65c28abc-872d-4974-ac52-14b618da33da}">
       <Implementation>
-        <ST><![CDATA[IF (iRun = MAX_INT OR iRun < 0) THEN
-	iRun := 0;
-END_IF
-
-IF NOT CIf.SwCfg.bolSimulation THEN
-	iRun := iRun + 1;
-END_IF
+        <ST><![CDATA[intLatestCmd := 4;
 
 // simulation
-iSimStatus := 4;
-bSimOff := FALSE;
-bSimBeltOn := FALSE;
-bSimManual := FALSE;
-bSimRun := TRUE;]]></ST>
+iSimStatus := 4;]]></ST>
       </Implementation>
     </Action>
     <Method Name="sta_READ" Id="{75bf96e5-4d01-4337-b000-089b7dd4522e}">
@@ -773,15 +750,15 @@ END_VAR]]></Declaration>
 	// Simulation
 	IF (CIf.SwCfg.bolSimulation) THEN
 		THIS^.Out_iStatus	:= iSimStatus;
-		THIS^.Out_bOff		:= bSimOff;
-		THIS^.Out_bBeltOn	:= bSimBeltOn;
-		THIS^.Out_bManual	:= bSimManual;
-		THIS^.Out_bRun		:= bSimRun;
+		THIS^.Out_bOff		:= (iSimStatus = 1);
+		THIS^.Out_bBeltOn	:= (iSimStatus = 2);
+		THIS^.Out_bManual	:= (iSimStatus = 3);
+		THIS^.Out_bRun		:= (iSimStatus = 4);
 		THIS^.Out_bSetParam	:= FALSE;
 		THIS^.Out_bGetParam	:= FALSE;
 		THIS^.Out_bAckError	:= FALSE;
 		
-		IF bSimRun THEN
+		IF (iSimStatus = 4) THEN
 			Out_adiTemp_dc := adiTemp_dc;
 			Out_adiAir_p := adiAir_p;
 		ELSE
@@ -791,7 +768,7 @@ END_VAR]]></Declaration>
 			END_FOR
 		END_IF
 		
-		IF bSimRun OR bSimBeltOn THEN
+		IF (iSimStatus = 4) OR (iSimStatus = 2) THEN
 			Out_diSpeed_mm_min := diSpeed_mm_min;
 		ELSE
 			THIS^.Out_diSpeed_mm_min :=	0;
@@ -807,7 +784,7 @@ END_VAR]]></Declaration>
 		THIS^.Out_iStatus :=		SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iStatus+0]),1*8)
 								+	SHL(BYTE_TO_INT(anReadBuffer[SIf.Cfg.uiByteOffset_rd_iStatus+1]),0*8);
 		THIS^.Out_bOff		:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bOff]		,SIf.Cfg.uiBitOffset_rd_bOff);
-		THIS^.Out_bBeltOn	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bBeltOn]		,SIf.Cfg.uiBitOffset_rd_bBeltOn);
+		THIS^.Out_bBeltOn	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bBeltOnly]		,SIf.Cfg.uiBitOffset_rd_bBeltOnly);
 		THIS^.Out_bManual	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bManual]		,SIf.Cfg.uiBitOffset_rd_bManual);
 		THIS^.Out_bRun		:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bRun]		,SIf.Cfg.uiBitOffset_rd_bRun);
 		THIS^.Out_bSetParam	:= bitAccess( anReadBuffer[SIf.Cfg.uiByteOffset_rd_bSetParam]	,SIf.Cfg.uiBitOffset_rd_bSetParam);
@@ -1096,22 +1073,12 @@ IF (me.StateMachine.intStateNext = cSTA_EOFFBusy) THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Action Name="setOff" Id="{cf6019e3-6f56-4571-9556-7b2c8be4ce3a}">
+    <Action Name="setCmdOff" Id="{cf6019e3-6f56-4571-9556-7b2c8be4ce3a}">
       <Implementation>
-        <ST><![CDATA[IF (iOff = MAX_INT OR ioff < 0) THEN
-	iOff := 0;
-END_IF
-
-IF NOT CIf.SwCfg.bolSimulation THEN
-	iOff := iOff + 1;
-END_IF
+        <ST><![CDATA[intLatestCmd := 1;
 
 // simulation
-iSimStatus := 1;
-bSimOff := TRUE;
-bSimBeltOn := FALSE;
-bSimManual := FALSE;
-bSimRun := FALSE;]]></ST>
+iSimStatus := 1;]]></ST>
       </Implementation>
     </Action>
     <Method Name="setSpeed" Id="{e1ee721f-99f7-487d-be02-76937e33dab0}">
@@ -1126,22 +1093,12 @@ END_VAR]]></Declaration>
 bIncrementSetParam := TRUE;]]></ST>
       </Implementation>
     </Method>
-    <Action Name="setBeltOn" Id="{eb96f45a-ccbb-4b9d-b34a-02806c599568}">
+    <Action Name="setCmdBeltOnly" Id="{eb96f45a-ccbb-4b9d-b34a-02806c599568}">
       <Implementation>
-        <ST><![CDATA[IF (iBeltOn = MAX_INT OR iBeltOn < 0) THEN
-	iBeltOn := 0;
-END_IF
-
-IF NOT CIf.SwCfg.bolSimulation THEN
-	iBeltOn := iBeltOn + 1;
-END_IF
+        <ST><![CDATA[intLatestCmd := 2;
 
 // simulation
-iSimStatus := 2;
-bSimOff := FALSE;
-bSimBeltOn := TRUE;
-bSimManual := FALSE;
-bSimRun := FALSE;]]></ST>
+iSimStatus := 2;]]></ST>
       </Implementation>
     </Action>
     <Method Name="sta_CONNECT" Id="{ee8c16a5-8b81-47d9-b812-1c3e8e6f51a5}">
@@ -1184,22 +1141,12 @@ METHOD PROTECTED sta_CONNECT : BOOL]]></Declaration>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Action Name="setStandby" Id="{ef93d172-8b44-42a4-9172-7b1faf91f740}">
+    <Action Name="setCmdManual" Id="{ef93d172-8b44-42a4-9172-7b1faf91f740}">
       <Implementation>
-        <ST><![CDATA[IF (iManual = MAX_INT OR iManual < 0) THEN
-	iManual := 0;
-END_IF
-
-IF NOT CIf.SwCfg.bolSimulation THEN
-	iManual := iManual + 1;
-END_IF
+        <ST><![CDATA[intLatestCmd := 3;
 
 // simulation
-iSimStatus := 3;
-bSimOff := FALSE;
-bSimBeltOn := FALSE;
-bSimManual := TRUE;
-bSimRun := FALSE;]]></ST>
+iSimStatus := 3;]]></ST>
       </Implementation>
     </Action>
     <Method Name="sta_DISCONNECTBusy" Id="{f12d780c-aad8-4f99-8cd6-b3f5cc2ebfc1}">
@@ -1259,6 +1206,5 @@ END_VAR]]></Declaration>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>
