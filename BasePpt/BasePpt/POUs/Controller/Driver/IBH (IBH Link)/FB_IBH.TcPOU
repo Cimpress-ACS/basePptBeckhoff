@@ -46,8 +46,8 @@ VAR
 	diSpeed_mm_min: DINT;
 	/// Try to reset error 
 	bolAckError: BOOL;
-	bIncrementSetParam: BOOL;
-	bRememberIncrementSetParam: BOOL;
+	bSetParam: BOOL;
+	bRememberSetParam: BOOL;
 	fbOpen: Tc2_S5S7Com.FB_NLinkOpen;
 	fbWrite: Tc2_S5S7Com.FB_NLinkWrite;
 	fbFetch: Tc2_S5S7Com.FB_NLinkFetch;
@@ -177,7 +177,7 @@ VAR_INPUT
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[adiTemp_dc := In_adiTemp_dc;
-bIncrementSetParam := TRUE;]]></ST>
+bSetParam := TRUE;]]></ST>
       </Implementation>
     </Method>
     <Method Name="FB_init" Id="{1e98861f-0bc6-4fd1-8c68-a6e91c74e1a0}">
@@ -241,8 +241,8 @@ FOR uiIdx:=0 TO MAX_NUMBER_OF_OVEN_MODULES-1 BY 1 DO
 END_FOR
 diSpeed_mm_min := 0;
 bolAckError := FALSE;
-bIncrementSetParam := FALSE;
-bRememberIncrementSetParam := FALSE;
+bSetParam := FALSE;
+bRememberSetParam := FALSE;
 
 // simulation
 iSimStatus := 1;
@@ -500,8 +500,8 @@ END_VAR]]></Declaration>
 		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_diSpeed_mm_min+2] := DINT_TO_BYTE(SHR( THIS^.diSpeed_mm_min, 1*8));
 		anWriteBuffer[SIf.Cfg.uiByteOffset_wr_diSpeed_mm_min+3] := DINT_TO_BYTE(SHR( THIS^.diSpeed_mm_min, 0*8));
 		
-		bRememberIncrementSetParam := bIncrementSetParam;
-		bIncrementSetParam := FALSE;
+		bRememberSetParam := bSetParam;
+		bSetParam := FALSE;
 	END_IF
 
 	
@@ -569,8 +569,8 @@ END_VAR]]></Declaration>
 			END_CASE
 			intLatestCmd := 0;
 			
-			IF (bRememberIncrementSetParam) THEN
-				bRememberIncrementSetParam := FALSE;
+			IF (bRememberSetParam) THEN
+				bRememberSetParam := FALSE;
 				anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iSetParam	+0]	:= INT_TO_BYTE(SHR(1, 1*8));
 				anWriteBuffer[SIf.Cfg.uiByteOffset_wr_iSetParam	+1]	:= INT_TO_BYTE(SHR(1, 0*8));
 			END_IF
@@ -1007,7 +1007,7 @@ VAR_INPUT
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[adiAir_p := In_adiAir_p;
-bIncrementSetParam := TRUE;]]></ST>
+bSetParam := TRUE;]]></ST>
       </Implementation>
     </Method>
     <Method Name="Always" Id="{ce678287-d0c0-4c11-aa96-f26232737c22}">
@@ -1090,7 +1090,7 @@ VAR_INPUT
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[diSpeed_mm_min := In_diSpeed_mm_min;
-bIncrementSetParam := TRUE;]]></ST>
+bSetParam := TRUE;]]></ST>
       </Implementation>
     </Method>
     <Action Name="setCmdBeltOnly" Id="{eb96f45a-ccbb-4b9d-b34a-02806c599568}">
