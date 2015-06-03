@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
   <DUT Name="T_Ctrl_SIf_IBH_Cfg" Id="{3ba03782-c7db-4092-abc5-720424700977}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_IBH_Cfg :
 STRUCT
@@ -22,8 +22,8 @@ STRUCT
 	uiByteOffset_rd_iStatus: UINT;
 	uiByteOffset_rd_bOff: UINT;
 	uiBitOffset_rd_bOff: UINT;
-	uiByteOffset_rd_bBeltOn: UINT;
-	uiBitOffset_rd_bBeltOn: UINT;
+	uiByteOffset_rd_bBeltOnly: UINT;
+	uiBitOffset_rd_bBeltOnly: UINT;
 	uiByteOffset_rd_bManual: UINT;
 	uiBitOffset_rd_bManual: UINT;
 	uiByteOffset_rd_bRun: UINT;
@@ -41,7 +41,7 @@ STRUCT
 	uiByteOffset_rd_iErrorID: UINT;
 	uiByteOffset_rd_iErrorValue: UINT;
 	uiByteOffset_wr_iOff: UINT;
-	uiByteOffset_wr_iBeltOn: UINT;
+	uiByteOffset_wr_iBeltOnly: UINT;
 	uiByteOffset_wr_iManual: UINT;
 	uiByteOffset_wr_iRun: UINT;
 	uiByteOffset_wr_iSetParam: UINT;
@@ -52,6 +52,5 @@ STRUCT
 	uiByteOffset_wr_diSpeed_mm_min: UINT;
 END_STRUCT
 END_TYPE]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>

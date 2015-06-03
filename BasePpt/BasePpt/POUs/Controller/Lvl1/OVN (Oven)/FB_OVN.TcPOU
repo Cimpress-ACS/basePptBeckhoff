@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_OVN" Id="{d4623e6e-93c7-42a6-a41a-a4db5bbad042}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_OVN" Id="{d4623e6e-93c7-42a6-a41a-a4db5bbad042}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_OVN EXTENDS FB_CtrlBase
 VAR_INPUT
 	/// 0 = Busy, 1 = OFF, 2 = BeltOn, 3 = Manual, 4 = Run, 5 = Error, 6 = Bundverschlusserkennung 
@@ -528,7 +528,7 @@ SIf.Par.diSpeedBand1_mm_min := 100;
 SIf.Par.diSpeedBand2_mm_min := 200;
 SIf.Par.udiSpeedTimeout_ms := 5000;
 SIf.Par.udiTimeoutOffBusy_ms := 2000;
-SIf.Par.udiTimeoutRunBusyReaction_ms := 2*1000;
+SIf.Par.udiTimeoutRunBusyReaction_ms := 1000;
 SIf.Par.udiTimeoutRunBusyInBand_ms := 1*60*1000;
 SIf.Par.udiTimeoutBeltOnlyReaction_ms := 1000;
 SIf.Par.udiTimeoutBeltOnlyBusy_ms := 10000;
@@ -771,7 +771,7 @@ END_VAR]]></Declaration>
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 		
 		// Set Outputs
-		p_fbIBH^.setRun();
+		p_fbIBH^.setCmdRun();
 		p_fbIBH^.setSpeed(In_diSpeed_mm_min := SIf.Par.diSpeed_mm_min);
 		p_fbIBH^.setTemp(In_adiTemp_dc := SIf.Par.adiTemp_dc);
 		p_fbIBH^.setAirflow(In_adiAir_p := SIf.Par.adiAir_p);
@@ -1020,7 +1020,7 @@ END_VAR]]></Declaration>
 		me.SubStateMachine.intStateNext := OVN_CmdState.cSUB_WAITOFF;
 		
 		// Set Outputs
-		p_fbIBH^.setOff();
+		p_fbIBH^.setCmdOff();
 		
 		// mark all tracked items as trash
 		fbTracker.markAllTrash();
@@ -1105,7 +1105,7 @@ END_VAR]]></Declaration>
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 		
 		// Set Outputs
-		p_fbIBH^.setBeltOn();
+		p_fbIBH^.setCmdBeltOnly();
 		p_fbIBH^.setSpeed(In_diSpeed_mm_min := SIf.Par.diSpeed_mm_min);
 		THIS^.lastSifPar := SIf.Par;
 	END_IF
@@ -1206,9 +1206,6 @@ METHOD PROTECTED sta_ERRORQuit : BOOL]]></Declaration>
 		// PON
 		Base_PLC.cSTA_PON, Base_PLC.cSTA_PONBusy:
 			me.StateMachine.intStateNext := Base_PLC.cSTA_PONBusy;
-		// STOP
-		Base_PLC.cSTA_STOP, Base_PLC.cSTA_STOPBusy:
-			me.StateMachine.intStateNext := Base_PLC.cSTA_STOPBusy;
 		// BELTONLY
 		OVN_CmdState.cSTA_BELTONLY, OVN_CmdState.cSTA_BELTONLYBusy:
 			me.StateMachine.intStateNext := OVN_CmdState.cSTA_BELTONLYBusy;
@@ -1275,6 +1272,5 @@ END_VAR]]></Declaration>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>

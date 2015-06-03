@@ -14,11 +14,11 @@
     <Implicit_Jitter_Distribution>{05df713b-4380-4094-b41a-8414cb6f0f1c}</Implicit_Jitter_Distribution>
     <LibraryReferences>{9ca4c198-5f7b-460e-9c01-d829e63a3734}</LibraryReferences>
     <Title>BasePpt</Title>
-    <ProjectVersion>0.0.0.89</ProjectVersion>
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.89     - update Libraries
+    <Description>0.0.0.90     - fixed IBH driver
+0.0.0.89     - update Libraries
 0.0.0.88     - update Libraries
 0.0.0.87     - [RP-1730] - Inlcude BaseElements 0.0.0.86     - [RP-1814] - Inlcude BaseElements V0.0.1.55
 0.0.0.85     - TwinCAT 3.1.4018.4
@@ -117,6 +117,7 @@
 0.0.0.4 - Bug fixed in FB_PTB
 0.0.0.3 - Update to take the newest libraries 
 0.0.0.2 - Update to Base_PLC 0.3.3.2; Update to Base_Elements 0.0.0.9</Description>
+    <ProjectVersion>0.0.0.90</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
