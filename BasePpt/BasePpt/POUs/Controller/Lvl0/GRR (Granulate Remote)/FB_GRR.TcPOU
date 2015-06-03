@@ -168,17 +168,17 @@ IF (me.StateMachine.intState <> cSTA_SINGLE_ANSWER) THEN
 		SIf.Par.rPowderVibrator_Hz := 0;
 	END_IF
 	// Analog Value
-	IF (SIf.Par.rAirKnife_Hz>SIf.Cfg.rMaxFreq_Hz) THEN
-		SIf.Par.rAirKnife_Hz := SIf.Cfg.rMaxFreq_Hz;
-	ELSIF (SIf.Par.rAirKnife_Hz<0) THEN
-		SIf.Par.rAirKnife_Hz := 0;
+	IF (SIf.Par.rAirKnife_p>100) THEN
+		SIf.Par.rAirKnife_p := 100;
+	ELSIF (SIf.Par.rAirKnife_p<0) THEN
+		SIf.Par.rAirKnife_p := 0;
 	END_IF
 	
 	// Set Outputs
 	SIf.Out.intConveyorBelt.intern := REAL_TO_INT(MAX_INT/SIf.Cfg.rMaxFreq_Hz*SIf.Par.rConveyorBelt_Hz);
 	SIf.Out.intConveyorVibrator.intern := REAL_TO_INT(MAX_INT/SIf.Cfg.rMaxFreq_Hz*SIf.Par.rConveyorVibrator_Hz);
 	SIf.Out.intPowderVibrator.intern := REAL_TO_INT(MAX_INT/SIf.Cfg.rMaxFreq_Hz*SIf.Par.rPowderVibrator_Hz);
-	SIf.Out.intAnalogValue.intern := REAL_TO_INT(MAX_INT/SIf.Cfg.rMaxFreq_Hz*SIf.Par.rAirKnife_Hz);
+	SIf.Out.intAnalogValue.intern := REAL_TO_INT(MAX_INT/100*SIf.Par.rAirKnife_p);
 	SIf.Out.uinFilterClearingCycleTime_min.intern := SIf.Par.uinFilterClearingCycleTime_min;
 	
 	// Set Current Values
@@ -521,7 +521,7 @@ SIf.Cfg.rMaxFreq_Hz := 50.0;
 SIf.Par.rConveyorBelt_Hz		:= SIf.Cfg.rMaxFreq_Hz/2;
 SIf.Par.rConveyorVibrator_Hz	:= SIf.Cfg.rMaxFreq_Hz/2;
 SIf.Par.rPowderVibrator_Hz		:= SIf.Cfg.rMaxFreq_Hz/2;
-SIf.Par.rAirKnife_Hz			:= SIf.Cfg.rMaxFreq_Hz/2;
+SIf.Par.rAirKnife_p				:= 50;
 SIf.Par.uinFilterClearingCycleTime_min	:= 4*60;]]></ST>
       </Implementation>
     </Method>
