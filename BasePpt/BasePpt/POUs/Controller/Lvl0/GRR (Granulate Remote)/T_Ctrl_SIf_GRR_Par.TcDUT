@@ -1,15 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
   <DUT Name="T_Ctrl_SIf_GRR_Par" Id="{acc58138-5a92-4dd5-a90e-bda48795aadd}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_GRR_Par :
 STRUCT
 	rConveyorBelt_Hz: REAL;
 	rPowderVibrator_Hz: REAL;
 	rConveyorVibrator_Hz: REAL;
-	rAnalogValue_p: REAL;
+	rAirKnife_Hz: REAL;
 	uinFilterClearingCycleTime_min: UINT;
 END_STRUCT
 END_TYPE]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>
