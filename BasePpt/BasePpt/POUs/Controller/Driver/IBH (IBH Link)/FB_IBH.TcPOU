@@ -36,7 +36,7 @@ END_VAR
 VAR
 	/// Specific interface struct for public access
 	SIf: T_Ctrl_SIf_IBH;
-	/// Status
+	/// Latest Command
 	intLatestCmd: INT;
 	/// Temperature in deci °C 
 	adiTemp_dc: ARRAY[0..(MAX_NUMBER_OF_OVEN_MODULES - 1)] OF DINT;
