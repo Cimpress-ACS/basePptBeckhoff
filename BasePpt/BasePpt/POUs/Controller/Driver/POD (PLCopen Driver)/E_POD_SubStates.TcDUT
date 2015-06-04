@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="E_POD_SubStates" Id="{2b4e1df3-81df-4bf1-8c63-334d59c67b2c}">
+    <Declaration><![CDATA[TYPE E_POD_SubStates :
+(
+	ReadErrorCode := 10000,
+	StartHardReset := 10001,
+	WaitHardResetDone := 10002,
+	StartSoftReset := 10003,
+	WaitSoftResetDone := 10004
+);
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

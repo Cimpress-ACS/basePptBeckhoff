@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_POD_Error" Id="{53170a35-0272-4571-871a-1e44be633ee3}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="T_POD_Error" Id="{4a635a1e-dfd8-4126-bc95-c0912fce2cc8}">
     <Declaration><![CDATA[TYPE T_POD_Error :
 STRUCT
 	/// Reset failure
@@ -18,6 +18,5 @@ STRUCT
 END_STRUCT
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>

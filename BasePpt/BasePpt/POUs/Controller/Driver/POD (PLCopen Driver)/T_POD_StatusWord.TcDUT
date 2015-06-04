@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_POD_StatusWord" Id="{e87a1ec7-a1f2-40ac-a515-3e362015acae}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="T_POD_StatusWord" Id="{62ef4b9a-8f3f-44a9-8183-b9b6b9c1f1fd}">
     <Declaration><![CDATA[TYPE T_POD_StatusWord :
 STRUCT
 	/// 0	Ready TO Switch on =1
@@ -30,6 +30,5 @@ STRUCT
 END_STRUCT
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>

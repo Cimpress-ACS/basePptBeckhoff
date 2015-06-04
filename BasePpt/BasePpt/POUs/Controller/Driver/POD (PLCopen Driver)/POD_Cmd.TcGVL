@@ -1,11 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <GVL Name="POD_Cmd" Id="{929106cd-f01b-40f8-aa09-ae2b396b3ed0}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <GVL Name="POD_Cmd" Id="{2f87d738-6032-419f-89fc-4cdbb9560840}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	/// Switch controller on 
 	cPOD_STA_PowerOff: INT := 0;
 	/// Error
 	cPOD_STA_Error: INT := 256;
+	cPOD_STA_ErrorQuit: INT := 257;
 	cPOD_STA_WaitForJob: INT := 1000;
 	cPOD_STA_PowerOnBusy: INT := 1001;
 	/// Homing 
@@ -67,6 +68,5 @@
 	cPOD_SCMD_WRITE_PARA_NC: INT := 2008;
 	cPOD_SCMD_READ_PARA_NC: INT := 2010;
 END_VAR]]></Declaration>
-    <ObjectProperties />
   </GVL>
 </TcPlcObject>

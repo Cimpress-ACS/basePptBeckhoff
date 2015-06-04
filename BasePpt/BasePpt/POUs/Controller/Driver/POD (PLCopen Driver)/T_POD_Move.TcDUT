@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_POD_Move" Id="{2d2fdfc8-8551-4038-8980-0c2442a9f2d6}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="T_POD_Move" Id="{aa5ccc35-5c4d-46d3-8e38-dde3c492c091}">
     <Declaration><![CDATA[TYPE T_POD_Move :
 STRUCT
 	///target position [Units] 
@@ -32,6 +32,5 @@ STRUCT
 END_STRUCT
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>
