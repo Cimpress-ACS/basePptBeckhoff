@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_GRR" Id="{e59aaea5-7c5d-4e22-a01a-aa7ca2d8a38d}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_GRR" Id="{e59aaea5-7c5d-4e22-a01a-aa7ca2d8a38d}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_GRR EXTENDS FB_CtrlBase
 VAR_INPUT
 	In_bolSystemOk: BOOL;
@@ -168,17 +168,17 @@ IF (me.StateMachine.intState <> cSTA_SINGLE_ANSWER) THEN
 		SIf.Par.rPowderVibrator_Hz := 0;
 	END_IF
 	// Analog Value
-	IF (SIf.Par.rAnalogValue_p>100) THEN
-		SIf.Par.rAnalogValue_p := 100;
-	ELSIF (SIf.Par.rAnalogValue_p<0) THEN
-		SIf.Par.rAnalogValue_p := 0;
+	IF (SIf.Par.rAirKnife_p>100) THEN
+		SIf.Par.rAirKnife_p := 100;
+	ELSIF (SIf.Par.rAirKnife_p<0) THEN
+		SIf.Par.rAirKnife_p := 0;
 	END_IF
 	
 	// Set Outputs
 	SIf.Out.intConveyorBelt.intern := REAL_TO_INT(MAX_INT/SIf.Cfg.rMaxFreq_Hz*SIf.Par.rConveyorBelt_Hz);
 	SIf.Out.intConveyorVibrator.intern := REAL_TO_INT(MAX_INT/SIf.Cfg.rMaxFreq_Hz*SIf.Par.rConveyorVibrator_Hz);
 	SIf.Out.intPowderVibrator.intern := REAL_TO_INT(MAX_INT/SIf.Cfg.rMaxFreq_Hz*SIf.Par.rPowderVibrator_Hz);
-	SIf.Out.intAnalogValue.intern := REAL_TO_INT(MAX_INT/100*SIf.Par.rAnalogValue_p);
+	SIf.Out.intAnalogValue.intern := REAL_TO_INT(MAX_INT/100*SIf.Par.rAirKnife_p);
 	SIf.Out.uinFilterClearingCycleTime_min.intern := SIf.Par.uinFilterClearingCycleTime_min;
 	
 	// Set Current Values
@@ -521,7 +521,7 @@ SIf.Cfg.rMaxFreq_Hz := 50.0;
 SIf.Par.rConveyorBelt_Hz		:= SIf.Cfg.rMaxFreq_Hz/2;
 SIf.Par.rConveyorVibrator_Hz	:= SIf.Cfg.rMaxFreq_Hz/2;
 SIf.Par.rPowderVibrator_Hz		:= SIf.Cfg.rMaxFreq_Hz/2;
-SIf.Par.rAnalogValue_p			:= 0;
+SIf.Par.rAirKnife_p				:= 50;
 SIf.Par.uinFilterClearingCycleTime_min	:= 4*60;]]></ST>
       </Implementation>
     </Method>
@@ -551,6 +551,8 @@ METHOD PROTECTED sta_OFFBusy : BOOL]]></Declaration>
 
 	IF (SIf.In.intState.intern=cSTA_OFF OR NOT SIf.In.bolAutoMode.intern) THEN
 		me.StateMachine.intStateNext := cSTA_OFF;
+	ELSIF me.intCmd=Base_PLC.cCMD_RUN AND SIf.In.bolSystemOk.intern THEN
+		me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;
 	END_IF
 
 	
@@ -561,6 +563,5 @@ METHOD PROTECTED sta_OFFBusy : BOOL]]></Declaration>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>

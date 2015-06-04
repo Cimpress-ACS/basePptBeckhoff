@@ -17,7 +17,8 @@
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.90     - fixed IBH driver
+    <Description>0.0.0.91     - improve GRR for Weiss
+0.0.0.90     - fixed IBH driver
 0.0.0.89     - update Libraries
 0.0.0.88     - update Libraries
 0.0.0.87     - [RP-1730] - Inlcude BaseElements 0.0.0.86     - [RP-1814] - Inlcude BaseElements V0.0.1.55
@@ -117,7 +118,7 @@
 0.0.0.4 - Bug fixed in FB_PTB
 0.0.0.3 - Update to take the newest libraries 
 0.0.0.2 - Update to Base_PLC 0.3.3.2; Update to Base_Elements 0.0.0.9</Description>
-    <ProjectVersion>0.0.0.90</ProjectVersion>
+    <ProjectVersion>0.0.0.91</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
