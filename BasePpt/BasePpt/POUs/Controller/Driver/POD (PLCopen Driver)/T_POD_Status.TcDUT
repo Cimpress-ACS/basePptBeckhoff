@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="T_POD_Status" Id="{701949fe-00c5-44cf-912e-33db26c1ddf2}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="T_POD_Status" Id="{569a92b5-258d-4706-8e52-f1e677c7ac2d}">
     <Declaration><![CDATA[TYPE T_POD_Status :
 STRUCT
 	/// Hardware enable:0 = Open 1 = Closed  
@@ -31,6 +31,5 @@ STRUCT
 END_STRUCT
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>

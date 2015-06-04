@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="E_POD_UseHomeSwitch" Id="{cfc63ea8-8688-4ab6-9cf1-fb245a660988}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="E_POD_UseHomeSwitch" Id="{fd49e002-361b-4453-8978-dbba9b11f80e}">
     <Declaration><![CDATA[TYPE E_POD_UseHomeSwitch :
 (
 	FUB_Input := 0,
@@ -23,6 +23,5 @@
 ) USINT;
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>

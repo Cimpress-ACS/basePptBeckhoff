@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <DUT Name="E_AmpType" Id="{b43074b2-0cf2-4e30-9c36-a19833feca8e}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="E_AmpType" Id="{815574df-b175-4c0b-adb2-41284dc50dd0}">
     <Declaration><![CDATA[TYPE E_AmpType :
 (
 	BOTH_ROT_LIN := 0,
@@ -9,6 +9,5 @@
 ) USINT;
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>
