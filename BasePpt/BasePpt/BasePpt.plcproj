@@ -17,7 +17,8 @@
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.92	- [RP-1862] - POD ResetError change
+    <Description>0.0.0.93	- GRR: fix PONBusy, add MANUAL state + Cfg to ignore it
+0.0.0.92	- [RP-1862] - POD ResetError change
 	- New Libraries
 0.0.0.91     - improve GRR for Weiss
 0.0.0.90     - fixed IBH driver
@@ -120,7 +121,7 @@
 0.0.0.4 - Bug fixed in FB_PTB
 0.0.0.3 - Update to take the newest libraries 
 0.0.0.2 - Update to Base_PLC 0.3.3.2; Update to Base_Elements 0.0.0.9</Description>
-    <ProjectVersion>0.0.0.92</ProjectVersion>
+    <ProjectVersion>0.0.0.93</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
@@ -329,6 +330,10 @@
     </Compile>
     <Compile Include="POUs\Controller\Driver\TCP %28TCP communication driver%29\T_Ctrl_SIf_TCP_Par.TcDUT">
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\GRR (Granulate Remote)\GRR_CmdState.TcGVL">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\GRR (Granulate Remote)\E_ALM_GRR.TcDUT">
       <SubType>Code</SubType>

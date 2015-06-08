@@ -65,8 +65,12 @@ METHOD PROTECTED sta_OFF : BOOL]]></Declaration>
 // --------------------------------------------------------------------------------------
 // Cyclic action
 
-	IF me.intCmd=Base_PLC.cCMD_RUN AND SIf.In.bolSystemOk.intern THEN
-		me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;
+	IF (SIf.In.bolAutoMode.intern) THEN
+		IF me.intCmd=Base_PLC.cCMD_RUN AND SIf.In.bolSystemOk.intern THEN
+			me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;
+		END_IF
+	ELSE
+		me.StateMachine.intStateNext := GRR_CmdState.cSTA_MANUALBusy;
 	END_IF
 
 
@@ -79,8 +83,7 @@ METHOD PROTECTED sta_OFF : BOOL]]></Declaration>
     </Method>
     <Method Name="StateMachine" Id="{0d8f7722-1d1f-4a5e-9267-711c5ab50a30}">
       <Declaration><![CDATA[{attribute 'object_name' := 'StateMachine'}
-METHOD PROTECTED StateMachine : BOOL
-]]></Declaration>
+METHOD PROTECTED StateMachine : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[SUPER^.StateMachine();
 
@@ -90,6 +93,10 @@ CASE me.StateMachine.intState OF
         THIS^.sta_RUNBusy();
 	cSTA_RUN: 
         THIS^.sta_RUN();
+	cSTA_MANUALBusy: 
+        THIS^.sta_MANUALBusy();
+	cSTA_MANUAL: 
+        THIS^.sta_MANUAL();
 END_CASE]]></ST>
       </Implementation>
     </Method>
@@ -121,8 +128,20 @@ IF (me.StateMachine.intState <> cSTA_SINGLE_ANSWER) THEN
 		bToggleBitOK := TRUE;
 	END_IF
 	
-	IF NOT bToggleBitOK THEN
+	IF NOT (bToggleBitOK) AND (me.StateMachine.intState <> cSTA_ERROR) AND (me.StateMachine.intState <> cSTA_ERRORQuit) THEN
 		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRR.LostConnection,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		me.StateMachine.intStateNext := Base_CmdState.cSTA_ERROR;
+	END_IF
+	
+	IF NOT SIf.In.bolAutoMode.intern AND bToggleBitOK THEN
+		IF (SIf.Cfg.bolManualModeAllowed) THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRR.ManualModeWarning,0,ADR(SIf.Alm),E_AlmState.SET,CIf.Job.eMe_ActivAlmClass);
+		ELSIF (me.StateMachine.intState <> cSTA_ERROR) AND (me.StateMachine.intState <> cSTA_ERRORQuit) THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRR.ManualModeError,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_CmdState.cSTA_ERROR;
+		END_IF
+	ELSE
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRR.ManualModeWarning,0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
 	END_IF
 	
 	IF SIf.In.bolPowderLowWarning.intern AND bToggleBitOK THEN
@@ -131,20 +150,14 @@ IF (me.StateMachine.intState <> cSTA_SINGLE_ANSWER) THEN
 		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRR.LowPowderWarning,0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
 	END_IF
 	
-	IF NOT SIf.In.bolAutoMode.intern AND bToggleBitOK THEN
-		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRR.ManualOperation,0,ADR(SIf.Alm),E_AlmState.SET,CIf.Job.eMe_ActivAlmClass);
-	ELSE
-		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRR.ManualOperation,0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
-	END_IF
-	
-	// reasons are either bolMainPressureError or bolEoffOrFuseOk
+	// reasons are either PressureError or SystemError (EOFF/Fuse/Motor)
 	IF NOT SIf.In.bolSystemOk.intern AND bToggleBitOK THEN
 		IF SIf.In.bolMainPressureError.intern THEN
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRR.MainPressureError,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			me.StateMachine.intStateNext := cSTA_EOFFBusy;
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRR.PressureError,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_CmdState.cSTA_OFFBusy;
 		ELSE
 			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRR.SystemError,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			me.StateMachine.intStateNext := cSTA_EOFFBusy;
+			me.StateMachine.intStateNext := Base_CmdState.cSTA_OFFBusy;
 		END_IF
 	END_IF
 	
@@ -229,37 +242,6 @@ ELSE
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_ERROR" Id="{74d2b513-0985-4a05-a74d-8d4e67c5adf4}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
-METHOD PROTECTED sta_ERROR : BOOL]]></Declaration>
-      <Implementation>
-        <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
-// Entry action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
-		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
-		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		
-		SIf.Out.intCommand.intern := cCMD_OFF;
-	END_IF
-
-
-//--------------------------------------------------------------------------------------
-// Cyclic action
-
-	// State Change Condition
-	IF (CIf.Job.bolAlmReset = TRUE) THEN
-		me.StateMachine.intStateNext := cSTA_ERRORQuit;
-	END_IF
-
-	
-//--------------------------------------------------------------------------------------
-// Exit action
-	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
-		;
-	END_IF]]></ST>
-      </Implementation>
-    </Method>
     <Property Name="CtrlSIf" Id="{7a4e8331-ad47-4ba5-b879-cea967c63058}">
       <Declaration><![CDATA[PROPERTY PUBLIC CtrlSIf : POINTER TO T_Ctrl_SIf_GRR]]></Declaration>
       <Get Name="Get" Id="{09d94cee-b290-446b-a751-03d4e8bf104b}">
@@ -286,10 +268,14 @@ METHOD PROTECTED sta_RUNBusy : BOOL]]></Declaration>
 // --------------------------------------------------------------------------------------
 // Cyclic action
 
-	IF me.intCmd=Base_PLC.cCMD_OFF THEN
-		me.StateMachine.intStateNext := Base_PLC.cSTA_OFFBusy;
-	ELSIF SIf.In.intState.intern=cSTA_RUN THEN
-		me.StateMachine.intStateNext := Base_PLC.cSTA_RUN;
+	IF (SIf.In.bolAutoMode.intern) THEN
+		IF me.intCmd=Base_PLC.cCMD_OFF THEN
+			me.StateMachine.intStateNext := Base_PLC.cSTA_OFFBusy;
+		ELSIF (SIf.In.intState.intern = cSTA_RUN) THEN
+			me.StateMachine.intStateNext := Base_PLC.cSTA_RUN;
+		END_IF
+	ELSE
+		me.StateMachine.intStateNext := GRR_CmdState.cSTA_MANUALBusy;
 	END_IF
 
 
@@ -337,10 +323,38 @@ ELSE
 END_IF]]></ST>
       </Implementation>
     </Method>
+    <Method Name="sta_ERROR" Id="{979a2b00-7f2d-4812-b8dd-36de9c72075e}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
+METHOD PROTECTED sta_ERROR : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	END_IF
+
+	
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	
+	// State Change Condition
+	IF (CIf.Job.bolAlmReset = TRUE) THEN
+		me.StateMachine.intStateNext := cSTA_ERRORQuit;
+	END_IF
+
+	
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
     <Method Name="sta_PON" Id="{b65d2b03-ae1a-44e1-b1b8-0d2cfc836112}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_PON'}
-METHOD PROTECTED sta_PON : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_PON : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 // --------------------------------------------------------------------------------------
@@ -353,8 +367,12 @@ METHOD PROTECTED sta_PON : BOOL
 // --------------------------------------------------------------------------------------
 // Cyclic action
 
-	IF me.intCmd>Base_PLC.cCMD_PON THEN				
-		me.StateMachine.intStateNext := Base_PLC.cSTA_OFFBusy;
+	IF (SIf.In.bolAutoMode.intern) THEN
+		IF (me.intCmd > Base_PLC.cCMD_PON) THEN
+			me.StateMachine.intStateNext := Base_PLC.cSTA_OFFBusy;
+		END_IF
+	ELSE
+		me.StateMachine.intStateNext := GRR_CmdState.cSTA_MANUALBusy;
 	END_IF
 	
 	
@@ -363,6 +381,65 @@ METHOD PROTECTED sta_PON : BOOL
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		;
 	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_MANUALBusy" Id="{b9648b92-8712-4188-a138-912fc8030bd1}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_MANUALBusy'}
+METHOD PROTECTED sta_MANUALBusy : BOOL]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		SIf.Out.intCommand.intern := cCMD_OFF;
+	END_IF
+
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+
+	IF (SIf.In.bolAutoMode.intern) THEN
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	ELSE
+		me.StateMachine.intStateNext := GRR_CmdState.cSTA_MANUAL;
+	END_IF
+
+	
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="getCmdState" Id="{bd87fdb7-477b-4242-b8f8-064cd448fee8}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'getCmdState'}
+METHOD PROTECTED getCmdState : STRING
+VAR_INPUT
+	intCmdState: INT;
+	bolState: BOOL;
+END_VAR]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[getCmdState := SUPER^.getCmdState(intCmdState:=intCmdState,bolState:=bolState); // get global/base defined cmds/states
+
+IF (getCmdState='') THEN // global not defined get local
+	// get string cmd/state string information in runtime	
+	IF (bolState=FALSE) THEN
+		// Commands
+		;
+	ELSE
+		// States
+		CASE intCmdState OF
+			// Main states
+			GRR_CmdState.cSTA_MANUALBusy:
+				getCmdState := 'MANUALBusy';
+			GRR_CmdState.cSTA_MANUAL:
+				getCmdState := 'MANUAL';
+		END_CASE;
+	END_IF 
+END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_RUN" Id="{be96e68e-10ee-4bec-8003-10de61798d4d}">
@@ -380,8 +457,12 @@ METHOD PROTECTED sta_RUN : BOOL]]></Declaration>
 // --------------------------------------------------------------------------------------
 // Cyclic action
 
-	IF me.intCmd=Base_PLC.cCMD_OFF THEN
-		me.StateMachine.intStateNext := Base_PLC.cSTA_OFFBusy;
+	IF (SIf.In.bolAutoMode.intern) THEN
+		IF me.intCmd=Base_PLC.cCMD_OFF THEN
+			me.StateMachine.intStateNext := Base_PLC.cSTA_OFFBusy;
+		END_IF
+	ELSE
+		me.StateMachine.intStateNext := GRR_CmdState.cSTA_MANUALBusy;
 	END_IF
 
 
@@ -392,28 +473,34 @@ METHOD PROTECTED sta_RUN : BOOL]]></Declaration>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_ERRORQuit" Id="{c1bad505-2d26-4880-8acc-2cfc54839da4}">
+    <Method Name="sta_ERRORQuit" Id="{cf02d52a-5116-4955-b12e-90d21ef47cc8}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERRORQuit'}
 METHOD PROTECTED sta_ERRORQuit : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
-//--------------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------------
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 	END_IF
 
-
-//--------------------------------------------------------------------------------------
+	
+// --------------------------------------------------------------------------------------
 // Cyclic action
 	
-	// State Change Condition
-	IF (CIf.Job.bolAlmReset = FALSE) THEN
-		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	// evtl. wait time if reset of device is necessary and then decide to go to states or ERROR state
+	IF (CIf.Job.bolAlmReset = TRUE) THEN
+		CIf.Job.eMe_ActivAlmClass := E_AlmClass.NONE; // reset feedback channel for parent
+		CIf.Job.bolAlmReset := FALSE;
 	END_IF
 	
-
-//--------------------------------------------------------------------------------------
+	IF (SIf.In.bolAutoMode.intern) THEN
+		me.StateMachine.intStateNext := Base_PLC.cSTA_OFFBusy;
+	ELSE
+		me.StateMachine.intStateNext := GRR_CmdState.cSTA_MANUALBusy;
+	END_IF
+	
+// --------------------------------------------------------------------------------------
 // Exit action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 		;
@@ -430,10 +517,8 @@ METHOD PROTECTED sta_PONBusy : BOOL]]></Declaration>
 IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 	
-	IF SIf.In.intState.intern<=cSTA_PON THEN
+	IF (SIf.In.intState.intern < cSTA_PON) THEN
 		SIf.Out.intCommand.intern := cCMD_PON;
-	ELSE
-		SIf.Out.intCommand.intern := cCMD_OFF;
 	END_IF
 END_IF
 
@@ -441,7 +526,7 @@ END_IF
 // --------------------------------------------------------------------------------------
 // Cyclic action
 
-	IF SIf.In.intState.intern=cSTA_PON OR SIf.In.intState.intern=cSTA_OFF THEN
+	IF (SIf.In.intState.intern >= cSTA_PON) THEN
 		me.StateMachine.intStateNext := cSTA_PON;
 	END_IF
 
@@ -478,7 +563,7 @@ WHILE (iIdx < iLength) AND (CIf.Job.aCmdList[iIdx].intCmd <> cCMD_INITIALIZED) D
 END_WHILE
 
 IF (iIdx < iLength) THEN
-// Add configuration of own comands	
+	// Add configuration of own comands	
 	CIf.Job.aCmdList[iIdx].intCmd := BASE_PLC.cCMD_RUN;
 	CIf.Job.aCmdList[iIdx].strName := 'RUN'; 
 	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
@@ -494,14 +579,14 @@ CIf.Info.strFullName := 'Granulate Remote';
 // set alarm class
 SIf.Alm[E_ALM_GRR.SystemError].eAlmClass := E_AlmClass.OFF;
 SIf.Alm[E_ALM_GRR.SystemError].strText := 'System Error';
-SIf.Alm[E_ALM_GRR.MainPressureError].eAlmClass := E_AlmClass.OFF;
-SIf.Alm[E_ALM_GRR.MainPressureError].strText := 'Main Pressure Error';
-SIf.Alm[E_ALM_GRR.EoffOrFuseError].eAlmClass := E_AlmClass.OFF;
-SIf.Alm[E_ALM_GRR.EoffOrFuseError].strText := 'Eoff or Fuse Error';
+SIf.Alm[E_ALM_GRR.PressureError].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[E_ALM_GRR.PressureError].strText := 'Pressure Error';
 SIf.Alm[E_ALM_GRR.LowPowderWarning].eAlmClass := E_AlmClass.WARNING;
 SIf.Alm[E_ALM_GRR.LowPowderWarning].strText := 'Low Powder';
-SIf.Alm[E_ALM_GRR.ManualOperation].eAlmClass := E_AlmClass.WARNING;
-SIf.Alm[E_ALM_GRR.ManualOperation].strText := 'Manual Operation';
+SIf.Alm[E_ALM_GRR.ManualModeWarning].eAlmClass := E_AlmClass.WARNING;
+SIf.Alm[E_ALM_GRR.ManualModeWarning].strText := 'Manual Operation';
+SIf.Alm[E_ALM_GRR.ManualModeError].eAlmClass := E_AlmClass.OFF;
+SIf.Alm[E_ALM_GRR.ManualModeError].strText := 'Manual Operation';
 SIf.Alm[E_ALM_GRR.LostConnection].eAlmClass := E_AlmClass.OFF;
 SIf.Alm[E_ALM_GRR.LostConnection].strText := 'Lost Connection to the Granulate Machine';
 
@@ -512,9 +597,15 @@ SIf.Alm[E_ALM_GRR.LostConnection].strText := 'Lost Connection to the Granulate M
 // software configuration
 CIf.SwCfg.bolExist := TRUE;
 CIf.SwCfg.bolEnable := TRUE;
-CIf.SwCfg.bolSimulation :=  FALSE;
+CIf.SwCfg.bolSimulation := FALSE;
+
+me.AlarmConfig.bolEOffAlarmTransitionDisable := TRUE;
+me.AlarmConfig.bolOffAlarmTransitionDisable := TRUE;
+me.AlarmConfig.bolEOffCmdTransitionDisable := TRUE;
+me.AlarmConfig.bolOffCmdTransitionDisable := TRUE;
 
 // configuration
+SIf.Cfg.bolManualModeAllowed := FALSE;
 SIf.Cfg.rMaxFreq_Hz := 50.0;
 
 // parameter
@@ -525,11 +616,31 @@ SIf.Par.rAirKnife_p				:= 50;
 SIf.Par.uinFilterClearingCycleTime_min	:= 4*60;]]></ST>
       </Implementation>
     </Method>
-    <Method Name="getCtrlSIf" Id="{e19a1372-56b7-4fad-b15f-d75fbb96101f}">
-      <Declaration><![CDATA[{attribute 'object_name' := 'getCtrlSIf'}
-METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_GRR]]></Declaration>
+    <Method Name="sta_MANUAL" Id="{da63053a-8d2b-4867-9661-ae51602c0a56}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_MANUAL'}
+METHOD PROTECTED sta_MANUAL : BOOL]]></Declaration>
       <Implementation>
-        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+	END_IF
+
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+
+	IF (SIf.In.bolAutoMode.intern) THEN
+		me.StateMachine.intStateNext := cSTA_OFFBusy;
+	END_IF
+
+	
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_OFFBusy" Id="{f8a302e7-6b01-4806-8faf-6811e11ecba7}">
@@ -549,10 +660,14 @@ METHOD PROTECTED sta_OFFBusy : BOOL]]></Declaration>
 // --------------------------------------------------------------------------------------
 // Cyclic action
 
-	IF (SIf.In.intState.intern=cSTA_OFF OR NOT SIf.In.bolAutoMode.intern) THEN
-		me.StateMachine.intStateNext := cSTA_OFF;
-	ELSIF me.intCmd=Base_PLC.cCMD_RUN AND SIf.In.bolSystemOk.intern THEN
-		me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;
+	IF (SIf.In.bolAutoMode.intern) THEN
+		IF (SIf.In.intState.intern = cSTA_OFF) THEN
+			me.StateMachine.intStateNext := cSTA_OFF;
+		ELSIF me.intCmd=Base_PLC.cCMD_RUN AND SIf.In.bolSystemOk.intern THEN
+			me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;
+		END_IF
+	ELSE
+		me.StateMachine.intStateNext := GRR_CmdState.cSTA_MANUALBusy;
 	END_IF
 
 	
