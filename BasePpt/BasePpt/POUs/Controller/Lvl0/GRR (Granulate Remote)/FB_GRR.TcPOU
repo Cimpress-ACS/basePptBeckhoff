@@ -136,8 +136,10 @@ IF (me.StateMachine.intState <> cSTA_SINGLE_ANSWER) THEN
 	IF NOT SIf.In.bolAutoMode.intern AND bToggleBitOK THEN
 		IF (SIf.Cfg.bolManualModeAllowed) THEN
 			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRR.ManualModeWarning,0,ADR(SIf.Alm),E_AlmState.SET,CIf.Job.eMe_ActivAlmClass);
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRR.ManualModeError,0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
 		ELSIF (me.StateMachine.intState <> cSTA_ERROR) AND (me.StateMachine.intState <> cSTA_ERRORQuit) THEN
 			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRR.ManualModeError,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_GRR.ManualModeWarning,0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext := Base_CmdState.cSTA_ERROR;
 		END_IF
 	ELSE
