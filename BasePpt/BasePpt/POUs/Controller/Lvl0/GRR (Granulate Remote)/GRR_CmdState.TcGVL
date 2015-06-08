@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <GVL Name="GRR_CmdState" Id="{a0d9105e-6777-4223-88a3-dfb5dd57e81c}">
+    <Declaration><![CDATA[VAR_GLOBAL CONSTANT
+	///ctrl commands definitions
+	///specific commands >200 - every command has to be a even number
+	
+	///ctrl specific states definitions
+	cSTA_MANUALBusy	: INT := 201;
+	cSTA_MANUAL		: INT := 202;
+END_VAR]]></Declaration>
+  </GVL>
+</TcPlcObject>
