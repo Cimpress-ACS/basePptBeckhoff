@@ -1,18 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="U_JCL_Message" Id="{1119fcd8-70d3-4aab-a99f-59a689bde4c4}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="U_JCL_Message" Id="{0699f5f7-8e45-4c76-a7d1-96a71457598e}">
     <Declaration><![CDATA[{attribute 'pack_mode' := '1'}
 TYPE U_JCL_Message :
 
 UNION
-	Cmd: T_JCL_Command;
-	State: T_JCL_State;
-	PrintDone: T_JCL_PrintDone;
-	ReqCleaning: T_JCL_RequestCleaning;
-	AlmMsg: T_JCL_AlmMsg;
+	Cmd					: T_JCL_Command;
+	State				: T_JCL_State;
+	PrintDone			: T_JCL_PrintDone;
+	ReqCleaning			: T_JCL_RequestCleaning;
+	CleaningDone		: T_JCL_CleaningDone;
+	AlmMsg				: T_JCL_AlmMsg;
 END_UNION
 
 END_TYPE]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>

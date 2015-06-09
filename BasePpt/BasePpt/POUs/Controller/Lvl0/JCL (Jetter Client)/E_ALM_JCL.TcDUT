@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="E_ALM_JCL" Id="{b853a26a-b5c1-44a1-8eff-dcf7412d0d10}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="E_ALM_JCL" Id="{b33c21a8-7112-4d79-9aba-bf628e86d320}">
     <Declaration><![CDATA[TYPE E_ALM_JCL :
 (
 	NONE := 1,
@@ -10,10 +10,10 @@
 	JetterEOff := 5,
 	JetterCommunicationLost := 6,
 	CleaningError,
+	DataChannelFull,
 	MAX_E_ALM_JCL
 ) UINT;
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>

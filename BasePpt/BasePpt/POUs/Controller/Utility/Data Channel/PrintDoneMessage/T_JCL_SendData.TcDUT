@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="T_JCL_SendData" Id="{23f743d5-cf28-49cf-9b32-be771f827072}">
+    <Declaration><![CDATA[TYPE T_JCL_SendData :
+STRUCT
+	fbDataChannel			: FB_JCL_PrintDoneSendDch;
+	rDataChannelItem		: T_JCL_DCH;
+	fbFifo					: FB_DataChannelSenderFifo;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

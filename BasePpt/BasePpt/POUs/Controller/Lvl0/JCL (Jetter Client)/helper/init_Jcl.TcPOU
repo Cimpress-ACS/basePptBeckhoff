@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="init_Jcl" Id="{5bd12865-b25c-4d1a-93af-a72749daa79d}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="init_Jcl" Id="{6dbe0c81-50c2-425a-ac43-b4f3e1282f38}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION init_Jcl : BOOL
 VAR_INPUT
 	pJcl: POINTER TO T_JCL;
@@ -15,6 +15,5 @@ END_VAR
 pJcl^.ctrl.fbJcl.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pJcl^.id.Jcl);
 pJcl^.ctrl.fbJcl.TCP := ADR(pJcl^.ctrl.fbJcl_Tcp);]]></ST>
     </Implementation>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>
