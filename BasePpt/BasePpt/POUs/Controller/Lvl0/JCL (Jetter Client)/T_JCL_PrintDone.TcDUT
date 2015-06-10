@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_JCL_PrintDone" Id="{9f680572-9ccc-48de-a33f-469bfd13c5c9}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="T_JCL_PrintDone" Id="{1e243c07-acd8-41eb-8221-be8c5ea52376}">
     <Declaration><![CDATA[TYPE T_JCL_PrintDone :
 STRUCT
 	stHeader: ST_Header;
@@ -32,6 +32,5 @@ STRUCT
 END_STRUCT
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>

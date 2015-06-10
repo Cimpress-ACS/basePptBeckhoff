@@ -17,7 +17,8 @@
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.93	- GRR: fix PONBusy, add MANUAL state + Cfg to ignore it, add BaseElements
+    <Description>0.0.0.94	- [RP-1659] - PrintDone Message
+0.0.0.93	- GRR: fix PONBusy, add MANUAL state + Cfg to ignore it, add BaseElements
 0.0.0.92	- [RP-1862] - POD ResetError change
 	- New Libraries
 0.0.0.91     - improve GRR for Weiss
@@ -121,7 +122,7 @@
 0.0.0.4 - Bug fixed in FB_PTB
 0.0.0.3 - Update to take the newest libraries 
 0.0.0.2 - Update to Base_PLC 0.3.3.2; Update to Base_Elements 0.0.0.9</Description>
-    <ProjectVersion>0.0.0.93</ProjectVersion>
+    <ProjectVersion>0.0.0.94</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
@@ -205,6 +206,7 @@
     <Folder Include="POUs\Controller\Utility" />
     <Folder Include="POUs\Controller\Utility\Data Channel" />
     <Folder Include="POUs\Controller\Utility\Data Channel\OvenMessage" />
+    <Folder Include="POUs\Controller\Utility\Data Channel\PrintDoneMessage" />
     <Folder Include="POUs\Controller\Utility\FiFo" />
     <Folder Include="POUs\Controller\Utility\LookupTable" />
     <Folder Include="Version" />
@@ -379,63 +381,87 @@
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\E_ALM_JCL.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\FB_JCL.TcPOU">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\helper\cycle_Jcl.TcPOU">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\helper\init_Jcl.TcPOU">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\helper\T_JCL.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\helper\T_JCL_CTRL.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\helper\T_JCL_ID.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\helper\T_JCL_IO.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\JCL_CmdState.TcGVL">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\JCL_Constants.TcGVL">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\T_Ctrl_SIf_JCL.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\T_Ctrl_SIf_JCL_Cfg.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\T_Ctrl_SIf_JCL_Cur.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\T_Ctrl_SIf_JCL_Par.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\T_JCL_AlmMsg.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\T_JCL_CleaningDone.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\T_JCL_Command.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\T_JCL_PrintDone.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\T_JCL_RequestCleaning.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\T_JCL_State.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\U_JCL_Message.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\RAX%28Rotative Axis%29\E_ALM_RAX.TcDUT">
       <SubType>Code</SubType>
@@ -892,6 +918,18 @@
     </Compile>
     <Compile Include="POUs\Controller\Utility\Data Channel\OvenMessage\T_Oven_DCH.TcDUT">
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Utility\Data Channel\PrintDoneMessage\FB_JCL_PrintDoneSendDch.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Controller\Utility\Data Channel\PrintDoneMessage\T_JCL_DCH.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Controller\Utility\Data Channel\PrintDoneMessage\T_JCL_SendData.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Utility\FiFo\FB_DataSetFifo.TcPOU">
       <SubType>Code</SubType>

@@ -1,13 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <GVL Name="JCL_Constants" Id="{3fe6c60f-dddf-454d-ab8f-67efeaf9a481}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <GVL Name="JCL_Constants" Id="{c0626222-c424-4662-be14-1071f8f0ee2c}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	/// MsgID (valid for jetter TCP server protocol)
-	JCL_MsgId_Command: UINT := 1;
-	JCL_MsgId_State: UINT := 2;
-	JCL_MsgId_Alarm: UINT := 4;
-	JCL_MsgId_PrintDone: UINT := 5;
-	JCL_MsgId_ReqCleaning: UINT := 6;
+	JCL_MsgId_Command			: UINT := 1;
+	JCL_MsgId_State				: UINT := 2;
+	JCL_MsgId_Alarm				: UINT := 4;
+	JCL_MsgId_PrintDone			: UINT := 5;
+	JCL_MsgId_ReqCleaning		: UINT := 6;
+	JCL_MsgId_CleaningDone		: UINT := 8;
+	
 	/// Jetter CMD (valid for jetter TCP server protocol)	
 	JCL_CMD_PowerOn: USINT := 2;
 	JCL_CMD_Off: USINT := 6;
@@ -19,6 +21,5 @@
 	JCL_CMD_ResetAlarm: USINT := 230;
 	JCL_CMD_RequestState: USINT := 240;
 END_VAR]]></Declaration>
-    <ObjectProperties />
   </GVL>
 </TcPlcObject>

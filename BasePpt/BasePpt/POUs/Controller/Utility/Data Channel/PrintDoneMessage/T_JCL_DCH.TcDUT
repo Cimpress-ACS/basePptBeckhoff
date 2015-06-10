@@ -1,0 +1,43 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="T_JCL_DCH" Id="{626f2ad7-c16c-4478-9bc5-80d23b4f39e9}">
+    <Declaration><![CDATA[{attribute 'enable_dynamic_creation' := ''}
+TYPE T_JCL_DCH :
+STRUCT
+	rBaseInfo: T_ItemBase;
+	/// Paper ID
+	udiIdentification: ULINT;
+	
+	/// Recipe  process parameter
+	/// --------------------------------------------------------------
+	/// Jetter Print Done Data
+	///  [%]
+	usiInkLevelMainTank: USINT;
+	///  [%]	
+	usiInkLevelSupplyPrintModule1: USINT;
+	///  [%]	
+	usiInkLevelSupplyPrintModule2: USINT;
+	///  [%]	
+	usiInkLevelReturnPrintModule1: USINT;
+	///  [%]	
+	usiInkLevelReturnPrintModule2: USINT;
+	///  [0.01 mbar]
+	udiInkMeniscus: ARRAY[0..1] OF UDINT;
+	///  [0.1 °C] 
+	udiPrintHeadTemperatureModule1: ARRAY[0..4] OF UDINT;
+	///  [0.1 °C] 
+	udiPrintHeadTemperatureModule2: ARRAY[0..4] OF UDINT;
+	///  [Micrometer]	//  Dimension of printed file calculated by DJM
+	udiPrintWidthCalc: UDINT;
+	///  [Micrometer]	//  Dimension of printed file calculated by DJM
+	udiPrintLengthCalc: UDINT;
+	///  [Micrometer]	//  Offset of print
+	udiShiftXCalc: UDINT;
+	///  [Micrometer]	//  Offset of print
+	udiShiftYCalc: UDINT;
+	///  [0.01°]		//  Offset of rotation angle 
+	udiShiftAngleCalc: UDINT;
+END_STRUCT
+END_TYPE]]></Declaration>
+  </DUT>
+</TcPlcObject>

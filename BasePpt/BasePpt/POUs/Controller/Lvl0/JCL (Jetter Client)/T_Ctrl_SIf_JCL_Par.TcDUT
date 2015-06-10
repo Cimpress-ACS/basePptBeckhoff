@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_Ctrl_SIf_JCL_Par" Id="{8716b657-93ff-492a-961f-37047f3203e1}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="T_Ctrl_SIf_JCL_Par" Id="{e1546c65-c5f5-46e5-a5ca-4fd972ab6478}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_JCL_Par :
 STRUCT
 	//[ms] Timeout to detect cleaning start failure
@@ -8,6 +8,5 @@ STRUCT
 END_STRUCT
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>

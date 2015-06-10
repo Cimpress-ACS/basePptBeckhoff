@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="cycle_Jcl" Id="{839d184d-d948-4512-8110-16f2ec46e840}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="cycle_Jcl" Id="{6e865e9f-061f-4867-9812-af0b12f64d01}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION cycle_Jcl : BOOL
 VAR_INPUT
 	pJcl: POINTER TO T_JCL;
@@ -11,6 +11,5 @@ END_VAR
 
 pJcl^.ctrl.fbJcl();]]></ST>
     </Implementation>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>

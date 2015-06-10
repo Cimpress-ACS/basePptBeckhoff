@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_JCL_CTRL" Id="{00930d49-79c5-4a59-ae68-6a1bee28264a}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="T_JCL_CTRL" Id="{882bc395-3edd-41de-80ce-de61d95bd973}">
     <Declaration><![CDATA[TYPE T_JCL_CTRL :
 STRUCT
 	fbJcl: FB_JCL;
@@ -8,6 +8,5 @@ STRUCT
 END_STRUCT
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>
