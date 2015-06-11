@@ -17,7 +17,8 @@
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.94	- [RP-1659] - PrintDone Message
+    <Description>0.0.0.95	- [RP-1659] - Added DataChannel for PrintDone
+0.0.0.94	- [RP-1659] - PrintDone Message
 0.0.0.93	- GRR: fix PONBusy, add MANUAL state + Cfg to ignore it, add BaseElements
 0.0.0.92	- [RP-1862] - POD ResetError change
 	- New Libraries
@@ -122,7 +123,7 @@
 0.0.0.4 - Bug fixed in FB_PTB
 0.0.0.3 - Update to take the newest libraries 
 0.0.0.2 - Update to Base_PLC 0.3.3.2; Update to Base_Elements 0.0.0.9</Description>
-    <ProjectVersion>0.0.0.94</ProjectVersion>
+    <ProjectVersion>0.0.0.95</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
@@ -392,6 +393,10 @@
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\helper\init_Jcl.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\JCL (Jetter Client)\helper\T_JCL_DATACHN.TcDUT">
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>

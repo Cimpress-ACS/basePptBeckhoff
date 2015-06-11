@@ -11,7 +11,12 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[pJcl^.ctrl.fbJcl_Tcp.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pJcl^.id.Jcl_Tcp);
+      <ST><![CDATA[pJcl^.datachn.rSendData.fbDataChannel.InitChannel(SIZEOF(pJcl^.datachn.rSendData.rDataChannelItem), ADR(pJcl^.datachn.rSendData.rDataChannelItem));
+pJcl^.datachn.rSendData.fbFifo.DataChannel := ADR(pJcl^.datachn.rSendData.fbDataChannel);
+pJcl^.datachn.rSendData.fbFifo.FreeDataPointer := TRUE;
+pJcl^.datachn.rSendData.fbFifo.Enable := TRUE;
+
+pJcl^.ctrl.fbJcl_Tcp.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pJcl^.id.Jcl_Tcp);
 pJcl^.ctrl.fbJcl.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pJcl^.id.Jcl);
 pJcl^.ctrl.fbJcl.TCP := ADR(pJcl^.ctrl.fbJcl_Tcp);]]></ST>
     </Implementation>
