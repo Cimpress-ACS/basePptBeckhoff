@@ -6,6 +6,7 @@ STRUCT
 	io: T_JCL_IO;
 	ctrl: T_JCL_CTRL;
 	id: T_JCL_ID;
+	datachn: T_BCH_DATACHN;
 END_STRUCT
 END_TYPE
 ]]></Declaration>

@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="T_JCL_DATACHN" Id="{9d350f5a-8b67-41aa-99d6-c0be220ea521}">
+    <Declaration><![CDATA[TYPE T_JCL_DATACHN :
+STRUCT
+	rSendData: T_JCL_SendData;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

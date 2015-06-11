@@ -8,8 +8,8 @@ END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[pJcl^.ctrl.fbJcl_Tcp();
-
-pJcl^.ctrl.fbJcl();]]></ST>
+pJcl^.ctrl.fbJcl();
+pJcl^.datachn.rSendData.fbFifo();]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>

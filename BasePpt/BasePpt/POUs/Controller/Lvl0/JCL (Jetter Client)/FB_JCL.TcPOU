@@ -168,16 +168,16 @@ fbStateLookup.A_LookupByValue(iLookupValue := pMessage^.State.usiMainState, iFou
 
 // Prepare additional states
 (*
-State				BIT		Description
+State				   BIT		Description
 -------------------------------------------------------------------------------------------------
-ReadyForProduction	0		Jetter ready for production
-Running				1		Print running, in production
-NeedsAttention		2		System needs attention. Info or warning active
-Error				3		General error active
-CleaningIncomplete	4		Cleaning cycle was aborted before finishing. Production not possible.
- -					5	 	-
-IsLocalControlled	6		Local control active. Commands from Client are ignored
-IsRemoteControlled	7		Remote control active. Commands from Client are accepted
+ReadyForProduction		0		Jetter ready for production
+Running					1		Print running, in production
+NeedsAttention			2		System needs attention. Info or warning active
+Error					3		General error active
+CleaningIncomplete		4		Cleaning cycle was aborted before finishing. Production not possible.
+MaintenanceInProgress	5	 	TRUE if a maintenance work is in progress. Independent if auto or manual maintenance is in progress.
+IsLocalControlled		6		Local control active. Commands from Client are ignored
+IsRemoteControlled		7		Remote control active. Commands from Client are accepted
 *)
 
 SIf.Cur.bolReadyForProduction:= pMessage^.State.usiAddState.0;			
@@ -185,6 +185,7 @@ SIf.Cur.bolRunning:= pMessage^.State.usiAddState.1;
 SIf.Cur.bolNeedsAttention:= pMessage^.State.usiAddState.2;			
 SIf.Cur.bolError:= pMessage^.State.usiAddState.3;			
 SIf.Cur.bolCleaningIncomplete:= pMessage^.State.usiAddState.4;			
+SIf.Cur.bolMaintenanceInProgress:= pMessage^.State.usiAddState.5;
 SIf.Cur.bolIsLocalControlled:= pMessage^.State.usiAddState.6;		
 SIf.Cur.bolIsRemoteControlled:= pMessage^.State.usiAddState.7;
 ]]></ST>
