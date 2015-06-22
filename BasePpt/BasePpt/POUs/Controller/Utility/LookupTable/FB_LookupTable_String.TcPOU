@@ -1,0 +1,112 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_LookupTable_String" Id="{841222d4-5301-4dcd-9973-915b862fbcb9}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_LookupTable_String
+VAR_INPUT
+	iAddKey: INT;
+	strAddValue: STRING;
+	iLookupKey: INT;
+	strLookupValue: STRING;
+END_VAR
+VAR_OUTPUT
+	/// number of elements in Table
+	iCount: INT;
+	bOK: BOOL;
+	strFoundValue: STRING;
+	iFoundKey: INT;
+END_VAR
+VAR
+	_aiKeys: ARRAY[0..MaxLookupSize] OF INT;
+	_astrValues: ARRAY[0..MaxLookupSize] OF STRING;
+	_iIdx: INT;
+	_bDone: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(* 
+	This is a very slow lookup table! do not use for big amounts of data
+*)]]></ST>
+    </Implementation>
+    <Action Name="A_Add" Id="{0215d7fb-c8cc-4629-83ef-b957eb37dbc4}">
+      <Implementation>
+        <ST><![CDATA[IF (iAddKey = 0) OR (iCount = MaxLookupSize) THEN
+	bOK := 0; 
+	RETURN;
+END_IF
+_bDone := 0;
+
+FOR _iIdx := 0 TO MaxLookupSize BY 1 DO // see if key already exists
+	IF ( iAddKey = _aiKeys[_iIdx] ) THEN // overwrite old element
+		_astrValues[_iIdx] := strAddValue;
+		bOK := 1;
+		_bDone := 1;
+		RETURN;
+	END_IF
+END_FOR
+
+// add new entry
+// find first unused element in table
+FOR _iIdx := 0 TO MaxLookupSize BY 1 DO
+	IF _aiKeys[_iIdx] = 0 THEN
+		_aiKeys[_iIdx] := iAddKey;
+		_astrValues[_iIdx] := strAddValue;
+		iCount := iCount +1;
+		bOK := 1;
+		RETURN;
+	END_IF
+END_FOR
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="A_Reset" Id="{1c435bd3-585f-4622-bdee-5bf30628ac6f}">
+      <Implementation>
+        <ST><![CDATA[FOR _iIdx := 0 TO MaxLookupSize BY 1 DO
+	_aiKeys[_iIdx] := 0;
+	_astrValues[_iIdx] := '';
+END_FOR
+bOK := 1;]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="A_RemoveKey" Id="{2683ea6a-d483-4b3f-a8a1-0bbcebb0c397}">
+      <Implementation>
+        <ST><![CDATA[bOK := 0;
+
+FOR _iIdx := 0 TO MaxLookupSize BY 1 DO
+	IF iLookupKey = _aiKeys[_iIdx] THEN // found it
+		_aiKeys[_iIdx] := 0;
+		_astrValues[_iIdx] := '';
+		bOK := 1;
+		RETURN;
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="A_LookupByKey" Id="{ad934a92-8a48-4c8a-bcb4-5d60f4eaab36}">
+      <Implementation>
+        <ST><![CDATA[bOK := 0;
+
+FOR _iIdx := 0 TO MaxLookupSize BY 1 DO
+	IF iLookupKey = _aiKeys[_iIdx] THEN // found it
+		strFoundValue := _astrValues[_iIdx];
+		bOK := 1;
+		RETURN;
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="A_LookupByValue" Id="{c60e34fb-5cc1-4e6f-994b-61306f9bc399}">
+      <Implementation>
+        <ST><![CDATA[// will only find the first key associated with the value
+bOK := 0;
+
+FOR _iIdx := 0 TO MaxLookupSize BY 1 DO
+	IF strLookupValue = _astrValues[_iIdx] THEN // found it
+		iFoundKey := _aiKeys[_iIdx];
+		bOK := 1;
+		RETURN;
+	END_IF
+END_FOR]]></ST>
+      </Implementation>
+    </Action>
+  </POU>
+</TcPlcObject>

@@ -17,7 +17,8 @@
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.95	- [RP-1659] - Added DataChannel for PrintDone
+    <Description>0.0.0.96	- [RP-1863] - AutoClean fix
+0.0.0.95	- [RP-1659] - Added DataChannel for PrintDone
 0.0.0.94	- [RP-1659] - PrintDone Message
 0.0.0.93	- GRR: fix PONBusy, add MANUAL state + Cfg to ignore it, add BaseElements
 0.0.0.92	- [RP-1862] - POD ResetError change
@@ -123,7 +124,7 @@
 0.0.0.4 - Bug fixed in FB_PTB
 0.0.0.3 - Update to take the newest libraries 
 0.0.0.2 - Update to Base_PLC 0.3.3.2; Update to Base_Elements 0.0.0.9</Description>
-    <ProjectVersion>0.0.0.95</ProjectVersion>
+    <ProjectVersion>0.0.0.96</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
@@ -381,6 +382,10 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\E_ALM_JCL.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl0\JCL %28Jetter Client%29\E_JET_STATES.TcDUT">
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
@@ -941,6 +946,10 @@
     </Compile>
     <Compile Include="POUs\Controller\Utility\LookupTable\FB_LookupTable.TcPOU">
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Utility\LookupTable\FB_LookupTable_String.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Utility\LookupTable\LUT_Constants.TcGVL">
       <SubType>Code</SubType>
