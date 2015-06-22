@@ -1723,7 +1723,7 @@ METHOD PROTECTED sta_OFFBusy : BOOL
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
 		// Wait for feedback -> OFF
-		IF (SIf.Cur.intJETState = BASE_PLC.OFF) THEN
+		IF (SIf.Cur.intJETState = E_JET_STATES.OFF) THEN
 			me.StateMachine.intStateNext := cSTA_OFF;
 		END_IF
 		
