@@ -8,7 +8,7 @@ VAR
 	/// pointer to function block
 	p_fbTCP: POINTER TO FB_TCP;
 	pTCP_CIF: POINTER TO BASE_PLC.T_Ctrl_CIf;
-	fbStateLookup: FB_LookupTable;
+	fbStateLookup: FB_LookupTable_String;
 	fbCommandLookup: FB_LookupTable;
 	bolServerConnectionError: BOOL;
 	/// variables for receiving msgs
@@ -51,6 +51,9 @@ METHOD PROTECTED sta_OFF : BOOL
 // --------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF SIf.Cur.bolCleaningRequestPending AND (SIf.Cur.bolExecuteCleaning <> SIf.Cur.bolCleaningRequestPending) THEN
+			SIf.Cur.bolExecuteCleaning := TRUE;
+		END_IF
 	
 		CASE me.intCmd OF
 			Base_PLC.cCMD_RUN: 				
@@ -58,7 +61,7 @@ METHOD PROTECTED sta_OFF : BOOL
 			JCL_CmdState.cCMD_Standby, Base_PLC.cCMD_STOP: 				
 				me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;
 			JCL_CmdState.cCMD_CleanPrintHeads: 				
-				me.StateMachine.intStateNext := JCL_CmdState.cSTA_CleanPrintHeadsBusy;
+				me.StateMachine.intStateNext := JCL_CmdState.cSTA_AutoMaintenanceBusy;
 		END_CASE
 		
 		IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
@@ -164,7 +167,12 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// Update the main state
-fbStateLookup.A_LookupByValue(iLookupValue := pMessage^.State.usiMainState, iFoundKey => SIf.Cur.intJETState);
+SIf.Cur.intJETState := pMessage^.State.usiMainState;
+fbStateLookup.A_LookupByKey(iLookupKey := SIf.Cur.intJETState, strFoundValue => SIf.Cur.strJetState);
+
+IF NOT fbStateLookup.bOK THEN
+	SIf.Cur.strJetState := INT_TO_STRING(SIf.Cur.intJETState);
+END_IF
 
 // Prepare additional states
 (*
@@ -178,16 +186,18 @@ CleaningIncomplete		4		Cleaning cycle was aborted before finishing. Production n
 MaintenanceInProgress	5	 	TRUE if a maintenance work is in progress. Independent if auto or manual maintenance is in progress.
 IsLocalControlled		6		Local control active. Commands from Client are ignored
 IsRemoteControlled		7		Remote control active. Commands from Client are accepted
+CleaningRequestPending	8		Jetter requests a cleaning cylce
 *)
 
-SIf.Cur.bolReadyForProduction:= pMessage^.State.usiAddState.0;			
-SIf.Cur.bolRunning:= pMessage^.State.usiAddState.1;		
-SIf.Cur.bolNeedsAttention:= pMessage^.State.usiAddState.2;			
-SIf.Cur.bolError:= pMessage^.State.usiAddState.3;			
-SIf.Cur.bolCleaningIncomplete:= pMessage^.State.usiAddState.4;			
-SIf.Cur.bolMaintenanceInProgress:= pMessage^.State.usiAddState.5;
-SIf.Cur.bolIsLocalControlled:= pMessage^.State.usiAddState.6;		
-SIf.Cur.bolIsRemoteControlled:= pMessage^.State.usiAddState.7;
+SIf.Cur.bolReadyForProduction			:= pMessage^.State.usiAddState.0;			
+SIf.Cur.bolRunning						:= pMessage^.State.usiAddState.1;		
+SIf.Cur.bolNeedsAttention				:= pMessage^.State.usiAddState.2;			
+SIf.Cur.bolError						:= pMessage^.State.usiAddState.3;			
+SIf.Cur.bolCleaningIncomplete			:= pMessage^.State.usiAddState.4;			
+SIf.Cur.bolMaintenanceInProgress		:= pMessage^.State.usiAddState.5;
+SIf.Cur.bolIsLocalControlled			:= pMessage^.State.usiAddState.6;		
+SIf.Cur.bolIsRemoteControlled			:= pMessage^.State.usiAddState.7;
+SIf.Cur.bolCleaningRequestPending 		:= pMessage^.State.usiAddState.8;
 ]]></ST>
       </Implementation>
     </Method>
@@ -241,6 +251,7 @@ END_VAR
 // Entry action
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		SIf.Cur.bolExecuteCleaning := FALSE;
 		
 		IF NOT (CIf.SwCfg.bolSimulation) THEN
 			// If the socket is already connected, trigger a reconnet.
@@ -265,7 +276,7 @@ END_VAR
 			SIf.Cur.bolCleaningIncomplete:= FALSE;			
 			SIf.Cur.bolIsLocalControlled:= FALSE;		
 			SIf.Cur.bolIsRemoteControlled:= TRUE;
-			SIf.Cur.intJETState := BASE_PLC.cSTA_PON;
+			SIf.Cur.intJETState := E_JET_STATES.PON;
 		END_IF
 		
 	END_IF
@@ -357,9 +368,9 @@ IF (getCmdState='') THEN // global not defined get local
 				getCmdState := 'Standby';			
 			JCL_CmdState.cSTA_ConnectBusy:
 				getCmdState := 'ConnectBusy';
-			JCL_CmdState.cSTA_CleanPrintHeadsBusy: 
+			JCL_CmdState.cSTA_AutoMaintenanceBusy: 
 				getCmdState := 'CleanPrintHeadsBusy'; 
-			JCL_CmdState.cSTA_CleanPrintHeads:
+			JCL_CmdState.cSTA_AutoMaintenanceDone:
 				getCmdState := 'CleanPrintHeads';		
 			JCL_CmdState.cSTA_CalibrationBusy:
 				getCmdState := 'CalibrationBusy';	
@@ -407,7 +418,7 @@ METHOD PROTECTED sta_STANDBY : BOOL
 			JCL_CmdState.cCMD_Standby:
 				me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;
 			JCL_CmdState.cCMD_CleanPrintHeads: 				
-				me.StateMachine.intStateNext := JCL_CmdState.cSTA_CleanPrintHeadsBusy;
+				me.StateMachine.intStateNext := JCL_CmdState.cSTA_AutoMaintenanceBusy;
 			JCL_CmdState.cCMD_Calibration: 				
 				me.StateMachine.intStateNext := JCL_CmdState.cSTA_CalibrationBusy;	
 		END_CASE
@@ -463,12 +474,12 @@ END_VAR
 		IF (CIf.SwCfg.bolSimulation) THEN
 			fbSimulationTimer(); // simulation time
 			IF (fbSimulationTimer.Q) THEN
-				SIf.Cur.intJETState  := JCL_CmdState.cSTA_Calibration;
+				SIf.Cur.intJETState  := E_JET_STATES.CALIBRATE;
 			END_IF
 		END_IF	
 	
 		// Wait for feedback -> maintenance automatic done	
-		IF (SIf.Cur.intJETState = JCL_CmdState.cSTA_Calibration) THEN
+		IF (SIf.Cur.intJETState = E_JET_STATES.CALIBRATE) THEN
 			me.StateMachine.intStateNext := JCL_CmdState.cSTA_Calibration;
 		END_IF
 		
@@ -596,7 +607,7 @@ IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	// EOFF and MANUAL
 	IF (me.StateMachine.intState<>cSTA_EOFF) AND (me.StateMachine.intState<>cSTA_EOFFBusy) AND (me.StateMachine.intState>cSTA_PON)
 	  AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit)  THEN
-		IF (SIf.Cur.intJETState = cSTA_EOFF) OR (SIf.Cur.intJETState = cSTA_EOFFBusy) THEN
+		IF (SIf.Cur.intJETState = E_JET_STATES.EOFF) OR (SIf.Cur.intJETState = E_JET_STATES.EOFFBusy) THEN
 			me.StateMachine.intStateNext := cSTA_EOFFBusy;
 		ELSIF (SIf.Cur.bolIsLocalControlled) AND (me.StateMachine.intState<>cSTA_MANUALMODE) AND (me.StateMachine.intState<>cSTA_ERROR) AND (me.StateMachine.intState<>cSTA_ERRORQuit) THEN
 			me.StateMachine.intStateNext := cSTA_MANUALMODE;
@@ -659,7 +670,7 @@ END_VAR
 			SIf.Cur.bolCleaningIncomplete:= FALSE;			
 			SIf.Cur.bolIsLocalControlled:= FALSE;		
 			SIf.Cur.bolIsRemoteControlled:= TRUE;
-			SIf.Cur.intJETState := cSTA_RUN;
+			SIf.Cur.intJETState := E_JET_STATES.RUN;
 		ELSE
 			cmdRUN();
 		END_IF
@@ -672,7 +683,7 @@ END_VAR
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
 		// Wait for feedback -> RUN
-		IF (SIf.Cur.intJETState = cSTA_RUN) THEN
+		IF (SIf.Cur.intJETState = E_JET_STATES.RUN) THEN
 			me.StateMachine.intStateNext := BASE_PLC.cSTA_RUN;
 		END_IF
 		
@@ -731,10 +742,12 @@ CASE me.StateMachine.intState OF
         THIS^.sta_STANDBYBusy();
 	JCL_CmdState.cSTA_Standby: 
         THIS^.sta_STANDBY();	
-	JCL_CmdState.cSTA_CleanPrintHeadsBusy: 
-        THIS^.sta_CLEANINGBusy();
-	JCL_CmdState.cSTA_CleanPrintHeads: 
-        THIS^.sta_CLEANING();	
+	JCL_CmdState.cSTA_AutoMaintenanceBusy: 
+        THIS^.sta_AUTOMAINTENANCEbusy();
+	JCL_CmdState.cSTA_AutoMaintenanceDone: 
+        THIS^.sta_AUTOMAINTENANCE();	
+	JCL_CmdState.cSTA_AutoMaintenanceFailed: 
+        THIS^.sta_AUTOMAINTENANCEfailed();	
 	JCL_CmdState.cSTA_CalibrationBusy:
 		THIS^.sta_CALIBRATIONBusy();
 	JCL_CmdState.cSTA_Calibration:
@@ -789,12 +802,12 @@ END_VAR
 				SIf.Cur.bolCleaningIncomplete:= FALSE;			
 				SIf.Cur.bolIsLocalControlled:= FALSE;		
 				SIf.Cur.bolIsRemoteControlled:= TRUE;
-				SIf.Cur.intJETState  := JCL_CmdState.cSTA_Standby;
+				SIf.Cur.intJETState  := E_JET_STATES.STANDBY;
 			END_IF
 		END_IF	
 	
 		// Wait for feedback -> standby	
-		IF (SIf.Cur.intJETState  = JCL_CmdState.cSTA_Standby) THEN
+		IF (SIf.Cur.intJETState  = E_JET_STATES.STANDBY) THEN
 			me.StateMachine.intStateNext := JCL_CmdState.cSTA_Standby;
 		END_IF
 		
@@ -858,6 +871,8 @@ METHOD PROTECTED sta_ERROR : BOOL
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+
+		SIf.Cur.bolExecuteCleaning := FALSE;
 	END_IF
 
 	
@@ -891,7 +906,7 @@ METHOD PROTECTED sta_MANUALMODE : BOOL
 		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle;
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 		
-		SIf.Cur.bolNeedsCleaning := FALSE;
+		SIf.Cur.bolExecuteCleaning := FALSE;
 		
 		// set Warning
 		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterManualWarning,0,ADR(SIf.Alm),E_AlmState.SET,CIf.Job.eMe_ActivAlmClass);
@@ -941,6 +956,7 @@ METHOD PROTECTED sta_EOFFBusy : BOOL
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 		
 		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterEOff,0,ADR(SIf.Alm),E_AlmState.SET,CIf.Job.eMe_ActivAlmClass);
+		SIf.Cur.bolExecuteCleaning := FALSE;
 	END_IF
 
 
@@ -972,9 +988,9 @@ IF (pTCP_CIF^.Job.eMe_ActivAlmClass >= E_AlmClass.TSTOP) THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_CLEANING" Id="{91e22eed-8133-4e1e-a7a2-a2ec2d9086fe}">
+    <Method Name="sta_AUTOMAINTENANCE" Id="{91e22eed-8133-4e1e-a7a2-a2ec2d9086fe}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_CLEANING'}
-METHOD PROTECTED sta_CLEANING : BOOL
+METHOD PROTECTED sta_AUTOMAINTENANCE : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
@@ -983,7 +999,7 @@ METHOD PROTECTED sta_CLEANING : BOOL
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 
-		SIf.Cur.bolNeedsCleaning:= FALSE;			
+		SIf.Cur.bolExecuteCleaning:= FALSE;			
 	END_IF
 
 // --------------------------------------------------------------------------------------
@@ -1011,9 +1027,9 @@ METHOD PROTECTED sta_CLEANING : BOOL
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <Method Name="sta_CLEANINGBusy" Id="{95a1d77f-d2a5-41b0-867b-84981014c697}">
+    <Method Name="sta_AUTOMAINTENANCEbusy" Id="{95a1d77f-d2a5-41b0-867b-84981014c697}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_CLEANINGBusy'}
-METHOD PROTECTED sta_CLEANINGBusy : BOOL
+METHOD PROTECTED sta_AUTOMAINTENANCEbusy : BOOL
 VAR
 	stNextCommand: T_JCL_Command;
 	pNextCommand: POINTER TO T_JCL_Command;
@@ -1051,13 +1067,13 @@ END_VAR
 		IF (CIf.SwCfg.bolSimulation) THEN
 			fbSimulationTimer(); // simulation time
 			IF (fbSimulationTimer.Q) THEN
-				SIf.Cur.intJETState  := JCL_CmdState.cSTA_CleanPrintHeads;
+				SIf.Cur.intJETState  := E_JET_STATES.MAINTAUTOBusy;
 			END_IF
 		END_IF	
 		
 		CASE me.SubStateMachine.intState OF
 			cSUB_WaitForCleaningToStart:
-				IF SIf.Cur.intJETState = cSTA_CleanPrintHeadsBusy THEN
+				IF SIf.Cur.intJETState = E_JET_STATES.MAINTAUTOBusy THEN
 					me.SubStateMachine.intStateNext := cSUB_CleaningBusy;
 				END_IF
 				
@@ -1067,12 +1083,13 @@ END_VAR
 				END_IF
 			cSUB_CleaningBusy:
 				// Wait for feedback -> maintenance automatic done	
-				IF (SIf.Cur.intJETState = JCL_CmdState.cSTA_CleanPrintHeads) THEN
-					me.StateMachine.intStateNext := JCL_CmdState.cSTA_CleanPrintHeads;
+				IF (SIf.Cur.intJETState = E_JET_STATES.MAINTAUTODONE) AND (NOT SIf.Cur.bolCleaningRequestPending) THEN
+					SIf.Cur.bolExecuteCleaning := FALSE;
+					me.StateMachine.intStateNext := JCL_CmdState.cSTA_AutoMaintenanceDone;
 				END_IF
 		END_CASE
 		
-		IF SIf.Cur.intJETState = cSTA_ERROR THEN
+		IF SIf.Cur.intJETState = E_JET_STATES.ERROR THEN
 			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.CleaningError,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.SubStateMachine.intStateNext := Base_PLC.cSTA_ERROR;
 		END_IF
@@ -1081,6 +1098,44 @@ END_VAR
 			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterCommunicationLost,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
 		END_IF
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Exit action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
+		;
+	END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="sta_AUTOMAINTENANCEfailed" Id="{9b36bf56-5111-4653-9cd1-2bd47cfada19}">
+      <Declaration><![CDATA[{attribute 'object_name' := 'sta_CLEANING'}
+METHOD PROTECTED sta_AUTOMAINTENANCEfailed : BOOL
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[// state implemetation
+// --------------------------------------------------------------------------------------
+// Entry action
+	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
+		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
+		
+		CIf.Job.intACmd := cCMD_DONE;
+		CIf.Job.intMCmd := cCMD_DONE;
+
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.CleaningError,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+		
+		SIf.Cur.bolExecuteCleaning:= FALSE;			
+	END_IF
+
+// --------------------------------------------------------------------------------------
+// Cyclic action
+	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		// Only Off comand is allowed, handled in allways		
+
+		IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterCommunicationLost,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
+		END_IF
+
 	END_IF
 
 // --------------------------------------------------------------------------------------
@@ -1129,7 +1184,7 @@ METHOD PROTECTED sta_EOFF : BOOL
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 	
-		IF (SIf.Cur.intJETState <> cSTA_EOFF) AND (SIf.Cur.intJETState <> cSTA_EOFFBusy) THEN
+		IF (SIf.Cur.intJETState <> E_JET_STATES.EOFF) AND (SIf.Cur.intJETState <> E_JET_STATES.EOFFBusy) THEN
 			IF SIf.Cur.bolIsLocalControlled THEN
 				me.StateMachine.intStateNext := cSTA_MANUALMODE;
 			ELSE
@@ -1223,7 +1278,7 @@ METHOD PROTECTED sta_PON : BOOL
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN	
 		
-		IF (SIf.Cur.intJETState = cSTA_EOFF) OR (SIf.Cur.intJETState = cSTA_EOFFBusy) THEN
+		IF (SIf.Cur.intJETState = E_JET_STATES.EOFF) OR (SIf.Cur.intJETState = E_JET_STATES.EOFFbusy) THEN
 			me.StateMachine.intStateNext := cSTA_EOFFBusy;
 		ELSIF SIf.Cur.bolIsLocalControlled THEN
 			me.StateMachine.intStateNext := cSTA_MANUALMODE;
@@ -1311,7 +1366,7 @@ SIf.Alm[E_ALM_JCL.JetterEOff].strText := 'Jetter in EOFF';
 SIf.Alm[E_ALM_JCL.JetterCommunicationLost].eAlmClass := E_AlmClass.OFF;
 SIf.Alm[E_ALM_JCL.JetterCommunicationLost].strText := 'Jetter Communication Lost';
 SIf.Alm[E_ALM_JCL.CleaningError].eAlmClass := E_AlmClass.OFF;
-SIf.Alm[E_ALM_JCL.CleaningError].strText := 'Cleaning Error';
+SIf.Alm[E_ALM_JCL.CleaningError].strText := 'AutoMaintenance Failed - Check Jetter';
 SIf.Alm[E_ALM_JCL.DataChannelFull].eAlmClass := E_AlmClass.OFF;
 SIf.Alm[E_ALM_JCL.DataChannelFull].strText := 'Print Done DataChannel Buffer is full';
 
@@ -1326,30 +1381,38 @@ CIf.SwCfg.bolEnable := TRUE;
 CIf.SwCfg.bolSimulation :=  FALSE;
 
 // Fill the lookup table with all valid jetter states
-fbStateLookup.A_Add(iAddKey := Base_PLC.cSTA_EOFFBusy, iAddValue:= 3);
-fbStateLookup.A_Add(iAddKey := Base_PLC.cSTA_EOFF, iAddValue:= 4);
-fbStateLookup.A_Add(iAddKey := Base_PLC.cSTA_PONBusy, iAddValue:= 1);
-fbStateLookup.A_Add(iAddKey := Base_PLC.cSTA_PON, iAddValue:= 2);
-fbStateLookup.A_Add(iAddKey := BASE_PLC.cSTA_OFFBusy, iAddValue:= 5);
-fbStateLookup.A_Add(iAddKey := BASE_PLC.cSTA_OFF, iAddValue:= 6);
-fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_ParkBusy, iAddValue:= 211);
-fbStateLookup.A_Add(iAddKey := BASE_PLC.cSTA_INITBusy, iAddValue:= 7);
-fbStateLookup.A_Add(iAddKey := BASE_PLC.cSTA_INIT, iAddValue:= 8);
-fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_StandbyBusy, iAddValue:= 201);
-fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_Standby, iAddValue:= 202);
-fbStateLookup.A_Add(iAddKey := BASE_PLC.cSTA_RUNBusy, iAddValue:= 9);
-fbStateLookup.A_Add(iAddKey := BASE_PLC.cSTA_RUN, iAddValue:= 10);
-fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_CalibrationBusy, iAddValue:= 203);
-fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_Calibration, iAddValue:= 204);
-fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_CleanPrintHeadsBusy, iAddValue:= 205);
-fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_CleanPrintHeads, iAddValue:= 206);
-fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_MaintenanceBusy, iAddValue:= 208);
-fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_MaintenanceInWork, iAddValue:= 209);
-fbStateLookup.A_Add(iAddKey := JCL_CmdState.cSTA_MaintenanceDone, iAddValue:= 210);
+fbStateLookup.A_Add(iAddKey := E_JET_STATES.DONE			 ,strAddValue := 'DONE');
+fbStateLookup.A_Add(iAddKey := E_JET_STATES.INITIALIZED		 ,strAddValue := 'INITIALIZED'	);
+fbStateLookup.A_Add(iAddKey := E_JET_STATES.EOFFBusy		 ,strAddValue := 'EOFFBusy'		);
+fbStateLookup.A_Add(iAddKey := E_JET_STATES.EOFF			 ,strAddValue := 'EOFF'			);
+fbStateLookup.A_Add(iAddKey := E_JET_STATES.PONBusy			 ,strAddValue := 'PONbusy'		);
+fbStateLookup.A_Add(iAddKey := E_JET_STATES.PON				 ,strAddValue := 'PON'			);
+fbStateLookup.A_Add(iAddKey := E_JET_STATES.OFFBusy			 ,strAddValue := 'OFFbusy'		);
+fbStateLookup.A_Add(iAddKey := E_JET_STATES.OFF				 ,strAddValue := 'OFF'			);
+fbStateLookup.A_Add(iAddKey := E_JET_STATES.INITBusy		 ,strAddValue := 'INITbusy'		);
+fbStateLookup.A_Add(iAddKey := E_JET_STATES.INIT			 ,strAddValue := 'INIT'			);
+fbStateLookup.A_Add(iAddKey := E_JET_STATES.RUNBusy			 ,strAddValue := 'RUNbusy'		);
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.RUN				 ,strAddValue := 'RUN'			);
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.ERROR			 ,strAddValue := 'ERROR'		);
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.ERRORquit		 ,strAddValue := 'ERRORquit'	);
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.PARKBusy			 ,strAddValue := 'PARKbusy'		);
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.PARK				 ,strAddValue := 'PARK'			);
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.STANDBYBusy		 ,strAddValue := 'STANDBYbusy'	);
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.STANDBY			 ,strAddValue := 'STANDBY'		);
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.MAINTMANINWORK	 ,strAddValue := 'MAINTMANINWORK'	);
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.MAINTMANDONE		 ,strAddValue := 'MAINTMANDONE'	);
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.MAINTMANBusy		 ,strAddValue := 'MAINTMANBusy'	);
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.MAINTAUTOBusy	 ,strAddValue := 'MAINTAUTOBusy'	);
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.MAINTAUTODONE	 ,strAddValue := 'MAINTAUTODONE'	);
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.MAINTAUTOFAILED	 ,strAddValue := 'MAINTAUTOFAILED');
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.FLUSHBusy		 ,strAddValue := 'FLUSHBusy'		);
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.FLUSHDONE		 ,strAddValue := 'FLUSHDONE'		);
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.SPITBusy			 ,strAddValue := 'SPITBusy'		);
+fbStateLookup.A_Add(iAddKey :=E_JET_STATES.SPITDONE			 ,strAddValue := 'SPITDONE'		);
 
 SIf.Par.udiCleaningStartTimeout_ms := 5000;
 
-SIf.Cur.bolNeedsCleaning:= FALSE;	
+SIf.Cur.bolExecuteCleaning:= FALSE;	
 SIf.Cur.intJETState:= 0;  // current state not yet known
 SIf.Cfg.bolJetterManualModeAllowed := FALSE;
 SIf.Cfg.bolEnablePrintDoneDataChannel := FALSE;
@@ -1387,7 +1450,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[IF pMessage <> NULL THEN
-	SIf.Cur.bolNeedsCleaning:= FALSE;			
+	SIf.Cur.bolExecuteCleaning:= FALSE;			
 	SIf.Cur.strDTOfLastCleaningCycle:= pMessage^.CleaningDone.strDTLastClean;
 END_IF]]></ST>
       </Implementation>
@@ -1417,7 +1480,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[IF pMessage <> NULL THEN
-	SIf.Cur.bolNeedsCleaning:= TRUE;			
+	SIf.Cur.bolExecuteCleaning:= TRUE;			
 END_IF]]></ST>
       </Implementation>
     </Method>
@@ -1466,6 +1529,9 @@ METHOD PROTECTED sta_RUN : BOOL
 // --------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
+		IF SIf.Cur.bolCleaningRequestPending AND (SIf.Cur.bolExecuteCleaning <> SIf.Cur.bolCleaningRequestPending) THEN
+			SIf.Cur.bolExecuteCleaning := TRUE;
+		END_IF
 		
 		IF (SIf.Cfg.bolJetterManualModeAllowed) THEN
 			IF SIf.Cur.bolIsLocalControlled THEN
@@ -1477,7 +1543,7 @@ METHOD PROTECTED sta_RUN : BOOL
 				me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
 			END_IF
 		ELSE
-			IF (SIf.Cur.intJETState <> cSTA_RUN) THEN
+			IF (SIf.Cur.intJETState <> E_JET_STATES.RUN) THEN
 				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.JetterNotRun,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 				me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
 			END_IF
@@ -1498,7 +1564,7 @@ METHOD PROTECTED sta_RUN : BOOL
 				Base_PLC.cCMD_RUN:
 					me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;
 				JCL_CmdState.cCMD_CleanPrintHeads:
-					me.StateMachine.intStateNext := JCL_CmdState.cSTA_CleanPrintHeadsBusy;
+					me.StateMachine.intStateNext := JCL_CmdState.cSTA_AutoMaintenanceBusy;
 				JCL_CmdState.cCMD_Standby, Base_PLC.cCMD_STOP:
 					me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;
 			END_CASE
@@ -1642,11 +1708,13 @@ METHOD PROTECTED sta_OFFBusy : BOOL
 			SIf.Cur.bolCleaningIncomplete:= FALSE;			
 			SIf.Cur.bolIsLocalControlled:= FALSE;		
 			SIf.Cur.bolIsRemoteControlled:= TRUE;
-			SIf.Cur.intJETState := BASE_PLC.cSTA_OFF;
+			SIf.Cur.intJETState := E_JET_STATES.OFF;
 		ELSE 
-			SIf.Cur.bolNeedsCleaning := FALSE;
+			SIf.Cur.bolExecuteCleaning := FALSE;
 			cmdOFF();
 		END_IF
+		
+		SIf.Cur.bolExecuteCleaning := FALSE;
 	END_IF
 
 
@@ -1655,7 +1723,7 @@ METHOD PROTECTED sta_OFFBusy : BOOL
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
 		// Wait for feedback -> OFF
-		IF (SIf.Cur.intJETState = BASE_PLC.cSTA_OFF) THEN
+		IF (SIf.Cur.intJETState = E_JET_STATES.OFF) THEN
 			me.StateMachine.intStateNext := cSTA_OFF;
 		END_IF
 		

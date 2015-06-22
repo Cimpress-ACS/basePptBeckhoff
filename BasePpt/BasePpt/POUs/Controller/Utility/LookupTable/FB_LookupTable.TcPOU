@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
-  <POU Name="FB_LookupTable" Id="{222d6a01-f54a-44a2-a504-2cb2e40c6879}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_LookupTable" Id="{222d6a01-f54a-44a2-a504-2cb2e40c6879}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_LookupTable
 VAR_INPUT
 	iAddKey: INT;
@@ -21,6 +21,7 @@ VAR
 	ii: INT;
 	bDone: BOOL;
 END_VAR
+
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[(* 
@@ -108,6 +109,5 @@ FOR ii := 0 TO MaxLookupSize BY 1 DO
 END_FOR]]></ST>
       </Implementation>
     </Action>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>
