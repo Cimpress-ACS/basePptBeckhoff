@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
   <DUT Name="E_PTS_MODE" Id="{5529f173-ee9b-4396-96fd-ab6e360061ad}">
     <Declaration><![CDATA[TYPE E_PTS_MODE :
 (
@@ -8,10 +8,10 @@
 	FixA := 0,
 	FixB := 1,
 	FixC := 2,
+	Test := 3,
 	MAX_E_PTS_MODE
 );
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>
