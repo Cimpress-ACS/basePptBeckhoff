@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_PTS" Id="{ce4721d8-0ee6-4269-bb23-f91a21a98bc0}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_PTS" Id="{ce4721d8-0ee6-4269-bb23-f91a21a98bc0}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_PTS EXTENDS FB_CtrlBase
 VAR_INPUT
 	In_bol_PaperAvailable: BOOL;
@@ -517,7 +517,7 @@ SIf.Cfg.aAutoPosDef[1].uinOutput := 1;
 SIf.Cfg.aDistributionPositionDefinition[0] := E_PTS_MODE.FixC; 
 SIf.Cfg.aDistributionPositionDefinition[1] := E_PTS_MODE.FixA; 
 SIf.Cfg.bolRaxEnable := True;		// Use Servo Axis instead of Malteser 
-SIf.Par.eMode := E_PTS_MODE.FixC;
+SIf.Par.eMode := E_PTS_MODE.Distribute;
 SIf.Par.udiPaperBarcodeToInputSensorTime := 2000;
 SIf.Par.udiPaperInTurnDelayTime := 000;
 SIf.Par.udiPaperOutTurnDelayTime := 300;
@@ -1392,6 +1392,5 @@ METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_PTS
         <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
       </Implementation>
     </Method>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>
