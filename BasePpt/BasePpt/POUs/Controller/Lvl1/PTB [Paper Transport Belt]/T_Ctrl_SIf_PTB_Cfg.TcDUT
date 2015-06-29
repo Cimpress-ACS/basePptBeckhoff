@@ -1,8 +1,12 @@
-﻿<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.19">
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
   <DUT Name="T_Ctrl_SIf_PTB_Cfg" Id="{dd1e60ba-e7ac-4ad1-83d3-60eba5efedbb}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PTB_Cfg :
 STRUCT
-	// Function Mode
+	(* 
+		Function Mode
+		{enum 0=Endless; 1=To Sensor; 2=To Distance; 3=To Time; 4=Stack}
+	*)
 	eMode							: E_PTB_MODE;
 	// Vacuum pump present
 	bolVacuumPresent				: BOOL;
@@ -17,6 +21,5 @@ STRUCT
 END_STRUCT
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>

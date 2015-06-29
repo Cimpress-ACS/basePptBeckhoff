@@ -1,14 +1,25 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
   <DUT Name="T_Ctrl_SIf_RAX_Cfg" Id="{fabe0b57-7541-495a-a5ef-9ec0831620b7}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_RAX_Cfg :
 STRUCT
-	/// homing mode
+	(* Homing mode
+		{enum 
+			0=Default Homing;
+			1=Abs Switch;
+			2=Limit Switch;
+			3=Ref Pulse;
+			4=Direct;
+			5=Absolute;
+			6=Block;
+			7=Force Calibration;
+			8=Reset Calibration;}
+	*)
 	eHomingMode: MC_HomingMode;
+	
 	lreShortestWayWindow_deg: LREAL;
 END_STRUCT
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>
