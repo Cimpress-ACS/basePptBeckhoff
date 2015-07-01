@@ -132,7 +132,7 @@ METHOD PROTECTED sta_WaitPaper : BOOL]]></Declaration>
 		END_IF
 		
 		CASE me.intCmd OF
-			PTS_CmdState.cCMD_STANDBY:
+			BASE_PLC.cCMD_STANDBY:
 				me.StateMachine.intStateNext := PTS_CmdState.cSTA_InitializeBusy;
 			Base_PLC.cCMD_STOP:
 				me.StateMachine.intStateNext := Base_PLC.cSTA_STOPBusy;
@@ -359,9 +359,9 @@ METHOD PROTECTED StateMachine : BOOL
 
 // main statemachine of base controller
 CASE me.StateMachine.intState OF
-    PTS_CmdState.cSTA_STANDBYBusy: 
+    BASE_PLC.cSTA_STANDBYBusy: 
         THIS^.sta_STANDBYBusy();
-    PTS_CmdState.cSTA_STANDBY: 
+    BASE_PLC.cSTA_STANDBY: 
         THIS^.sta_STANDBY();
     BASE_PLC.cSTA_RUNBusy: 
         THIS^.sta_RUNBusy();
@@ -466,7 +466,7 @@ IF (iIdx < iLength) THEN
 	CIf.Job.aCmdList[iIdx].strName := 'STOP'; 
 	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
 	iIdx := iIdx + 1;
-	CIf.Job.aCmdList[iIdx].intCmd := PTS_CmdState.cCMD_STANDBY;
+	CIf.Job.aCmdList[iIdx].intCmd := BASE_PLC.cCMD_STANDBY;
 	CIf.Job.aCmdList[iIdx].strName := 'STANDBY'; 
 	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
 	iIdx := iIdx + 1;
@@ -579,7 +579,7 @@ METHOD PROTECTED sta_STANDBYBusy : BOOL
 				PTS_CmdState.cSUB_TURNDONE:
 					IF (pRaxCIf^.Job.intState = cSTA_STOP) 
 					  AND ((pBeltCIf^.Job.intState = BASE_PLC.cSTA_OFF) OR (pBeltCIf^.Job.intState = BASE_PLC.cSTA_STOP)) THEN
-						me.StateMachine.intStateNext := PTS_CmdState.cSTA_STANDBY;
+						me.StateMachine.intStateNext := BASE_PLC.cSTA_STANDBY;
 					END_IF
 			END_CASE
 		ELSE
@@ -594,7 +594,7 @@ METHOD PROTECTED sta_STANDBYBusy : BOOL
 				PTS_CmdState.cSUB_TURNDONE:
 					IF (pMalteserCIf^.Job.intState = MDC_CmdState.cSTA_InPosition) 
 					  AND ((pBeltCIf^.Job.intState = BASE_PLC.cSTA_OFF) OR (pBeltCIf^.Job.intState = BASE_PLC.cSTA_STOP)) THEN
-						me.StateMachine.intStateNext := PTS_CmdState.cSTA_STANDBY;
+						me.StateMachine.intStateNext := BASE_PLC.cSTA_STANDBY;
 					END_IF
 			END_CASE	
 		END_IF
@@ -762,11 +762,11 @@ METHOD PROTECTED sta_InitializeBusy : BOOL
 		IF (SIf.Cfg.bolRaxEnable) THEN
 			IF (pRaxCIf^.Job.intState = cSTA_INIT) THEN
 				pRaxCIf^.Job.intACmd := cCMD_STOP;				
-				me.StateMachine.intStateNext := PTS_CmdState.cSTA_STANDBYBusy;
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_STANDBYBusy;
 			END_IF
 		ELSE
 			IF (pMalteserCIf^.Job.intState = MDC_CmdState.cSTA_InPosition) THEN
-				me.StateMachine.intStateNext := PTS_CmdState.cSTA_STANDBYBusy;
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_STANDBYBusy;
 			END_IF
 		END_IF
 	END_IF
@@ -798,7 +798,7 @@ METHOD PROTECTED sta_OFF : BOOL
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		CASE me.intCmd OF
 			BASE_PLC.cCMD_RUN,
-			PTS_CmdState.cCMD_STANDBY,
+			BASE_PLC.cCMD_STANDBY,
 			Base_plc.cCMD_STOP: 
 				me.StateMachine.intStateNext := PTS_CmdState.cSTA_InitializeBusy;
 		END_CASE
@@ -854,8 +854,8 @@ METHOD PROTECTED sta_RUN : BOOL]]></Declaration>
 		CASE me.intCmd OF
 			BASE_PLC.cCMD_STOP:
 				me.StateMachine.intStateNext := BASE_PLC.cSTA_STOPBusy;
-			PTS_CmdState.cCMD_STANDBY:
-				me.StateMachine.intStateNext := PTS_CmdState.cSTA_STANDBYBusy;
+			BASE_PLC.cCMD_STANDBY:
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_STANDBYBusy;
 		END_CASE
 	END_IF
 
@@ -999,8 +999,6 @@ IF (getCmdState='') THEN // global not defined get local
 	// get string cmd/state string information in runtime
 	IF (bolState=FALSE) THEN
 		CASE intCmdState OF
-			PTS_CmdState.cCMD_STANDBY: 
-				getCmdState := 'cCMD_STANDBY';
 			PTS_CmdState.cCMD_TURN: 
 				getCmdState := 'cCMD_TURN';
 		END_CASE;
@@ -1015,10 +1013,6 @@ IF (getCmdState='') THEN // global not defined get local
 				getCmdState := 'cSTA_InitializeBusy';
 			PTS_CmdState.cSTA_PaperDelayBusy: 
 				getCmdState := 'cSTA_PaperDelayBusy';
-			PTS_CmdState.cSTA_STANDBY: 
-				getCmdState := 'cSTA_STANDBY';
-			PTS_CmdState.cSTA_STANDBYBusy: 
-				getCmdState := 'cSTA_STANDBYBusy';
 			PTS_CmdState.cSTA_TurnEmptyBusy: 
 				getCmdState := 'cSTA_TurnEmptyBusy';
 			PTS_CmdState.cSTA_TurnPaperBusy: 
