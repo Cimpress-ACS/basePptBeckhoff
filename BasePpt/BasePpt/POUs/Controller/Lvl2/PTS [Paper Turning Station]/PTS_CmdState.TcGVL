@@ -1,13 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.25">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
   <GVL Name="PTS_CmdState" Id="{6f02a571-a11c-453b-8545-bf1aa9f00e5c}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	///ctrl specific command definitions
 	cCMD_TURN: INT := 202;
-	cCMD_STANDBY: INT := 204;
 	///ctrl specific states definitions
-	cSTA_STANDBYBusy: INT := 203;
-	cSTA_STANDBY: INT := 204;
 	cSTA_PaperDelayBusy: INT := 205;
 	cSTA_TurnPaperBusy: INT := 207;
 	cSTA_WaitPaperGone: INT := 209;
@@ -28,6 +25,5 @@
 	cPTS_MAX_AUTOPOS: UINT := 5;
 	cPTS_MAX_DISTRIBUTION: INT := 2;
 END_VAR]]></Declaration>
-    <ObjectProperties />
   </GVL>
 </TcPlcObject>

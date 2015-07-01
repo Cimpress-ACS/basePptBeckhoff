@@ -2,8 +2,6 @@
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
   <GVL Name="JCL_CmdState" Id="{b347002d-a030-4b1d-a62c-f83848d76bf8}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
-	/// Preparing jetter for production
-	cCMD_Standby: INT := 202;
 	/// Start calibration routine for MM camera system
 	cCMD_Calibration: INT := 204;
 	/// Start automatic cleaning cycle for both printheads
@@ -13,8 +11,6 @@
 	/// Send back the state msg.
 	cCMD_RequestState: INT := 240;
 	/// ctrl specific states definitions
-	cSTA_StandbyBusy: INT := 201;
-	cSTA_Standby: INT := cCMD_Standby;
 	cSTA_ConnectBusy: INT := 250;
 	cSTA_AutoMaintenanceBusy: INT := 205;
 	cSTA_AutoMaintenanceDone: INT := cCMD_CleanPrintHeads;

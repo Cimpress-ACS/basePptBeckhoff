@@ -58,8 +58,8 @@ METHOD PROTECTED sta_OFF : BOOL
 		CASE me.intCmd OF
 			Base_PLC.cCMD_RUN: 				
 				me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;	
-			JCL_CmdState.cCMD_Standby, Base_PLC.cCMD_STOP: 				
-				me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;
+			BASE_PLC.cCMD_STANDBY, Base_PLC.cCMD_STOP: 				
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_STANDBYBusy;
 			JCL_CmdState.cCMD_CleanPrintHeads: 				
 				me.StateMachine.intStateNext := JCL_CmdState.cSTA_AutoMaintenanceBusy;
 		END_CASE
@@ -219,8 +219,8 @@ METHOD PROTECTED sta_CALIBRATION : BOOL
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 		
 		CASE me.intCmd OF		
-			JCL_CmdState.cCMD_Standby, Base_PLC.cCMD_STOP:
-				me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;			
+			BASE_PLC.cCMD_STANDBY, Base_PLC.cCMD_STOP:
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_STANDBYBusy;			
 		END_CASE
 
 		IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
@@ -352,8 +352,6 @@ IF (getCmdState='') THEN // global not defined get local
 	IF (bolState=FALSE) THEN
 		// States's
 		CASE intCmdState OF
-			JCL_CmdState.cCMD_Standby: 
-				getCmdState := 'Standby';
 			JCL_CmdState.cCMD_CleanPrintHeads: 
 				getCmdState := 'CleanPrintHeads';		
 				
@@ -361,11 +359,7 @@ IF (getCmdState='') THEN // global not defined get local
 	ELSE
 		// States's
 		CASE intCmdState OF			
-			// Main states
-			JCL_CmdState.cSTA_StandbyBusy: 
-				getCmdState := 'StandbyBusy'; 
-			JCL_CmdState.cSTA_Standby:
-				getCmdState := 'Standby';			
+			// Main states			
 			JCL_CmdState.cSTA_ConnectBusy:
 				getCmdState := 'ConnectBusy';
 			JCL_CmdState.cSTA_AutoMaintenanceBusy: 
@@ -397,8 +391,7 @@ END_IF]]></ST>
     </Method>
     <Method Name="sta_STANDBY" Id="{20cd81fb-31ab-45dd-9818-931aceaa8cde}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_STANDBY'}
-METHOD PROTECTED sta_STANDBY : BOOL
-]]></Declaration>
+METHOD PROTECTED sta_STANDBY : BOOL]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 // --------------------------------------------------------------------------------------
@@ -415,8 +408,8 @@ METHOD PROTECTED sta_STANDBY : BOOL
 		CASE me.intCmd OF
 			BASE_PLC.cCMD_RUN:
 				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUNBusy;
-			JCL_CmdState.cCMD_Standby:
-				me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;
+			BASE_PLC.cCMD_STANDBY:
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_STANDBYBusy;
 			JCL_CmdState.cCMD_CleanPrintHeads: 				
 				me.StateMachine.intStateNext := JCL_CmdState.cSTA_AutoMaintenanceBusy;
 			JCL_CmdState.cCMD_Calibration: 				
@@ -738,9 +731,9 @@ CASE me.StateMachine.intState OF
         THIS^.sta_RUNBusy();
 	cSTA_RUN: 
         THIS^.sta_RUN();
-	JCL_CmdState.cSTA_StandbyBusy: 
+	BASE_PLC.cSTA_STANDBYBusy: 
         THIS^.sta_STANDBYBusy();
-	JCL_CmdState.cSTA_Standby: 
+	BASE_PLC.cSTA_STANDBY:
         THIS^.sta_STANDBY();	
 	JCL_CmdState.cSTA_AutoMaintenanceBusy: 
         THIS^.sta_AUTOMAINTENANCEbusy();
@@ -808,7 +801,7 @@ END_VAR
 	
 		// Wait for feedback -> standby	
 		IF (SIf.Cur.intJETState  = E_JET_STATES.STANDBY) THEN
-			me.StateMachine.intStateNext := JCL_CmdState.cSTA_Standby;
+			me.StateMachine.intStateNext := BASE_PLC.cSTA_STANDBY;
 		END_IF
 		
 		IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
@@ -1009,8 +1002,8 @@ METHOD PROTECTED sta_AUTOMAINTENANCE : BOOL
 		CASE me.intCmd OF	
 			Base_PLC.cCMD_RUN:
 				me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;	
-			JCL_CmdState.cCMD_Standby, Base_PLC.cCMD_STOP:
-				me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;			
+			BASE_PLC.cCMD_STANDBY, Base_PLC.cCMD_STOP:
+				me.StateMachine.intStateNext := BASE_PLC.cSTA_STANDBYBusy;			
 		END_CASE
 
 		IF p_fbTCP^.CtrlCIf^.Job.intState <> TCP_CmdState.cSTA_Connect THEN
@@ -1327,7 +1320,7 @@ IF (iIdx < iLength) THEN
 	CIf.Job.aCmdList[iIdx].strName := 'RUN'; 
 	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
     iIdx := iIdx + 1;
-	CIf.Job.aCmdList[iIdx].intCmd := JCL_CmdState.cCMD_Standby;
+	CIf.Job.aCmdList[iIdx].intCmd := BASE_PLC.cCMD_STANDBY;
 	CIf.Job.aCmdList[iIdx].strName := 'STANDBY'; 
 	CIf.Job.aCmdList[iIdx].bolAvailable := TRUE;
 	iIdx := iIdx + 1;
@@ -1565,8 +1558,8 @@ METHOD PROTECTED sta_RUN : BOOL
 					me.StateMachine.intStateNext := Base_PLC.cSTA_RUNBusy;
 				JCL_CmdState.cCMD_CleanPrintHeads:
 					me.StateMachine.intStateNext := JCL_CmdState.cSTA_AutoMaintenanceBusy;
-				JCL_CmdState.cCMD_Standby, Base_PLC.cCMD_STOP:
-					me.StateMachine.intStateNext := JCL_CmdState.cSTA_StandbyBusy;
+				BASE_PLC.cCMD_STANDBY, Base_PLC.cCMD_STOP:
+					me.StateMachine.intStateNext := BASE_PLC.cSTA_STANDBYBusy;
 			END_CASE
 		END_IF
 		
