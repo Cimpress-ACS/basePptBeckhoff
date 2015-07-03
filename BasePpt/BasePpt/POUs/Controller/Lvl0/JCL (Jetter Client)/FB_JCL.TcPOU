@@ -1066,14 +1066,10 @@ END_VAR
 		
 		CASE me.SubStateMachine.intState OF
 			cSUB_WaitForCleaningToStart:
-				IF SIf.Cur.intJETState = E_JET_STATES.MAINTAUTOBusy THEN
+				IF (SIf.Cur.intJETState = E_JET_STATES.MAINTAUTOBusy) OR (SIf.Cur.intJETState = E_JET_STATES.MAINTAUTODONE) THEN
 					me.SubStateMachine.intStateNext := cSUB_CleaningBusy;
 				END_IF
-				
-				IF me.SubStateMachine.udiTimeInState_ms > SIf.Par.udiCleaningStartTimeout_ms THEN
-					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.CleaningError,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-					me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
-				END_IF
+
 			cSUB_CleaningBusy:
 				// Wait for feedback -> maintenance automatic done	
 				IF (SIf.Cur.intJETState = E_JET_STATES.MAINTAUTODONE) AND (NOT SIf.Cur.bolCleaningRequestPending) THEN
