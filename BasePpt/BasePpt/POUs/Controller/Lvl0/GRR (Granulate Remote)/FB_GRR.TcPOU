@@ -314,14 +314,13 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 	BASE_PLC.getInInt(CIf.Job.bolIoForce,ADR(SIf.In.intMainPressure));
 ELSE
 	//simulation of global IO
-	SIf.In.bolSystemOk.intern	:= TRUE;
+	SIf.In.bolSystemOk.intern			:= TRUE;
 	SIf.In.bolMainPressureError.intern	:= FALSE;
-	SIf.In.bolEoffOrFuseOk.intern	:= TRUE;
+	SIf.In.bolEoffOrFuseOk.intern		:= TRUE;
 	SIf.In.bolPowderLowWarning.intern	:= FALSE;
-	SIf.In.bolAutoMode.intern	:= TRUE;
-	SIf.In.intState.intern	:= SIf.Out.intCommand.intern;
-	SIf.In.bolToggleBitGrn.intern	:= SIf.Out.bolToggleBitGrr.intern;
-	SIf.In.intState.intern	:= 0;
+	SIf.In.bolAutoMode.intern			:= TRUE;
+	SIf.In.intState.intern				:= SIf.Out.intCommand.intern;
+	SIf.In.bolToggleBitGrn.intern		:= SIf.Out.bolToggleBitGrr.intern;
 END_IF]]></ST>
       </Implementation>
     </Method>
