@@ -85,8 +85,7 @@ METHOD PROTECTED cmdSTANDBY : BOOL
 VAR
 	stNextCommand: T_JCL_Command;
 	pNextCommand: POINTER TO T_JCL_Command;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// -----------------------------------------
 // Prepare telegram for STANDBY
@@ -646,8 +645,7 @@ METHOD PROTECTED sta_RUNBusy : BOOL
 VAR
 	stNextCommand: T_JCL_Command;
 	pNextCommand: POINTER TO T_JCL_Command;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
 // --------------------------------------------------------------------------------------
@@ -1414,8 +1412,7 @@ METHOD PROTECTED cmdRUN : BOOL
 VAR
 	stNextCommand: T_JCL_Command;
 	pNextCommand: POINTER TO T_JCL_Command;
-END_VAR
-]]></Declaration>
+END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// -----------------------------------------
 // Prepare telegram for RUN
