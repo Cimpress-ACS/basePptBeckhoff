@@ -17,7 +17,8 @@
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.101	- improve GRR simulation
+    <Description>0.0.0.102 - add latest BaseElements
+0.0.0.101	- improve GRR simulation
 0.0.0.100	- [RP-1927] AutoCleaning more fault tolerant
 0.0.0.99   - added Standby state
 0.0.0.98   - [RP-1409] - Added metadata to enum
@@ -128,13 +129,13 @@
 0.0.0.4 - Bug fixed in FB_PTB
 0.0.0.3 - Update to take the newest libraries 
 0.0.0.2 - Update to Base_PLC 0.3.3.2; Update to Base_Elements 0.0.0.9</Description>
-    <ProjectVersion>0.0.0.101</ProjectVersion>
+    <ProjectVersion>0.0.0.102</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
   </PropertyGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.1.61,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.1.64,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
     <LibraryReference Include="Base_PLC,0.3.5.17,Vistaprint">
