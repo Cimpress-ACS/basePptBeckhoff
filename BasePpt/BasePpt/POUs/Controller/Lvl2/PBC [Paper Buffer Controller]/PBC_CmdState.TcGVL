@@ -1,28 +1,24 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
   <GVL Name="PBC_CmdState" Id="{c08a46b0-45e8-438d-90f8-78fc66cf873f}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	///ctrl specific command definitions
 	cCMD_SINGLE			: INT := 202;
 	cCMD_MANUALSTART	: INT := 204;
 	///ctrl specific states definitions
-	cSTA_INITbusy		: INT := 205;
-	cSUB_WAITPAPER: INT := 300;
-	cSUB_POSITIONbusy: INT := 301;
-	cSUB_POSITIONSTOPbusy: INT := 302;
-	cSUB_EVALUATEEJECT: INT := 303;
-	cSUB_EJECTbusy: INT := 304;
-	cSUB_EJECTSTOPbusy: INT := 305;
-	cSUB_POSITIONSTARTbusy: INT := 306;
-	cSUB_EJECTSTARTbusy: INT := 307;
-	cSUB_READYEJECT: INT := 308;
-	cSUB_WAITPAPERGONETABLE: INT := 309;
-	///	cSUB_BARCODEREADstart	: INT := 310;
-	///	cSUB_BARCODREREADbusy	: INT := 311;
-	///	cSUB_BARCODREREAD  		: INT := 312;
-	cSUB_POSITIONRETRYDELAY: INT := 313;
-	cSUB_POSITIONRETRYSTOP: INT := 314;
+	cSUB_WAITPAPER				: INT := 300;
+	cSUB_POSITIONbusy			: INT := 301;
+	cSUB_POSITIONSTOPbusy		: INT := 302;
+	cSUB_EVALUATEEJECT			: INT := 303;
+	cSUB_EJECTbusy				: INT := 304;
+	cSUB_EJECTSTOPbusy			: INT := 305;
+	cSUB_POSITIONSTARTbusy		: INT := 306;
+	cSUB_EJECTSTARTbusy			: INT := 307;
+	cSUB_READYEJECT				: INT := 308;
+	cSUB_WAITPAPERGONETABLE		: INT := 309;
+	cSUB_POSITIONRETRYDELAY		: INT := 313;
+	cSUB_POSITIONRETRYSTOP		: INT := 314;
+	cSUB_EJECTPAUSE				: INT := 315;
 END_VAR]]></Declaration>
-    <ObjectProperties />
   </GVL>
 </TcPlcObject>
