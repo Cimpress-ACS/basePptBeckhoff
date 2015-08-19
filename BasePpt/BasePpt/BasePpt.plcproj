@@ -17,7 +17,8 @@
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.103 - [RP-1951] Introduced Standby
+    <Description>0.0.0.104 - [RP-2023] 5min item wait time
+0.0.0.103 - [RP-1951] Introduced Standby
 0.0.0.102 - add latest BaseElements
 0.0.0.101	- improve GRR simulation
 0.0.0.100	- [RP-1927] AutoCleaning more fault tolerant
@@ -130,7 +131,7 @@
 0.0.0.4 - Bug fixed in FB_PTB
 0.0.0.3 - Update to take the newest libraries 
 0.0.0.2 - Update to Base_PLC 0.3.3.2; Update to Base_Elements 0.0.0.9</Description>
-    <ProjectVersion>0.0.0.103</ProjectVersion>
+    <ProjectVersion>0.0.0.104</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
@@ -217,6 +218,7 @@
     <Folder Include="POUs\Controller\Utility\Data Channel\PrintDoneMessage" />
     <Folder Include="POUs\Controller\Utility\FiFo" />
     <Folder Include="POUs\Controller\Utility\LookupTable" />
+    <Folder Include="POUs\Controller\Utility\PaperTracker" />
     <Folder Include="Version" />
   </ItemGroup>
   <ItemGroup>
@@ -737,6 +739,10 @@
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\helper\init_Pbc.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\helper\T_PBC_DATACHN.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\helper\T_PBC.TcDUT">
       <SubType>Code</SubType>
     </Compile>
@@ -959,6 +965,14 @@
     </Compile>
     <Compile Include="POUs\Controller\Utility\LookupTable\LUT_Constants.TcGVL">
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\Controller\Utility\PaperTracker\FB_ITR.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Controller\Utility\PaperTracker\T_ItrInfo.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="Version\Global_Version.TcGVL">
       <SubType>Code</SubType>
