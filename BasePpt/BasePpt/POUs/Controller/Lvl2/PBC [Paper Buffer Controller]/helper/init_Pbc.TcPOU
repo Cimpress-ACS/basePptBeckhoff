@@ -1,17 +1,26 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="init_Pbc" Id="{a9544bb5-a3f8-471a-9027-9ef21922f1e9}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="init_Pbc" Id="{a9544bb5-a3f8-471a-9027-9ef21922f1e9}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION init_Pbc : BOOL
 VAR_INPUT
-	pPbc: POINTER TO T_PBC;
+	pPbc		: POINTER TO T_PBC;
+	pItr		: POINTER TO FB_ITR;
 	/// instance array of all controller instances
-	pCtrlInst: POINTER TO fb_CtrlBase;
+	pCtrlInst	: POINTER TO fb_CtrlBase;
 	/// common interface array of all controllers (main use for PLC)
-	pCtrlCIf: POINTER TO T_Ctrl_CIf;
+	pCtrlCIf	: POINTER TO T_Ctrl_CIf;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPbc^.id.Pbc_PtbDeStacker_Umc); // init and entry fb_instance in global fb pointer array
+      <ST><![CDATA[pPbc^.datachn.rSendData.fbDataChannel.InitChannel(SIZEOF(pPbc^.datachn.rSendData.rDataChannelItem), ADR(pPbc^.datachn.rSendData.rDataChannelItem));
+pPbc^.datachn.rSendData.fbFifo.DataChannel := ADR(pPbc^.datachn.rSendData.fbDataChannel);
+pPbc^.datachn.rSendData.fbFifo.FreeDataPointer := TRUE;
+pPbc^.datachn.rSendData.fbFifo.Enable := TRUE;
+
+pPbc^.ctrl.fbPbc_Bcc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPbc^.id.Pbc_Bcc); // init and entry fb_instance in global fb pointer array
+pPbc^.ctrl.fbPbc_Bcc.pBCD_SIf_In := pPbc^.ctrl.fbPbc_Bcc_Bcd.getSIf();
+
+pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPbc^.id.Pbc_PtbDeStacker_Umc); // init and entry fb_instance in global fb pointer array
 pPbc^.ctrl.fbPbc_PtbDeStacker.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPbc^.id.Pbc_PtbDeStacker); // init and entry fb_instance in global fb pointer array
 pPbc^.ctrl.fbPbc_PtbDeStacker.Drive := ADR(pPbc^.ctrl.fbPbc_PtbDeStacker_Umc);
 
@@ -23,8 +32,11 @@ pPbc^.ctrl.fbPbc_PtbBelt.VacuumPump := ADR(pPbc^.ctrl.fbPbc_PtbBelt_Vpc);
 
 pPbc^.ctrl.fbPbc.iniAllCtrlArrays(pCtrlInst,pCtrlCIf,pPbc^.id.Pbc); 		 // init and entry fb_instance in global fb pointer array
 pPbc^.ctrl.fbPbc.DeStacker := ADR(pPbc^.ctrl.fbPbc_PtbDeStacker);
-pPbc^.ctrl.fbPbc.Belt := ADR(pPbc^.ctrl.fbPbc_PtbBelt);]]></ST>
+pPbc^.ctrl.fbPbc.Belt := ADR(pPbc^.ctrl.fbPbc_PtbBelt);
+pPbc^.ctrl.fbPbc.ItemTracker := pItr;
+pPbc^.ctrl.fbPbc.BarcodeReader := ADR(pPbc^.ctrl.fbPbc_Bcc);
+pPbc^.ctrl.fbPbc.DataChannel := ADR(pPbc^.datachn.rSendData.fbFifo);
+]]></ST>
     </Implementation>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>

@@ -16,22 +16,36 @@ END_VAR
 VAR
 	/// Specific interface struct for public access
 	/// -------------------------------------------------------
-	SIf: T_Ctrl_SIf_PBC;
+	_SIf					: T_Ctrl_SIf_PBC;
 	
 	///Sub Controller Pointer
 	/// -------------------------------------------------------
-	p_fbDeStacker: POINTER TO FB_PTB;
-	pDeStackerCIf: POINTER TO BASE_PLC.T_Ctrl_CIf;
-	p_fbBelt: POINTER TO FB_PTB;
-	pBeltCIf: POINTER TO BASE_PLC.T_Ctrl_CIf;
+	_pDeStacker				: POINTER TO FB_PTB;
+	_pDeStackerCIf			: POINTER TO BASE_PLC.T_Ctrl_CIf;
+	_pBelt					: POINTER TO FB_PTB;
+	_pBeltCIf				: POINTER TO BASE_PLC.T_Ctrl_CIf;
+	/// Barcode Reader Variable
+	_pBcc					: POINTER TO FB_BCC;
+	_pBccCIf				: POINTER TO T_Ctrl_CIf;
+	_pBccSIf				: POINTER TO T_Ctrl_SIf_BCC;
 	
+	/// DataChannel
+	_pDataChannel			: POINTER TO FB_DataChannelSenderFifo;
+	
+	/// Item Tracker
+	_pItemTracker			: POINTER TO FB_ITR;
+	/// -------------------------------------------------------
+
 	/// Other localy used variables
 	/// -------------------------------------------------------
-	m_uinPaperHight_mm: UINT := 460;
-	m_uinPaperWidth_mm: UINT := 320;
-	m_intRetry: INT := 0;
-	udiBufferEmptyTimer_ms: UDINT;
-	m_eStopReason			: E_STOPREASON;
+	_uinPaperHight_mm			: UINT := 460;
+	_uinPaperWidth_mm			: UINT := 320;
+	_intRetry					: INT := 0;
+	_udiBufferEmptyTimer_ms		: UDINT;
+	_eStopReason				: E_STOPREASON;
+	
+	_uliLastBarcodeDetected		: ULINT;
+	
 END_VAR
 VAR CONSTANT
 	cPAPERPOSITION_TOLERANCE_mm: UINT := 200;
@@ -102,48 +116,51 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 
 	IF (CIf.SwCfg.bolSimulation) THEN
-		SIf.In.bolCapacityReached.intern := FALSE;
-		SIf.In.bolPaperAvailableEntry.intern := TRUE;
-		SIf.In.bolPaperAvailableExit.intern := TRUE;
+		_SIf.In.bolCapacityReached.intern := FALSE;
+		_SIf.In.bolPaperAvailableEntry.intern := TRUE;
+		_SIf.In.bolPaperAvailableExit.intern := TRUE;
 	END_IF
 
-	SIf.Out.bolAirOn.intern := TRUE;
+	_SIf.Out.bolAirOn.intern := TRUE;
 	
-	pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
-	pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+	_pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
+	_pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+	_pBccCIf^.Job.intACmd := cCMD_OFF;
 	
 	// clear alarm
-	pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
+	pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(_SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
 END_IF
 
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
 IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-	IF SIf.Par.bolAutomaticMode THEN
-		SIf.Cur.uinPaperToEjectParameter := 0;
-		SIf.Cur.uinPaperToEjectCount := 0;
-		me.StateMachine.intStateNext := BASE_PLC.cSTA_RUN;
-	ELSE	
-		IF me.intCmd = PBC_CmdState.cCMD_SINGLE THEN
-			SIf.Cur.uinPaperToEjectParameter := 1;
-			SIf.Cur.uinPaperToEjectCount := 1;
-	
-			IF NOT SIf.In.bolPaperAvailableExit.intern AND NOT SIf.In.bolPaperAvailableEntry.intern THEN
-				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.BufferEmpty),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-			END_IF
-	
+	IF (_pBeltCIf^.Job.intState = cSTA_RUN) AND (_pBccCIf^.Job.intState = cSTA_OFF) THEN
+		IF _SIf.Par.bolAutomaticMode THEN
+			_SIf.Cur.uinPaperToEjectParameter := 0;
+			_SIf.Cur.uinPaperToEjectCount := 0;
 			me.StateMachine.intStateNext := BASE_PLC.cSTA_RUN;
-		ELSE
-			SIf.Cur.uinPaperToEjectParameter := UDINT_TO_UINT(SIf.Par.udiSheetToEject);
-			SIf.Cur.uinPaperToEjectCount := UDINT_TO_UINT(SIf.Par.udiSheetToEject);
-	
-			IF SIf.Par.udiSheetToEject > 0 THEN
+		ELSE	
+			IF me.intCmd = PBC_CmdState.cCMD_SINGLE THEN
+				_SIf.Cur.uinPaperToEjectParameter := 1;
+				_SIf.Cur.uinPaperToEjectCount := 1;
+		
+				IF NOT _SIf.In.bolPaperAvailableExit.intern AND NOT _SIf.In.bolPaperAvailableEntry.intern THEN
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.BufferEmpty),0,ADR(_SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				END_IF
+		
 				me.StateMachine.intStateNext := BASE_PLC.cSTA_RUN;
 			ELSE
-				CIf.Job.intACmd := cCMD_DONE;
-				CIf.Job.intMCmd := cCMD_DONE;
-				me.StateMachine.intStateNext := BASE_PLC.cSTA_STANDBYBusy;
+				_SIf.Cur.uinPaperToEjectParameter := UDINT_TO_UINT(_SIf.Par.udiSheetToEject);
+				_SIf.Cur.uinPaperToEjectCount := UDINT_TO_UINT(_SIf.Par.udiSheetToEject);
+		
+				IF _SIf.Par.udiSheetToEject > 0 THEN
+					me.StateMachine.intStateNext := BASE_PLC.cSTA_RUN;
+				ELSE
+					CIf.Job.intACmd := cCMD_DONE;
+					CIf.Job.intMCmd := cCMD_DONE;
+					me.StateMachine.intStateNext := BASE_PLC.cSTA_STANDBYBusy;
+				END_IF
 			END_IF
 		END_IF
 	END_IF
@@ -167,9 +184,10 @@ END_VAR
       <Implementation>
         <ST><![CDATA[SUPER^.CtrlInit();
 
-pDeStackerCIf 	:= AddChild(p_fbDeStacker^);
-pBeltCIf 		:= AddChild(p_fbBelt^);
-
+_pDeStackerCIf 	:= AddChild(_pDeStacker^);
+_pBeltCIf 		:= AddChild(_pBelt^);
+_pBccCIf		:= AddChild(_pBelt^);
+_pBccSIf		:= _pBcc^.CtrlSIf;
 
 
 
@@ -192,14 +210,14 @@ END_VAR]]></Declaration>
 IF (me.StateMachine.intState<>cSTA_SINGLE_ANSWER) THEN
 	
 	// check if DeStacker is empty
-	IF NOT SIf.In.bolPaperAvailableEntry.intern AND NOT SIf.In.bolPaperAvailableExit.intern THEN
-		udiBufferEmptyTimer_ms := udiBufferEmptyTimer_ms + me.FUBInfo.udiSample_ms;
-		IF udiBufferEmptyTimer_ms > 3000 THEN
-			SIf.Cur.intPaperInBufferCount := 0;
+	IF NOT _SIf.In.bolPaperAvailableEntry.intern AND NOT _SIf.In.bolPaperAvailableExit.intern THEN
+		_udiBufferEmptyTimer_ms := _udiBufferEmptyTimer_ms + me.FUBInfo.udiSample_ms;
+		IF _udiBufferEmptyTimer_ms > 3000 THEN
+			_SIf.Cur.intPaperInBufferCount := 0;
 		END_IF
 	ELSE
-		udiBufferEmptyTimer_ms := 0;
-		SIf.Cur.intPaperInBufferCount := -1;
+		_udiBufferEmptyTimer_ms := 0;
+		_SIf.Cur.intPaperInBufferCount := -1;
 	END_IF
 
 END_IF
@@ -226,11 +244,11 @@ METHOD PROTECTED sta_ERROR : BOOL]]></Declaration>
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateHistory := me.StateMachine.intStateLastCycle; // -> possibillity to go back to state before error
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
-		pDeStackerCIf^.Job.intACmd 	:= BASE_PLC.cCMD_STOP;
+		_pDeStackerCIf^.Job.intACmd 	:= BASE_PLC.cCMD_STOP;
 		//pBeltCIf^.Job.intACmd 		:= BASE_PLC.cCMD_STOP;
 		
 		// clear alarm
-		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(_SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
 	END_IF
 
 
@@ -316,7 +334,7 @@ END_IF]]></ST>
       <Get Name="Get" Id="{7eacd356-6888-4a09-bbea-080afa2d0daf}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[CtrlSIf := ADR(SIf);]]></ST>
+          <ST><![CDATA[CtrlSIf := ADR(_SIf);]]></ST>
         </Implementation>
       </Get>
     </Property>
@@ -330,11 +348,11 @@ METHOD PROTECTED sta_STOPbusy : BOOL]]></Declaration>
 IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 
-	pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
+	_pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
 	
 	// set alarm
-	IF (NOT SIf.Par.bolAutomaticMode) THEN
-		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(SIf.Alm),E_AlmState.SET,CIf.Job.eMe_ActivAlmClass);
+	IF (NOT _SIf.Par.bolAutomaticMode) THEN
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(_SIf.Alm),E_AlmState.SET,CIf.Job.eMe_ActivAlmClass);
 	END_IF
 END_IF
 
@@ -382,7 +400,8 @@ END_VAR
 	PBC_CmdState.cSUB_POSITIONSTARTbusy:
 		IF NOT SIf.In.bolPaperAvailableExit.intern THEN
 			SIf.Cur.bolPaperBeforeEjectAvailable := SIf.In.bolCapacityReached.intern OR SIf.In.bolPaperAvailableEntry.intern;
-			pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+			_pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+			_pBccCIf^.Job.intACmd := BCC_CmdState.cBCC_CMD_READ;
 			intSubStateNext := PBC_CmdState.cSUB_POSITIONbusy;
 		ELSE
 			intSubStateNext := cSUB_READYEJECT;
@@ -396,12 +415,12 @@ END_VAR
 				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.PaperTransport),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 				intStateNext := Base_PLC.cSTA_ERROR;	
 			ELSE
-				pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
+				_pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
 				intSubStateNext := PBC_CmdState.cSUB_POSITIONSTOPbusy;
 			END_IF 
 		ELSE
 			IF SIf.In.bolPaperAvailableExit.intern THEN
-				pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
+				_pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
 				intSubStateNext := PBC_CmdState.cSUB_POSITIONSTOPbusy;
 			END_IF
 		END_IF
@@ -417,13 +436,19 @@ END_VAR
 	// substate Wait paper - wait for the next paper if the buffer was empty
 	// ------------------------------------------------------------------------
 	PBC_CmdState.cSUB_POSITIONSTOPbusy:
-		IF pDeStackerCIf^.Job.intState = BASE_PLC.cSTA_STOP THEN
+		IF (_pDeStackerCIf^.Job.intState = BASE_PLC.cSTA_STOP) 
+			AND (_pBccCIf^.Job.intState = BCH_CmdState.cCMD_READ) THEN
+
+			_uliLastBarcodeDetected := _pBccSIf^.Cur.stData.uliBarCode;
+			_pBccCIf^.Job.intACmd := cCMD_OFF;
+
 			IF SIf.In.bolPaperAvailableExit.intern THEN
 				intSubStateNext := PBC_CmdState.cSUB_READYEJECT;
 			ELSE
 				intSubStateNext := PBC_CmdState.cSUB_WAITPAPER;
 			END_IF
 		END_IF
+
 	PBC_CmdState.cSUB_READYEJECT:
 		IF NOT SIf.In.bolPaperAvailableExit.intern THEN
 			intSubStateNext := PBC_CmdState.cSUB_WAITPAPER;
@@ -442,8 +467,8 @@ END_VAR
       <Implementation>
         <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
 IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-	setOutBol(CIf.Job.bolIoForce ,ADR(SIf.Out.bolAirOn));
-	THIS^.Out_bolAirOn := SIf.Out.bolAirOn.map;
+	setOutBol(CIf.Job.bolIoForce ,ADR(_SIf.Out.bolAirOn));
+	THIS^.Out_bolAirOn := _SIf.Out.bolAirOn.map;
 END_IF]]></ST>
       </Implementation>
     </Method>
@@ -451,7 +476,8 @@ END_IF]]></ST>
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_RUN'}
 METHOD PROTECTED sta_RUN : BOOL
 VAR
-	pItem: POINTER TO T_IdBase_DCH;
+	pItem				: POINTER TO T_IdBase_DCH;
+	bolRelease			: BOOL;
 END_VAR]]></Declaration>
       <Implementation>
         <ST><![CDATA[// state implemetation
@@ -465,14 +491,14 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		CIf.Job.intMCmd := BASE_PLC.cCMD_DONE;
 	END_IF
 	
-	SIf.Cur.uinSheetToSheetTime := 0;
-	m_intRetry := 0;
+	_SIf.Cur.uinSheetToSheetTime := 0;
+	_intRetry := 0;
 	
 	IF CIf.SwCfg.bolSimulation THEN
-		SIf.In.bolPaperAvailableEntry.intern := TRUE;
-		SIf.In.bolDoublePaperDetection.intern := FALSE;	
-		SIf.In.bolPaperAvailableExit.intern := TRUE;	
-		SIf.In.bolCapacityReached.intern := TRUE;
+		_SIf.In.bolPaperAvailableEntry.intern := TRUE;
+		_SIf.In.bolDoublePaperDetection.intern := FALSE;	
+		_SIf.In.bolPaperAvailableExit.intern := TRUE;	
+		_SIf.In.bolCapacityReached.intern := TRUE;
 	END_IF
 
 	me.SubStateMachine.intState 	:= PBC_CmdState.cSUB_POSITIONSTARTbusy;
@@ -483,20 +509,20 @@ END_IF
 //--------------------------------------------------------------------------------------
 // Cyclic action
 IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-	IF (SIf.In.bolDoublePaperDetection.intern) THEN
-		IF SIf.Par.bolEnableDoublePaperDetection THEN
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoublePaperError),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+	IF (_SIf.In.bolDoublePaperDetection.intern) THEN
+		IF _SIf.Par.bolEnableDoublePaperDetection THEN
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoublePaperError),0,ADR(_SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;
 		ELSE
-			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoublePaperWarning),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+			pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoublePaperWarning),0,ADR(_SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 		END_IF
 	ELSE	
 		CASE me.SubStateMachine.intState OF
 			// substate Wait paper - wait for the next paper if the buffer was empty
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_WAITPAPER:
-				IF NOT SIf.In.bolPaperAvailableExit.intern THEN
-					IF SIf.In.bolCapacityReached.intern OR SIf.In.bolPaperAvailableEntry.intern THEN
+				IF NOT _SIf.In.bolPaperAvailableExit.intern THEN
+					IF _SIf.In.bolCapacityReached.intern OR _SIf.In.bolPaperAvailableEntry.intern THEN
 						me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONSTARTbusy;
 					END_IF
 				ELSE
@@ -506,9 +532,9 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 			// substate PositionStart busy
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_POSITIONSTARTbusy:
-				IF NOT SIf.In.bolPaperAvailableExit.intern THEN
-					SIf.Cur.bolPaperBeforeEjectAvailable := SIf.In.bolCapacityReached.intern OR SIf.In.bolPaperAvailableEntry.intern;
-					pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+				IF NOT _SIf.In.bolPaperAvailableExit.intern THEN
+					_SIf.Cur.bolPaperBeforeEjectAvailable := _SIf.In.bolCapacityReached.intern OR _SIf.In.bolPaperAvailableEntry.intern;
+					_pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
 					me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONbusy;
 				ELSE
 					me.SubStateMachine.intStateNext := cSUB_EVALUATEEJECT;
@@ -517,35 +543,36 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 			// substate Position busy
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_POSITIONbusy:
-				IF me.SubStateMachine.udiTimeInState_ms <= SIf.Par.udiPaperTransportTime THEN
-					IF SIf.In.bolPaperAvailableExit.intern THEN
-						m_intRetry := 0;
-						pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
+				IF me.SubStateMachine.udiTimeInState_ms <= _SIf.Par.udiPaperTransportTime THEN
+					IF _SIf.In.bolPaperAvailableExit.intern THEN
+						_intRetry := 0;
+						_pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
+						_pBccCIf^.Job.intACmd := BCC_CmdState.cBCC_CMD_READ;
 						me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONSTOPbusy;
 					END_IF
 				ELSE
-					IF SIf.Cur.bolPaperBeforeEjectAvailable OR SIf.In.bolCapacityReached.intern OR SIf.In.bolPaperAvailableEntry.intern THEN
-						IF DINT_TO_UDINT(m_intRetry) < SIf.Par.udiPaperInjectRetries THEN
-							pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
-							m_intRetry := m_intRetry + 1;
-							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.PaperInjectRetry),m_intRetry,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+					IF _SIf.Cur.bolPaperBeforeEjectAvailable OR _SIf.In.bolCapacityReached.intern OR _SIf.In.bolPaperAvailableEntry.intern THEN
+						IF DINT_TO_UDINT(_intRetry) < _SIf.Par.udiPaperInjectRetries THEN
+							_pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
+							_intRetry := _intRetry + 1;
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.PaperInjectRetry),_intRetry,ADR(_SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 							me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONRETRYSTOP;	
 						ELSE
-							m_intRetry := 0;
-							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.PaperInject),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+							_intRetry := 0;
+							pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.PaperInject),0,ADR(_SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 							me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;	
 						END_IF
 					ELSE
-						m_intRetry := 0;
-						pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
+						_intRetry := 0;
+						_pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
 						me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONSTOPbusy;
 					END_IF 
 				END_IF
 
 				// Simulation
 				IF CIf.SwCfg.bolSimulation THEN
-					IF (me.SubStateMachine.udiTimeInState_ms > SIf.Par.udiSimPaperTransportTime) AND NOT SIf.In.bolPaperAvailableExit.intern THEN
-						SIf.In.bolPaperAvailableExit.intern := TRUE;	
+					IF (me.SubStateMachine.udiTimeInState_ms > _SIf.Par.udiSimPaperTransportTime) AND NOT _SIf.In.bolPaperAvailableExit.intern THEN
+						_SIf.In.bolPaperAvailableExit.intern := TRUE;	
 					END_IF
 				END_IF
 				// -----------------------------------
@@ -553,21 +580,24 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 			// Wait that the moto stops
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_POSITIONRETRYSTOP:
-				IF pDeStackerCIf^.Job.intState = BASE_PLC.cSTA_STOP THEN
+				IF _pDeStackerCIf^.Job.intState = BASE_PLC.cSTA_STOP THEN
 					me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONRETRYDELAY;
 				END_IF
 
 			// Stop the motor and way for x ms
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_POSITIONRETRYDELAY:
-				IF me.SubStateMachine.udiTimeInState_ms > SIf.Par.udiPaperInjectRetryPauseTime_ms THEN
+				IF me.SubStateMachine.udiTimeInState_ms > _SIf.Par.udiPaperInjectRetryPauseTime_ms THEN
 					me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONSTARTbusy;
 				END_IF
 
 			// substate PositionStop busy
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_POSITIONSTOPbusy:
-				IF pDeStackerCIf^.Job.intState = BASE_PLC.cSTA_STOP THEN
+				IF (_pDeStackerCIf^.Job.intState = BASE_PLC.cSTA_STOP) 
+					AND (_pBccCIf^.Job.intState = BCH_CmdState.cCMD_READ) THEN
+					_uliLastBarcodeDetected := _pBccSIf^.Cur.stData.uliBarCode;
+					_pBccCIf^.Job.intACmd := cCMD_OFF;
 					me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_EVALUATEEJECT;
 				END_IF
 
@@ -575,16 +605,28 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_EVALUATEEJECT:
 				// Eject next paper if there are still paper to edject or endless ejection
-				IF (((SIf.Cur.uinPaperToEjectCount > 0) AND NOT SIf.Par.bolAutomaticMode AND NOT StopReleaseItems()) 
-					OR (SIf.Par.bolAutomaticMode AND NOT StopReleaseItems())) THEN 
+				IF (((_SIf.Cur.uinPaperToEjectCount > 0) AND NOT _SIf.Par.bolAutomaticMode AND NOT StopReleaseItems()) 
+					OR (_SIf.Par.bolAutomaticMode AND NOT StopReleaseItems())) THEN 
 					// Make a delay from sheet to sheet if it is not the first sheet
-					IF SIf.In.bolPaperAvailableExit.intern THEN
-						IF   ((SIf.Cur.uinSheetToSheetTime > SIf.Par.udiSheetToSheetTime) AND SIf.Par.bolAutomaticMode)
-						  OR ((SIf.Cur.uinSheetToSheetTime > SIf.Par.udiManualSheetToSheetTime_ms) AND NOT SIf.Par.bolAutomaticMode)
-						  OR ((SIf.Cur.uinPaperToEjectCount = SIf.Cur.uinPaperToEjectParameter) AND NOT SIf.Par.bolAutomaticMode) THEN
-							SIf.Cur.uinSheetToSheetTime := 0;
-							me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_EJECTSTARTbusy;
+					IF _SIf.In.bolPaperAvailableExit.intern THEN
+						IF _SIf.Par.bolAutomaticMode THEN
+							bolRelease := TRUE;
+							
+							IF _pItemTracker <> NULL THEN
+								bolRelease := _pItemTracker^.Release(_uliLastBarcodeDetected);
+							END_IF
+							
+							IF  (_SIf.Cur.uinSheetToSheetTime > _SIf.Par.udiSheetToSheetTime) AND bolRelease THEN
+								_SIf.Cur.uinSheetToSheetTime := 0;
+								me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_EJECTSTARTbusy;
+							END_IF
+						ELSE
+							IF (_SIf.Cur.uinSheetToSheetTime > _SIf.Par.udiManualSheetToSheetTime_ms) OR (_SIf.Cur.uinPaperToEjectCount = _SIf.Cur.uinPaperToEjectParameter) THEN
+								_SIf.Cur.uinSheetToSheetTime := 0;
+								me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_EJECTSTARTbusy;
+							END_IF	
 						END_IF
+
 					ELSE
 						me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_WAITPAPER;
 					END_IF
@@ -599,7 +641,7 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 			// substate Pause Eject
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_EJECTPAUSE:
-				IF SIf.In.bolPaperAvailableExit.intern THEN
+				IF _SIf.In.bolPaperAvailableExit.intern THEN
 					IF NOT StopReleaseItems() THEN
 						me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_EVALUATEEJECT;
 					END_IF
@@ -612,36 +654,58 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 			// substate EjectStart busy
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_EJECTSTARTbusy:
-				pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
-				SIf.Cur.uinPaperToPaperTime_ms := UDINT_TO_UINT((m_uinPaperHight_mm + 100) * 1000 / p_fbDeStacker^.CtrlSIf^.Par.rBeltParam.uinBeltSpeed);
-				SIf.Par.udiSimPaperToPaperTransportTime := SIf.Cur.uinPaperToPaperTime_ms / 3; 
+				_pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+				_SIf.Cur.uinPaperToPaperTime_ms := UDINT_TO_UINT((_uinPaperHight_mm + 100) * 1000 / _pDeStacker^.CtrlSIf^.Par.rBeltParam.uinBeltSpeed);
+				_SIf.Par.udiSimPaperToPaperTransportTime := _SIf.Cur.uinPaperToPaperTime_ms / 3; 
+
+				// Send the Barcode to Saber
+				IF (_pDataChannel <> NULL) AND (_SIf.Cfg.bolEnableDataChannel) THEN
+					IF UINT_TO_INT(_pDataChannel^.ItemCount) >= _pDataChannel^.MaxFifoSize THEN
+						pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_BCH.DataChannelBufferFull,0,ADR(_SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+					ELSE
+						pItem := __NEW(T_IdBase_DCH);
+						pItem^.rBaseInfo.eHealth := E_ItemHealth.Healthy;
+						pItem^.rBaseInfo.uinModuleId := 1;
+						pItem^.rBaseInfo.uinActualPosition := 1;
+						pItem^.udiIdentification := _uliLastBarcodeDetected;
+						_pDataChannel^.Push(pItem);					
+					END_IF
+				END_IF
+				
+				IF _pItemTracker <> NULL THEN
+					_pItemTracker^.RemoveBarcode(_uliLastBarcodeDetected);
+				END_IF
+				
+				_uliLastBarcodeDetected := 0;
+
 				me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_EJECTbusy;
+				// Add here the message to Saber about the barcode.
 	
 			// substate Eject busy
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_EJECTbusy:
-				IF NOT SIf.In.bolPaperAvailableExit.intern AND NOT SIf.Cfg.bolUseTurnTableSensorForEject THEN
-					pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
+				IF NOT _SIf.In.bolPaperAvailableExit.intern AND NOT _SIf.Cfg.bolUseTurnTableSensorForEject THEN
+					_pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
 					me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_EJECTSTOPbusy;
 				END_IF
 	
-				IF SIf.In.bolTurnTableMiddleSensor.intern AND SIf.Cfg.bolUseTurnTableSensorForEject THEN
-					pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
+				IF _SIf.In.bolTurnTableMiddleSensor.intern AND _SIf.Cfg.bolUseTurnTableSensorForEject THEN
+					_pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
 					me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_WAITPAPERGONETABLE;
 				END_IF
 				
-				IF (me.SubStateMachine.udiTimeInState_ms > SIf.Cur.uinPaperToPaperTime_ms) THEN
-					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.PaperTransport),0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				IF (me.SubStateMachine.udiTimeInState_ms > _SIf.Cur.uinPaperToPaperTime_ms) THEN
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.PaperTransport),0,ADR(_SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 					me.StateMachine.intStateNext := Base_PLC.cSTA_ERROR;	
 				END_IF
 
 				// Simulation
 				IF CIf.SwCfg.bolSimulation THEN
-					IF (me.SubStateMachine.udiTimeInState_ms > SIf.Par.udiSimPaperToPaperTransportTime) THEN
-						IF SIf.Cfg.bolUseTurnTableSensorForEject THEN
-							SIf.In.bolTurnTableMiddleSensor.intern := TRUE;
+					IF (me.SubStateMachine.udiTimeInState_ms > _SIf.Par.udiSimPaperToPaperTransportTime) THEN
+						IF _SIf.Cfg.bolUseTurnTableSensorForEject THEN
+							_SIf.In.bolTurnTableMiddleSensor.intern := TRUE;
 						ELSE
-							SIf.In.bolPaperAvailableExit.intern := FALSE;	
+							_SIf.In.bolPaperAvailableExit.intern := FALSE;	
 						END_IF	
 					END_IF
 				END_IF
@@ -650,14 +714,14 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 			// substate Wait Paper Gone Table - Wait until the paper is gone from the turn table
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_WAITPAPERGONETABLE:
-				IF NOT SIf.In.bolTurnTableMiddleSensor.intern THEN
+				IF NOT _SIf.In.bolTurnTableMiddleSensor.intern THEN
 					me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_EJECTSTOPbusy;
 				END_IF
 
 				// Simulation
 				IF CIf.SwCfg.bolSimulation THEN
-					IF (me.SubStateMachine.udiTimeInState_ms > SIf.Par.udiSimPaperToPaperTransportTime) THEN
-						SIf.In.bolTurnTableMiddleSensor.intern := FALSE;
+					IF (me.SubStateMachine.udiTimeInState_ms > _SIf.Par.udiSimPaperToPaperTransportTime) THEN
+						_SIf.In.bolTurnTableMiddleSensor.intern := FALSE;
 					END_IF
 				END_IF
 				// -----------------------------------
@@ -666,9 +730,9 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 			// substate EjectStop busy
 			// ------------------------------------------------------------------------
 			PBC_CmdState.cSUB_EJECTSTOPbusy:
-				IF pDeStackerCIf^.Job.intState = BASE_PLC.cSTA_STOP THEN
-					IF SIf.Cur.uinPaperToEjectCount > 0 THEN
-						SIf.Cur.uinPaperToEjectCount := SIf.Cur.uinPaperToEjectCount - 1;
+				IF _pDeStackerCIf^.Job.intState = BASE_PLC.cSTA_STOP THEN
+					IF _SIf.Cur.uinPaperToEjectCount > 0 THEN
+						_SIf.Cur.uinPaperToEjectCount := _SIf.Cur.uinPaperToEjectCount - 1;
 					END_IF
 	
 					me.SubStateMachine.intStateNext := PBC_CmdState.cSUB_POSITIONSTARTbusy;
@@ -688,7 +752,7 @@ IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
 			END_CASE
 	END_CASE
 	
-	SIf.Cur.uinSheetToSheetTime := UDINT_TO_UINT(SIf.Cur.uinSheetToSheetTime + me.FUBInfo.udiSample_ms);
+	_SIf.Cur.uinSheetToSheetTime := UDINT_TO_UINT(_SIf.Cur.uinSheetToSheetTime + me.FUBInfo.udiSample_ms);
 END_IF
 
 
@@ -710,22 +774,24 @@ METHOD PROTECTED sta_OFFBusy : BOOL]]></Declaration>
 	IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 		me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 		
-		SIf.Out.bolAirOn.intern := FALSE;
+		_SIf.Out.bolAirOn.intern := FALSE;
 		
-		pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_OFF;
-		pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_OFF;
-		
+		_pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_OFF;
+		_pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_OFF;
+		_pBccCIf^.Job.intACmd := cCMD_OFF;
+
 		// clear alarm
-		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
+		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(_SIf.Alm),E_AlmState.CLR,CIf.Job.eMe_ActivAlmClass);
 	END_IF
 
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
 	IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-		IF (pDeStackerCIf^.Job.intState = BASE_PLC.cSTA_OFF)
-		  AND (pBeltCIf^.Job.intState = BASE_PLC.cSTA_OFF) 
-		  AND (NOT SIf.In.bolAirPressorOk.intern OR (NOT SIf.Cfg.bolGranulatAirPressureUnitAvailable))  THEN
+		IF (_pDeStackerCIf^.Job.intState = BASE_PLC.cSTA_OFF)
+		  AND (_pBeltCIf^.Job.intState = BASE_PLC.cSTA_OFF)
+		  AND (_pBccCIf^.Job.intState = cSTA_OFF) 
+		  AND (NOT _SIf.In.bolAirPressorOk.intern OR (NOT _SIf.Cfg.bolGranulatAirPressureUnitAvailable))  THEN
 			me.StateMachine.intStateNext := BASE_PLC.cSTA_OFF;
 		END_IF
 	END_IF
@@ -744,13 +810,13 @@ METHOD PROTECTED sta_OFFBusy : BOOL]]></Declaration>
       <Get Name="Get" Id="{159bb6ca-ce34-40c1-b61a-0a16d00312b8}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[PaperHight := m_uinPaperHight_mm;]]></ST>
+          <ST><![CDATA[PaperHight := _uinPaperHight_mm;]]></ST>
         </Implementation>
       </Get>
       <Set Name="Set" Id="{9c753651-a36c-4e95-9665-c74526259204}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[m_uinPaperHight_mm := PaperHight;]]></ST>
+          <ST><![CDATA[_uinPaperHight_mm := PaperHight;]]></ST>
         </Implementation>
       </Set>
     </Property>
@@ -762,28 +828,44 @@ METHOD PROTECTED CountPaper : UINT
         <ST><![CDATA[]]></ST>
       </Implementation>
     </Method>
+    <Property Name="BarcodeReader" Id="{7231db18-640f-4789-8e1b-c190373c027d}">
+      <Declaration><![CDATA[PROPERTY BarcodeReader : POINTER TO FB_BCC
+]]></Declaration>
+      <Set Name="Set" Id="{3dd5565c-2566-4bc6-af7f-b7707ca58bd7}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_pBcc := BarcodeReader;]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{63b8d992-e47e-40a7-9aa8-7446e6fba6ad}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[BarcodeReader := _pBcc;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
     <Method Name="IoInBridge" Id="{732f0498-951e-474e-9d5f-cb91c7db908a}">
       <Declaration><![CDATA[{attribute 'object_name' := 'IoInBridge'}
 METHOD PROTECTED IoInBridge : BOOL
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[// digitale and analoge inputs read from hardware or forcing
-SIf.In.bolCapacityReached.map			:= THIS^.In_bolCapacityReached				;
-SIf.In.bolPaperAvailableEntry.map		:= THIS^.In_bolPaperAvailableEntry	;
-SIf.In.bolPaperAvailableExit.map		:= THIS^.In_bolPaperAvailableExit		;
-SIf.In.bolDoublePaperDetection.map		:= NOT THIS^.In_bolDoublePaperDetection		;
-SIf.In.bolTurnTableMiddleSensor.map		:= NOT THIS^.In_bolTurnTableMiddleSensor		;
-SIf.In.bolAirPressorOk.map				:= THIS^.In_bolAirPressorOk		;
+_SIf.In.bolCapacityReached.map			:= THIS^.In_bolCapacityReached				;
+_SIf.In.bolPaperAvailableEntry.map		:= THIS^.In_bolPaperAvailableEntry	;
+_SIf.In.bolPaperAvailableExit.map		:= THIS^.In_bolPaperAvailableExit		;
+_SIf.In.bolDoublePaperDetection.map		:= NOT THIS^.In_bolDoublePaperDetection		;
+_SIf.In.bolTurnTableMiddleSensor.map		:= NOT THIS^.In_bolTurnTableMiddleSensor		;
+_SIf.In.bolAirPressorOk.map				:= THIS^.In_bolAirPressorOk		;
 
 IF (CIf.SwCfg.bolSimulation = FALSE) THEN
-	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolCapacityReached));
-	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolPaperAvailableEntry));
-	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolPaperAvailableExit));
-	BASE_PLC.getInBolDebounced(CIf.Job.bolIoForce,me.FUBInfo.udiSample_ms, SIf.Par.udiDoublePaperDebounceTime_ms, ADR(SIf.In.bolDoublePaperDetection));
-	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolTurnTableMiddleSensor));
-	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolAirPressorOk));
+	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(_SIf.In.bolCapacityReached));
+	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(_SIf.In.bolPaperAvailableEntry));
+	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(_SIf.In.bolPaperAvailableExit));
+	BASE_PLC.getInBolDebounced(CIf.Job.bolIoForce,me.FUBInfo.udiSample_ms, _SIf.Par.udiDoublePaperDebounceTime_ms, ADR(_SIf.In.bolDoublePaperDetection));
+	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(_SIf.In.bolTurnTableMiddleSensor));
+	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(_SIf.In.bolAirPressorOk));
 ELSE
-	SIf.In.bolDoublePaperDetection.intern := FALSE;
+	_SIf.In.bolDoublePaperDetection.intern := FALSE;
 END_IF
 ]]></ST>
       </Implementation>
@@ -910,13 +992,13 @@ METHOD PROTECTED sta_OFF : BOOL
       <Get Name="Get" Id="{c18a6bb5-7cac-4ac6-a19f-0b49df655263}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[DeStacker := p_fbDeStacker;]]></ST>
+          <ST><![CDATA[DeStacker := _pDeStacker;]]></ST>
         </Implementation>
       </Get>
       <Set Name="Set" Id="{cfc2fe3f-121f-4c38-8ab7-7ca9165be5e4}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[p_fbDeStacker := DeStacker;]]></ST>
+          <ST><![CDATA[_pDeStacker := DeStacker;]]></ST>
         </Implementation>
       </Set>
     </Property>
@@ -933,10 +1015,10 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 
 	IF CIf.SwCfg.bolSimulation THEN
-		SIf.In.bolPaperAvailableEntry.intern := TRUE;
-		SIf.In.bolDoublePaperDetection.intern := FALSE;	
-		SIf.In.bolPaperAvailableExit.intern := FALSE;	
-		SIf.In.bolCapacityReached.intern := TRUE;
+		_SIf.In.bolPaperAvailableEntry.intern := TRUE;
+		_SIf.In.bolDoublePaperDetection.intern := FALSE;	
+		_SIf.In.bolPaperAvailableExit.intern := FALSE;	
+		_SIf.In.bolCapacityReached.intern := TRUE;
 	END_IF
 	
 	me.SubStateMachine.intState 	:= PBC_CmdState.cSUB_POSITIONSTARTbusy;
@@ -946,7 +1028,7 @@ END_IF
 //--------------------------------------------------------------------------------------
 // Cyclic action
 IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-	sub_TransportPaperToFront(me.SubStateMachine.intState,SIf,me.StateMachine.intStateNext, me.SubStateMachine.intStateNext);
+	sub_TransportPaperToFront(me.SubStateMachine.intState,_SIf,me.StateMachine.intStateNext, me.SubStateMachine.intStateNext);
 	
 	CASE me.SubStateMachine.intState OF
 		PBC_CmdState.cSUB_WAITPAPER,
@@ -974,22 +1056,32 @@ VAR_INPUT
 END_VAR
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[StopReleaseItems := SIf.Par.bolStopReleaseItems AND SIf.Cfg.bolEnableSaberStopDeStack;]]></ST>
+        <ST><![CDATA[StopReleaseItems := _SIf.Par.bolStopReleaseItems AND _SIf.Cfg.bolEnableSaberStopDeStack;]]></ST>
       </Implementation>
     </Method>
+    <Property Name="DataChannel" Id="{bd0f8c36-928b-42cd-8a2f-0b824fc1acc9}">
+      <Declaration><![CDATA[PROPERTY DataChannel : POINTER TO FB_DataChannelSenderFifo
+]]></Declaration>
+      <Set Name="Set" Id="{cdb2fc7a-6083-4db2-bbe9-08973093e53a}">
+        <Declaration><![CDATA[]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_pDataChannel := DataChannel;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
     <Property Name="PaperWidth" Id="{bdbc5d91-7413-4fdb-8d4f-fb269464fa49}">
       <Declaration><![CDATA[PROPERTY PaperWidth : UINT
 ]]></Declaration>
       <Set Name="Set" Id="{847efd9e-5aef-4387-9b44-81ea88222d4a}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[m_uinPaperWidth_mm := PaperWidth;]]></ST>
+          <ST><![CDATA[_uinPaperWidth_mm := PaperWidth;]]></ST>
         </Implementation>
       </Set>
       <Get Name="Get" Id="{f6372af2-1c30-4f0a-a6ff-7be6bd5caf7d}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[PaperWidth := m_uinPaperWidth_mm;]]></ST>
+          <ST><![CDATA[PaperWidth := _uinPaperWidth_mm;]]></ST>
         </Implementation>
       </Get>
     </Property>
@@ -1004,10 +1096,10 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 
 	IF CIf.SwCfg.bolSimulation THEN
-		SIf.In.bolPaperAvailableEntry.intern := TRUE;
-		SIf.In.bolDoublePaperDetection.intern := FALSE;	
-		SIf.In.bolPaperAvailableExit.intern := FALSE;	
-		SIf.In.bolCapacityReached.intern := TRUE;
+		_SIf.In.bolPaperAvailableEntry.intern := TRUE;
+		_SIf.In.bolDoublePaperDetection.intern := FALSE;	
+		_SIf.In.bolPaperAvailableExit.intern := FALSE;	
+		_SIf.In.bolCapacityReached.intern := TRUE;
 	END_IF
 	
 	me.SubStateMachine.intState 	:= PBC_CmdState.cSUB_POSITIONSTARTbusy;
@@ -1017,7 +1109,7 @@ END_IF
 //--------------------------------------------------------------------------------------
 // Cyclic action
 IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-	sub_TransportPaperToFront(me.SubStateMachine.intState,SIf,me.StateMachine.intStateNext, me.SubStateMachine.intStateNext);
+	sub_TransportPaperToFront(me.SubStateMachine.intState,_SIf,me.StateMachine.intStateNext, me.SubStateMachine.intStateNext);
 	
 	CASE me.SubStateMachine.intState OF
 		PBC_CmdState.cSUB_WAITPAPER,
@@ -1045,7 +1137,7 @@ END_IF]]></ST>
 METHOD getCtrlSIf : POINTER TO T_Ctrl_SIf_PBC
 ]]></Declaration>
       <Implementation>
-        <ST><![CDATA[getCtrlSIf := ADR(SIf);]]></ST>
+        <ST><![CDATA[getCtrlSIf := ADR(_SIf);]]></ST>
       </Implementation>
     </Method>
     <Method Name="FB_init" Id="{d6a73665-80ea-4a98-bb13-8baa13b64ead}">
@@ -1095,26 +1187,26 @@ CIf.Info.strType := 'FB_PBC';
 CIf.Info.strFullName := 'Paper Buffer Controller';
 
 // set alarm class
-SIf.Alm[E_ALM_PBC.BufferEmpty].eAlmClass := Base_PLC.E_AlmClass.WARNING;
-SIf.Alm[E_ALM_PBC.BufferEmpty].strText := 'Buffer is Empty'; 
-SIf.Alm[E_ALM_PBC.BufferFull].eAlmClass := E_AlmClass.TSTOP;
-SIf.Alm[E_ALM_PBC.BufferFull].strText := 'Buffer reached capacity limit';
-SIf.Alm[E_ALM_PBC.PaperTransport].eAlmClass := E_AlmClass.TSTOP;
-SIf.Alm[E_ALM_PBC.PaperTransport].strText := 'Possible Paper Jam';
-SIf.Alm[E_ALM_PBC.DoublePaperError].eAlmClass := E_AlmClass.TSTOP;
-SIf.Alm[E_ALM_PBC.DoublePaperError].strText := 'Double paper detected';
-SIf.Alm[E_ALM_PBC.DataChannelBufferFull].eAlmClass := E_AlmClass.WARNING;
-SIf.Alm[E_ALM_PBC.DataChannelBufferFull].strText := 'Data Channel buffer is full';
-SIf.Alm[E_ALM_PBC.DataChannelSend].eAlmClass := E_AlmClass.WARNING;
-SIf.Alm[E_ALM_PBC.DataChannelSend].strText := 'Data Channel item could not be sent';
-SIf.Alm[E_ALM_PBC.PaperInject].eAlmClass := E_AlmClass.TSTOP;
-SIf.Alm[E_ALM_PBC.PaperInject].strText := 'Paper is not transported to the front';
-SIf.Alm[E_ALM_PBC.PaperInjectRetry].eAlmClass := E_AlmClass.WARNING;
-SIf.Alm[E_ALM_PBC.PaperInjectRetry].strText := 'Paper transport retry';
-SIf.Alm[E_ALM_PBC.DoNotReleaseItems].eAlmClass := E_AlmClass.INFO;
-SIf.Alm[E_ALM_PBC.DoNotReleaseItems].strText := 'Currently not releasing items because in manual mode';
-SIf.Alm[E_ALM_PBC.DoublePaperWarning].eAlmClass := E_AlmClass.WARNING;
-SIf.Alm[E_ALM_PBC.DoublePaperWarning].strText := 'Double paper detected';
+_SIf.Alm[E_ALM_PBC.BufferEmpty].eAlmClass := Base_PLC.E_AlmClass.WARNING;
+_SIf.Alm[E_ALM_PBC.BufferEmpty].strText := 'Buffer is Empty'; 
+_SIf.Alm[E_ALM_PBC.BufferFull].eAlmClass := E_AlmClass.TSTOP;
+_SIf.Alm[E_ALM_PBC.BufferFull].strText := 'Buffer reached capacity limit';
+_SIf.Alm[E_ALM_PBC.PaperTransport].eAlmClass := E_AlmClass.TSTOP;
+_SIf.Alm[E_ALM_PBC.PaperTransport].strText := 'Possible Paper Jam';
+_SIf.Alm[E_ALM_PBC.DoublePaperError].eAlmClass := E_AlmClass.TSTOP;
+_SIf.Alm[E_ALM_PBC.DoublePaperError].strText := 'Double paper detected';
+_SIf.Alm[E_ALM_PBC.DataChannelBufferFull].eAlmClass := E_AlmClass.WARNING;
+_SIf.Alm[E_ALM_PBC.DataChannelBufferFull].strText := 'Data Channel buffer is full';
+_SIf.Alm[E_ALM_PBC.DataChannelSend].eAlmClass := E_AlmClass.WARNING;
+_SIf.Alm[E_ALM_PBC.DataChannelSend].strText := 'Data Channel item could not be sent';
+_SIf.Alm[E_ALM_PBC.PaperInject].eAlmClass := E_AlmClass.TSTOP;
+_SIf.Alm[E_ALM_PBC.PaperInject].strText := 'Paper is not transported to the front';
+_SIf.Alm[E_ALM_PBC.PaperInjectRetry].eAlmClass := E_AlmClass.WARNING;
+_SIf.Alm[E_ALM_PBC.PaperInjectRetry].strText := 'Paper transport retry';
+_SIf.Alm[E_ALM_PBC.DoNotReleaseItems].eAlmClass := E_AlmClass.INFO;
+_SIf.Alm[E_ALM_PBC.DoNotReleaseItems].strText := 'Currently not releasing items because in manual mode';
+_SIf.Alm[E_ALM_PBC.DoublePaperWarning].eAlmClass := E_AlmClass.WARNING;
+_SIf.Alm[E_ALM_PBC.DoublePaperWarning].strText := 'Double paper detected';
 
 //*******************************************************************************
 // initial values
@@ -1126,26 +1218,26 @@ CIf.SwCfg.bolEnable := TRUE;
 CIf.SwCfg.bolSimulation := FALSE;
 
 // Configuration
-SIf.Cfg.bolUseTurnTableSensorForEject 		:= TRUE;
-SIf.Cfg.bolEnableDataChannel		  		:= FALSE;
-SIf.Cfg.bolGranulatAirPressureUnitAvailable := FALSE;
-SIf.Cfg.bolEnableSaberStopDeStack 			:= TRUE;
+_SIf.Cfg.bolUseTurnTableSensorForEject 		:= TRUE;
+_SIf.Cfg.bolEnableDataChannel		  		:= FALSE;
+_SIf.Cfg.bolGranulatAirPressureUnitAvailable := FALSE;
+_SIf.Cfg.bolEnableSaberStopDeStack 			:= TRUE;
 
 // parameter
-SIf.Par.bolAutomaticMode := TRUE;
-SIf.Par.bolStopReleaseItems := FALSE;
-SIf.Par.udiPaperTransportTime := 3000;
-SIf.Par.udiSheetToEject := 0;
-SIf.Par.udiSheetToSheetTime := 22800;
-SIf.Par.udiManualSheetToSheetTime_ms := 22800;
-SIf.Par.udiPaperInjectRetryPauseTime_ms := 400;
-SIf.Par.udiPaperInjectRetries := 3;
-SIf.Par.udiDoublePaperDebounceTime_ms := 500;
-SIf.Par.bolEnableDoublePaperDetection := FALSE;
-SIf.Par.udiSimPaperTransportTime := SIf.Par.udiPaperTransportTime / 2;
-SIf.Par.udiSimPaperToPaperTransportTime := SIf.Par.udiPaperTransportTime / 20;
+_SIf.Par.bolAutomaticMode := TRUE;
+_SIf.Par.bolStopReleaseItems := FALSE;
+_SIf.Par.udiPaperTransportTime := 3000;
+_SIf.Par.udiSheetToEject := 0;
+_SIf.Par.udiSheetToSheetTime := 22800;
+_SIf.Par.udiManualSheetToSheetTime_ms := 22800;
+_SIf.Par.udiPaperInjectRetryPauseTime_ms := 400;
+_SIf.Par.udiPaperInjectRetries := 3;
+_SIf.Par.udiDoublePaperDebounceTime_ms := 500;
+_SIf.Par.bolEnableDoublePaperDetection := FALSE;
+_SIf.Par.udiSimPaperTransportTime := _SIf.Par.udiPaperTransportTime / 2;
+_SIf.Par.udiSimPaperToPaperTransportTime := _SIf.Par.udiPaperTransportTime / 20;
 
-m_eStopReason := E_STOPREASON.None;]]></ST>
+_eStopReason := E_STOPREASON.None;]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_STANDBYbusy" Id="{e61e3d64-1535-4493-be9c-b65f7cfebb29}">
@@ -1161,23 +1253,24 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 
 	IF (CIf.SwCfg.bolSimulation) THEN
-		SIf.In.bolCapacityReached.intern := FALSE;
-		SIf.In.bolPaperAvailableEntry.intern := TRUE;
-		SIf.In.bolPaperAvailableExit.intern := TRUE;
+		_SIf.In.bolCapacityReached.intern := FALSE;
+		_SIf.In.bolPaperAvailableEntry.intern := TRUE;
+		_SIf.In.bolPaperAvailableExit.intern := TRUE;
 	END_IF
 
-	SIf.Out.bolAirOn.intern := TRUE;
-	m_eStopReason := E_STOPREASON.None;
+	_SIf.Out.bolAirOn.intern := TRUE;
+	_eStopReason := E_STOPREASON.None;
 	
-	pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
-	pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+	_pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
+	_pBeltCIf^.Job.intACmd := BASE_PLC.cCMD_RUN;
+	_pBccCIf^.Job.intACmd := cCMD_OFF;
 END_IF
 
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
 IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-	IF (pDeStackerCIf^.Job.intState = cSTA_STOP) AND (pBeltCIf^.Job.intState = cSTA_RUN) THEN
+	IF (_pDeStackerCIf^.Job.intState = cSTA_STOP) AND (_pBeltCIf^.Job.intState = cSTA_RUN) AND (_pBccCIf^.Job.intState = cSTA_OFF) THEN
 		CASE me.intCmd OF
 			cCMD_STANDBY:
 				me.StateMachine.intStateNext := cSTA_STANDBY;
@@ -1207,13 +1300,24 @@ END_IF]]></ST>
       <Get Name="Get" Id="{32b7403c-3e04-405e-9e0f-a6cf348536c0}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[Belt := p_fbBelt;]]></ST>
+          <ST><![CDATA[Belt := _pBelt;]]></ST>
         </Implementation>
       </Get>
       <Set Name="Set" Id="{a77fbb90-5c8a-4a09-bed6-9938a2374321}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[p_fbBelt := Belt;]]></ST>
+          <ST><![CDATA[_pBelt := Belt;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="ItemTracker" Id="{fd0906e4-d2c8-4f9a-83d7-bc617642b362}">
+      <Declaration><![CDATA[PROPERTY PUBLIC ItemTracker : POINTER TO FB_ITR]]></Declaration>
+      <Set Name="Set" Id="{e1d875e6-b89b-4352-9342-41f717d00397}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_pItemTracker := ItemTracker;]]></ST>
         </Implementation>
       </Set>
     </Property>

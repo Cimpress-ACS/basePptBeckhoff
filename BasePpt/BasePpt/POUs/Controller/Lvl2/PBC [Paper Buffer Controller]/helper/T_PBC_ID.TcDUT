@@ -1,17 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
   <DUT Name="T_PBC_ID" Id="{caa203cc-72be-4259-b87b-9c5be7015c95}">
     <Declaration><![CDATA[TYPE T_PBC_ID :
 STRUCT
-	Pbc: INT;
-	Pbc_PtbDeStacker: INT;
-	Pbc_PtbDeStacker_Umc: INT;
-	Pbc_PtbBelt: INT;
-	Pbc_PtbBelt_Umc: INT;
-	Pbc_PtbBelt_Vpc: INT;
+	Pbc						: INT;
+	Pbc_PtbDeStacker		: INT;
+	Pbc_PtbDeStacker_Umc	: INT;
+	Pbc_PtbBelt				: INT;
+	Pbc_PtbBelt_Umc			: INT;
+	Pbc_PtbBelt_Vpc			: INT;
+	Pbc_Bcc					: INT;
+	Pbc_Bcc_Bcd				: INT;
 END_STRUCT
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>

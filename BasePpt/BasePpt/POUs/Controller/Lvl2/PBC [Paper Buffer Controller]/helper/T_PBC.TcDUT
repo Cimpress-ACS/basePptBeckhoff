@@ -1,14 +1,14 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
   <DUT Name="T_PBC" Id="{2ec7650c-9a5e-4ce0-ad44-a11a81359129}">
     <Declaration><![CDATA[TYPE T_PBC :
 STRUCT
-	io: T_PBC_IO;
-	ctrl: T_PBC_CTRL;
-	id: T_PBC_ID;
+	io				: T_PBC_IO;
+	ctrl			: T_PBC_CTRL;
+	id				: T_PBC_ID;
+	datachn			: T_PBC_DATACHN;
 END_STRUCT
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>
