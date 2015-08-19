@@ -1,0 +1,229 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_ITR" Id="{6609e9c8-f682-4574-9b3a-097f4ba157fa}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ITR
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR CONSTANT
+	MAXTIME				: UDINT := 1000000000;
+END_VAR
+VAR
+	// Maximum size of the item fifo buffer
+	_uinMaxBufferSize			: UINT;
+	// Actual time of the PTR life. Needed to determen the item time
+	_udiActTime					: UDINT;
+	// Actual cycle time.
+	_udiCycleTime_ms			: UDINT;
+	// Enable this service
+	_bolEnabled					: BOOL;
+	// [sec] Pause Time
+	_udiPauseTime_sec			: UDINT;
+	
+	_fbBarcodeLookup			: FB_GHT;
+	_fbBarcodeFifo				: FB_DynamicFifo;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="RemoveBarcode" Id="{3575081d-acc1-40bb-a113-c9e6fc5d2cda}">
+      <Declaration><![CDATA[METHOD PUBLIC RemoveBarcode : BOOL
+VAR_INPUT
+	uliBarcode		: ULINT;
+END_VAR
+VAR
+	pItemData		: POINTER TO T_ItrInfo;
+	pItemHashData	: POINTER TO T_ItrInfo;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF _bolEnabled THEN
+	IF _fbBarcodeFifo.ItemCount > 0 THEN
+		pItemData := _fbBarcodeFifo.Peek();
+		
+		IF (pItemData <> NULL) AND (pItemData^.uliBarcode = uliBarcode) THEN
+			pItemHashData := _fbBarcodeLookup.Lookup(uliBarcode,TRUE);
+			pItemData := _fbBarcodeFifo.Pop();
+		END_IF
+	END_IF
+END_IF]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="CalcLookupTime" Id="{4a890bdf-280e-40ee-8696-326a6f2555f5}">
+      <Declaration><![CDATA[METHOD PROTECTED CalcLookupTime : UDINT
+VAR_INPUT
+	udiItemTime_ms			: UDINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[IF _udiActTime >= udiItemTime_ms THEN
+	CalcLookupTime := udiItemTime_ms - _udiActTime;
+ELSE	
+	CalcLookupTime := (MAXTIME - udiItemTime_ms) + _udiActTime;
+END_IF
+
+]]></ST>
+      </Implementation>
+    </Method>
+    <Action Name="Clear" Id="{4c1dc17c-eae5-48ac-81ea-958aa0cc1857}">
+      <Implementation>
+        <ST><![CDATA[_fbBarcodeFifo.ClearFifo();
+_fbBarcodeLookup.Clear(FALSE);]]></ST>
+      </Implementation>
+    </Action>
+    <Method Name="Release" Id="{5a87cfd0-ee8b-4e7e-a080-c234635ccca3}">
+      <Declaration><![CDATA[METHOD PUBLIC Release : BOOL
+VAR_INPUT
+	uliBarcode		: ULINT;
+END_VAR
+VAR
+	dinItemTime		: DINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[dinItemTime := LookupTime(uliBarcode);
+
+IF dinItemTime >= 0 THEN
+	Release := (( dinItemTime / 1000) > UDINT_TO_DINT(_udiPauseTime_sec)) OR NOT _bolEnabled;
+ELSE
+	Release := TRUE;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="AddBarcode" Id="{5dc70301-880e-487a-9a8c-7e081b2b7273}">
+      <Declaration><![CDATA[METHOD PUBLIC AddBarcode : Bool
+VAR_INPUT
+	uliBarcode		: ULINT;
+END_VAR
+VAR
+	pItemData		: POINTER TO T_ItrInfo;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[AddBarcode := FALSE;
+
+IF _bolEnabled THEN
+	IF _fbBarcodeFifo.ItemCount < _uinMaxBufferSize THEN
+		pItemData := __NEW(T_ItrInfo);
+		pItemData^.uliBarcode := uliBarcode;
+		pItemData^.udiTime_ms := _udiActTime;
+		
+		_fbBarcodeFifo.Push(pItemData);
+		_fbBarcodeLookup.AddItem(uliBarcode,pItemData);
+		
+		AddBarcode := TRUE;
+	END_IF
+ELSE
+	AddBarcode := TRUE;
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Property Name="PauseTime" Id="{63b8b22f-a197-4048-95ef-0b6428bad5b9}">
+      <Declaration><![CDATA[PROPERTY PUBLIC PauseTime : UDINT]]></Declaration>
+      <Get Name="Get" Id="{1ccfabdd-b363-44e1-9733-a3b668125520}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[PauseTime := _udiPauseTime_sec;]]></ST>
+        </Implementation>
+      </Get>
+      <Set Name="Set" Id="{8a037748-6ca8-448f-9aab-85de1f3d834f}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_udiPauseTime_sec := PauseTime;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
+    <Property Name="Enabled" Id="{826a15a2-9583-4b63-ad4d-1bf036a2908a}">
+      <Declaration><![CDATA[PROPERTY PUBLIC Enabled : BOOL]]></Declaration>
+      <Set Name="Set" Id="{48cdd0f7-e518-4d13-be5c-8d1ee0a277ac}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_bolEnabled := Enabled;
+
+IF NOT _bolEnabled THEN
+	Clear();
+END_IF]]></ST>
+        </Implementation>
+      </Set>
+      <Get Name="Get" Id="{7a96bd34-22cf-4ecd-8db3-f9a05fe38a06}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[Enabled := _bolEnabled;]]></ST>
+        </Implementation>
+      </Get>
+    </Property>
+    <Method Name="Initialize" Id="{8c05a82a-4ce2-4a91-9f70-4daf4b137a8c}">
+      <Declaration><![CDATA[METHOD PUBLIC Initialize : BOOL
+VAR_INPUT
+	uinMaxBufferSize			: UINT;
+	udiCycleTime_ms				: UDINT;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_udiActTime 		:= 0;
+_uinMaxBufferSize 	:= uinMaxBufferSize;
+_udiCycleTime_ms 	:= udiCycleTime_ms;
+_fbBarcodeFifo.FreeDataPointer := TRUE;]]></ST>
+      </Implementation>
+    </Method>
+    <Method Name="LookupTime" Id="{8dcf0b34-541a-45d6-8d5b-d9af874d8df6}">
+      <Declaration><![CDATA[METHOD PUBLIC LookupTime : DINT
+VAR_INPUT
+	uliBarcode		: ULINT;
+END_VAR
+VAR
+	pItemData		: POINTER TO T_ItrInfo;
+	pItemHashData	: POINTER TO T_ItrInfo;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[LookupTime := -1;
+
+IF _bolEnabled THEN
+	IF _fbBarcodeFifo.ItemCount > 0 THEN
+		pItemData :=_fbBarcodeFifo.Peek();
+		
+		IF pItemData <> NULL THEN
+			IF pItemData^.uliBarcode = uliBarcode THEN
+				LookupTime := UDINT_TO_DINT(CalcLookupTime(pItemData^.udiTime_ms));
+		
+				__DELETE(pItemData);
+			ELSE
+				pItemHashData := _fbBarcodeLookup.Lookup(uliBarcode,FALSE);
+				
+				IF pItemHashData <> NULL THEN
+					WHILE (_fbBarcodeFifo.ItemCount > 0) AND (pItemData <> NULL) AND (pItemData^.uliBarcode <> uliBarcode) DO
+						_fbBarcodeFifo.Pop();
+						_fbBarcodeFifo.Peek();
+					END_WHILE
+					
+					IF (pItemData <> NULL) AND (pItemData^.uliBarcode = uliBarcode) THEN
+						LookupTime := UDINT_TO_DINT(CalcLookupTime(pItemData^.udiTime_ms));
+					END_IF
+				END_IF
+			END_IF 
+		END_IF
+	END_IF
+END_IF
+]]></ST>
+      </Implementation>
+    </Method>
+    <Action Name="Cycle" Id="{a0b9f6a2-1ed0-4923-867f-ffc0c010cf10}">
+      <Implementation>
+        <ST><![CDATA[_udiActTime := (_udiActTime + _udiCycleTime_ms) MOD MAXTIME;]]></ST>
+      </Implementation>
+    </Action>
+  </POU>
+</TcPlcObject>
