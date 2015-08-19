@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_BCH" Id="{a692388c-4305-475f-ae8e-9d89dea2875c}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_BCH" Id="{a692388c-4305-475f-ae8e-9d89dea2875c}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_BCH EXTENDS FB_CtrlBase
 VAR_INPUT
 	In_bolSensorTrigScan: BOOL;
@@ -17,7 +17,9 @@ VAR
 	pBccCIf: POINTER TO T_Ctrl_CIf;
 	pBccSIf: POINTER TO T_Ctrl_SIf_BCC;
 	/// DataChannel
-	m_pDataChannel: POINTER TO FB_DataChannelSenderFifo;
+	_pDataChannel: POINTER TO FB_DataChannelSenderFifo;
+	/// Item Tracker
+	_pItemTracker			: POINTER TO FB_ITR;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -229,7 +231,7 @@ METHOD PROTECTED sta_OFF : BOOL
       <Set Name="Set" Id="{43175ef8-12d8-46d8-acfc-fc74639b9db3}">
         <Declaration><![CDATA[]]></Declaration>
         <Implementation>
-          <ST><![CDATA[m_pDataChannel := DataChannel;]]></ST>
+          <ST><![CDATA[_pDataChannel := DataChannel;]]></ST>
         </Implementation>
       </Set>
     </Property>
@@ -425,6 +427,17 @@ IF (me.StateMachine.intState<>me.StateMachine.intStateNext) THEN
 END_IF]]></ST>
       </Implementation>
     </Method>
+    <Property Name="ItemTracker" Id="{d75ef5e1-f453-43af-93af-a617cb31d545}">
+      <Declaration><![CDATA[PROPERTY PUBLIC ItemTracker : POINTER TO FB_ITR]]></Declaration>
+      <Set Name="Set" Id="{4314ca39-abf3-4b34-a467-d48d7bd41aea}">
+        <Declaration><![CDATA[VAR
+END_VAR
+]]></Declaration>
+        <Implementation>
+          <ST><![CDATA[_pItemTracker := ItemTracker;]]></ST>
+        </Implementation>
+      </Set>
+    </Property>
     <Method Name="sta_ERROR" Id="{dae2e508-4fbf-467c-aaaf-bc0034a3438a}">
       <Declaration><![CDATA[{attribute 'object_name' := 'sta_ERROR'}
 METHOD PROTECTED sta_ERROR : BOOL]]></Declaration>
@@ -539,28 +552,30 @@ END_VAR
 	// substate Reading Barcode Done
 	// ------------------------------------------------------------------------
 	BCH_CmdState.cSUB_BARCODREREAD:
-		IF SIf.Cfg.bolEnableDataChannel THEN
-			IF pBccSIf^.Cur.stData.uliBarCode > 0 THEN
-				uliBarcode := pBccSIf^.Cur.stData.uliBarCode;
-				Out_Barcode := uliBarcode;
-				Out_ChangeEvent := Out_ChangeEvent + 1;
+		IF pBccSIf^.Cur.stData.uliBarCode > 0 THEN
+			uliBarcode := pBccSIf^.Cur.stData.uliBarCode;
+			Out_Barcode := uliBarcode;
+			Out_ChangeEvent := Out_ChangeEvent + 1;
 
-				IF (m_pDataChannel <> NULL) AND (SIf.Cfg.bolEnableDataChannel) THEN
-					IF UINT_TO_INT(m_pDataChannel^.ItemCount) >= m_pDataChannel^.MaxFifoSize THEN
-						pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_BCH.DataChannelBufferFull,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
-					ELSE
-						pItem := __NEW(T_IdBase_DCH);
-						pItem^.rBaseInfo.eHealth := E_ItemHealth.Healthy;
-						pItem^.rBaseInfo.uinModuleId := 1;
-						pItem^.rBaseInfo.uinActualPosition := 1;
-						pItem^.udiIdentification := pBccSIf^.Cur.stData.uliBarCode;
-						m_pDataChannel^.Push(pItem);					
-					END_IF
+			IF (_pDataChannel <> NULL) AND (SIf.Cfg.bolEnableDataChannel) THEN
+				IF UINT_TO_INT(_pDataChannel^.ItemCount) >= _pDataChannel^.MaxFifoSize THEN
+					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_BCH.DataChannelBufferFull,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
+				ELSE
+					pItem := __NEW(T_IdBase_DCH);
+					pItem^.rBaseInfo.eHealth := E_ItemHealth.Healthy;
+					pItem^.rBaseInfo.uinModuleId := 1;
+					pItem^.rBaseInfo.uinActualPosition := 1;
+					pItem^.udiIdentification := pBccSIf^.Cur.stData.uliBarCode;
+					_pDataChannel^.Push(pItem);					
 				END_IF
 			END_IF
 
-			me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_WAITPAPERGONE;
+			IF _pItemTracker <> NULL THEN
+				_pItemTracker^.AddBarcode(uliBarcode);
+			END_IF
 		END_IF
+
+		me.SubStateMachine.intStateNext := BCH_CmdState.cSUB_WAITPAPERGONE;
 		
 	// Wait Until the Paper is gone
 	// ------------------------------------------------------------------------
@@ -634,6 +649,5 @@ METHOD PROTECTED sta_RUNBusy : BOOL]]></Declaration>
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>
