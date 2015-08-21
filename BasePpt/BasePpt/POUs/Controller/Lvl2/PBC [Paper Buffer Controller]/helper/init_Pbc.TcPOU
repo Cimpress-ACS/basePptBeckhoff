@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
-  <POU Name="init_Pbc" Id="{a9544bb5-a3f8-471a-9027-9ef21922f1e9}" SpecialFunc="None">
+  <POU Name="init_Pbc" Id="{59eb5830-51ca-414c-b26e-cf2f21d971ae}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION init_Pbc : BOOL
 VAR_INPUT
 	pPbc		: POINTER TO T_PBC;

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
-  <DUT Name="T_ItrInfo" Id="{0a506c52-4f6b-4826-9b1a-dac47e13c7ab}">
+  <DUT Name="T_ItrInfo" Id="{16410bd4-bffe-4447-9b08-cef5e82a5d18}">
     <Declaration><![CDATA[{attribute 'enable_dynamic_creation'}
 TYPE T_ItrInfo :
 STRUCT

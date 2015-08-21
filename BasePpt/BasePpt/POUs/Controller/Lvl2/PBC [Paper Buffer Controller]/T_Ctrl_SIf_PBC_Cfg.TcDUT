@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
-  <DUT Name="T_Ctrl_SIf_PBC_Cfg" Id="{898a4ff4-029d-4277-980e-032befe8200a}">
+  <DUT Name="T_Ctrl_SIf_PBC_Cfg" Id="{f17566a2-b032-4c00-b80d-828fcb1d82e9}">
     <Declaration><![CDATA[TYPE T_Ctrl_SIf_PBC_Cfg :
 STRUCT
 	/// True : Use the turn table sensor to detect ejects.

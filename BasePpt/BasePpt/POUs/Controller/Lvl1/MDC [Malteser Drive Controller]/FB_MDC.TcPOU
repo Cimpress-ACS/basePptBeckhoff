@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_MDC" Id="{caba4f97-8b2b-426d-95b4-6b3a12d61c7c}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_MDC" Id="{caba4f97-8b2b-426d-95b4-6b3a12d61c7c}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_MDC EXTENDS FB_CtrlBase
 VAR_INPUT
 	In_bolCrossPositionSensor			: BOOL;
@@ -1082,6 +1082,5 @@ END_CASE;
 ]]></ST>
       </Implementation>
     </Method>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>

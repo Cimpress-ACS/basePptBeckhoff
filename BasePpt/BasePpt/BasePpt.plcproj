@@ -726,58 +726,75 @@
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\E_ALM_PBC.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\E_STOPREASON.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\FB_PBC.TcPOU">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\helper\cycle_Pbc.TcPOU">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\helper\init_Pbc.TcPOU">
-      <SubType>Code</SubType>
-    </Compile>
-    <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\helper\T_PBC_DATACHN.TcDUT">
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\helper\T_PBC.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\helper\T_PBC_CTRL.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\helper\T_PBC_DATACHN.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\helper\T_PBC_ID.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\helper\T_PBC_IO.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\PBC_CmdState.TcGVL">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\T_Ctrl_SIf_PBC.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\T_Ctrl_SIf_PBC_Cfg.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\T_Ctrl_SIf_PBC_Cur.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\T_Ctrl_SIf_PBC_Ilk.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\T_Ctrl_SIf_PBC_In.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\T_Ctrl_SIf_PBC_Out.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PBC [Paper Buffer Controller]\T_Ctrl_SIf_PBC_Par.TcDUT">
       <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Controller\Lvl2\PCE [Paper Belt Corner Element]\E_ALM_PCE.TcDUT">
       <SubType>Code</SubType>

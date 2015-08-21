@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
-  <GVL Name="PBC_CmdState" Id="{c08a46b0-45e8-438d-90f8-78fc66cf873f}">
+  <GVL Name="PBC_CmdState" Id="{7a701d00-67ff-4632-aebd-6222c41b8063}">
     <Declaration><![CDATA[VAR_GLOBAL CONSTANT
 	///ctrl specific command definitions
 	cCMD_SINGLE			: INT := 202;
