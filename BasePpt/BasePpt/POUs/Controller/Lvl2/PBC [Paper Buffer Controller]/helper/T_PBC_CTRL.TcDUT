@@ -1,17 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <DUT Name="T_PBC_CTRL" Id="{5a45d332-ebf9-483d-9ed4-a8db9fdb70b1}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="T_PBC_CTRL" Id="{75fdad4f-6bfa-41c9-bb5d-1e0bfbfa02dc}">
     <Declaration><![CDATA[TYPE T_PBC_CTRL :
 STRUCT
-	fbPbc_PtbDeStacker: FB_PTB;
-	fbPbc_PtbDeStacker_Umc: FB_UMC;
-	fbPbc_PtbBelt: FB_PTB;
-	fbPbc_PtbBelt_Umc: FB_UMC;
-	fbPbc_PtbBelt_Vpc: FB_VPC;
-	fbPbc: FB_PBC;
+	fbPbc_Bcc_Bcd			: FB_BCD;
+	fbPbc_Bcc				: FB_BCC;
+	fbPbc_PtbDeStacker		: FB_PTB;
+	fbPbc_PtbDeStacker_Umc	: FB_UMC;
+	fbPbc_PtbBelt			: FB_PTB;
+	fbPbc_PtbBelt_Umc		: FB_UMC;
+	fbPbc_PtbBelt_Vpc		: FB_VPC;
+	fbPbc					: FB_PBC;
 END_STRUCT
 END_TYPE
 ]]></Declaration>
-    <ObjectProperties />
   </DUT>
 </TcPlcObject>

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_RAX" Id="{1ba66dca-9f6b-4b33-9c14-53cbd4cf9f57}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_RAX" Id="{1ba66dca-9f6b-4b33-9c14-53cbd4cf9f57}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_RAX EXTENDS FB_CtrlBase
 VAR_INPUT
 	In_pAD_SIf: POINTER TO T_POD;
@@ -1269,6 +1269,5 @@ METHOD PROTECTED sta_TurnBusy : BOOL
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>

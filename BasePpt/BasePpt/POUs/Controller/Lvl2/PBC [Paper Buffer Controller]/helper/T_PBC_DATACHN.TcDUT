@@ -1,0 +1,11 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="T_PBC_DATACHN" Id="{dc162dc9-35c5-40ed-8030-11815a9b3a96}">
+    <Declaration><![CDATA[TYPE T_PBC_DATACHN :
+STRUCT
+	rSendData: T_IdBaseSendData;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_PST" Id="{177fde74-8095-4d5b-83ca-4788bd6cdc14}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_PST" Id="{177fde74-8095-4d5b-83ca-4788bd6cdc14}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_PST EXTENDS FB_CtrlBase
 VAR_INPUT
 	In_uinBarcodeEvent: UINT;
@@ -746,6 +746,5 @@ SIf.Par.udiSimTimePaperInfeedStroke_ms:= 5000;
         </Implementation>
       </Set>
     </Property>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>

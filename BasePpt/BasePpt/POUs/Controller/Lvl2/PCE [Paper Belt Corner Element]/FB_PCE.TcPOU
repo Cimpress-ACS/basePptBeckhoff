@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="FB_PCE" Id="{4fd21a2c-bb8c-40f2-b8bb-db801457e1c0}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_PCE" Id="{4fd21a2c-bb8c-40f2-b8bb-db801457e1c0}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FB_PCE EXTENDS FB_CtrlBase
 VAR_INPUT
 	In_bolPaperAvailable: BOOL;
@@ -630,6 +630,5 @@ METHOD PROTECTED sta_STOPBusy : BOOL
 	END_IF]]></ST>
       </Implementation>
     </Method>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>

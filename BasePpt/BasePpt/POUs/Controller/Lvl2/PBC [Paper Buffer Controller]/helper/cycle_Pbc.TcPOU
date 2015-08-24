@@ -1,13 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.26">
-  <POU Name="cycle_Pbc" Id="{aa8703db-12c3-4ed7-8a3f-79a93208c1d8}">
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="cycle_Pbc" Id="{f5f907da-5ec1-4ca1-a90c-14205c75202a}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION cycle_Pbc : BOOL
 VAR_INPUT
 	pPbc: POINTER TO T_PBC;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_uinStatus 				:= pPbc^.io.In_uinPtbDeStacker_Umc_Status;
+      <ST><![CDATA[pPbc^.ctrl.fbPbc_Bcc_Bcd();
+pPbc^.ctrl.fbPbc_Bcc();
+
+pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_uinStatus 				:= pPbc^.io.In_uinPtbDeStacker_Umc_Status;
 pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_intMotorActualSpeed 	:= pPbc^.io.In_uinPtbDeStacker_Umc_ActualSpeed;
 pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_uinMotorSetSpeed 		:= pPbc^.io.In_uinPtbDeStacker_Umc_SetSpeed;
 pPbc^.ctrl.fbPbc_PtbDeStacker_Umc.In_uinIOData				:= pPbc^.io.In_uinPtbDeStacker_Umc_IOData1;
@@ -45,8 +48,9 @@ pPbc^.ctrl.fbPbc.In_bolDoublePaperDetection 				:= pPbc^.io.In_bolDoublePaperSen
 pPbc^.ctrl.fbPbc.In_bolTurnTableMiddleSensor 				:= pPbc^.io.In_bolPts_PaperSensor;
 pPbc^.ctrl.fbPbc.In_bolAirPressorOk 						:= pPbc^.io.In_bolAirPressureOk;
 pPbc^.ctrl.fbPbc();
-pPbc^.io.Out_bolAirPressureOn 								:= pPbc^.ctrl.fbPbc.Out_bolAirOn;]]></ST>
+pPbc^.io.Out_bolAirPressureOn 								:= pPbc^.ctrl.fbPbc.Out_bolAirOn;
+
+pPbc^.datachn.rSendData.fbFifo();]]></ST>
     </Implementation>
-    <ObjectProperties />
   </POU>
 </TcPlcObject>
