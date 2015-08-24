@@ -80,6 +80,18 @@ END_IF]]></ST>
         </Implementation>
       </Set>
     </Property>
+    <Method Name="FB_init" Id="{29c039a1-cf20-439d-8d4c-00ab0c448279}">
+      <Declaration><![CDATA[METHOD FB_init : BOOL
+VAR_INPUT
+	bInitRetains : BOOL; // if TRUE, the retain variables are initialized (warm start / cold start)
+	bInCopyCode : BOOL;  // if TRUE, the instance afterwards gets moved into the copy code (online change)
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[_bolEnabled 		:= TRUE;
+_udiPauseTime_sec 	:= 300;]]></ST>
+      </Implementation>
+    </Method>
     <Action Name="Cycle" Id="{3feb636b-062f-4751-8cfb-1246a9cc104c}">
       <Implementation>
         <ST><![CDATA[_udiActTime := (_udiActTime + _udiCycleTime_ms) MOD MAXTIME;]]></ST>
