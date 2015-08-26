@@ -17,7 +17,8 @@
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.104 - [RP-2023] 5min item wait time
+    <Description>0.0.0.105 	- [RP-1797] - New BaseConcept including SaberLogging
+0.0.0.104 - [RP-2023] 5min item wait time
 0.0.0.103 - [RP-1951] Introduced Standby
 0.0.0.102 - add latest BaseElements
 0.0.0.101	- improve GRR simulation
@@ -131,16 +132,16 @@
 0.0.0.4 - Bug fixed in FB_PTB
 0.0.0.3 - Update to take the newest libraries 
 0.0.0.2 - Update to Base_PLC 0.3.3.2; Update to Base_Elements 0.0.0.9</Description>
-    <ProjectVersion>0.0.0.104</ProjectVersion>
+    <ProjectVersion>0.0.0.105</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
   </PropertyGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.1.64,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.1.65,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Base_PLC,0.3.5.17,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.6.0,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.5.0,Beckhoff Automation GmbH">
