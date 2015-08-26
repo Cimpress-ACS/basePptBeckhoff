@@ -425,8 +425,8 @@ METHOD PROTECTED sta_ERRORQuit : BOOL]]></Declaration>
 			CASE me.intCmd OF
 				BASE_PLC.cCMD_OFF:
 					me.StateMachine.intStateNext := BASE_PLC.cSTA_OFFBusy;
-				cCMD_STOP:
-					me.StateMachine.intStateNext := cSTA_STOPBusy;
+				cCMD_STOP, Base_PLC.cCMD_STANDBY:
+					me.StateMachine.intStateNext := Base_PLC.cSTA_STANDBYBusy;
 				PBC_CmdState.cCMD_SINGLE,
 				BASE_PLC.cCMD_RUN:
 					me.StateMachine.intStateNext := cSTA_STANDBYbusy;

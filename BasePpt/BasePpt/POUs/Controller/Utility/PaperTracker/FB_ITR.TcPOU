@@ -21,8 +21,7 @@ VAR
 	// [sec] Pause Time
 	_udiPauseTime_sec			: UDINT;
 	
-	_fbBarcodeLookup			: FB_GHT;
-	_fbBarcodeFifo				: FB_DynamicFifo;
+	_fbBarcodeFifo				: FB_SFF;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -47,7 +46,6 @@ IF _bolEnabled THEN
 		pItemData^.udiTime_ms := _udiActTime;
 		
 		_fbBarcodeFifo.Push(pItemData);
-		_fbBarcodeLookup.AddItem(uliBarcode,pItemData);
 		
 		AddBarcode := TRUE;
 	END_IF
@@ -127,7 +125,6 @@ END_VAR
 		pItemData := _fbBarcodeFifo.Peek();
 		
 		IF (pItemData <> NULL) AND (pItemData^.uliBarcode = uliBarcode) THEN
-			pItemHashData := _fbBarcodeLookup.Lookup(uliBarcode,TRUE);
 			pItemData := _fbBarcodeFifo.Pop();
 		END_IF
 	END_IF
@@ -153,7 +150,7 @@ END_IF
     <Action Name="Clear" Id="{76c34da5-cd30-44b0-82a5-a6430795fce1}">
       <Implementation>
         <ST><![CDATA[_fbBarcodeFifo.ClearFifo();
-_fbBarcodeLookup.Clear(FALSE);]]></ST>
+]]></ST>
       </Implementation>
     </Action>
     <Method Name="Peek" Id="{937ca5a3-1f8b-4fcb-b5e8-846fd0edf7af}">
@@ -212,9 +209,7 @@ IF _bolEnabled THEN
 			IF pItemData^.uliBarcode = uliBarcode THEN
 				LookupTime := UDINT_TO_DINT(CalcLookupTime(pItemData^.udiTime_ms));
 			ELSE
-				pItemHashData := _fbBarcodeLookup.Lookup(uliBarcode,FALSE);
-				
-				IF pItemHashData <> NULL THEN
+				IF _fbBarcodeFifo.Lookup(uliBarcode) THEN
 					WHILE (_fbBarcodeFifo.ItemCount > 0) AND (pItemData <> NULL) AND (pItemData^.uliBarcode <> uliBarcode) DO
 						_fbBarcodeFifo.Pop();
 						_fbBarcodeFifo.Peek();

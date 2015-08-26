@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FB_SFF" Id="{35ca78d0-9a9b-4d2b-894a-dd514dfc7e29}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SFF EXTENDS FB_DynamicFifo
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[]]></ST>
+    </Implementation>
+    <Method Name="Lookup" Id="{bd97243e-6a39-4894-b2d6-bedd331d748d}">
+      <Declaration><![CDATA[METHOD PUBLIC Lookup : BOOL
+VAR_INPUT
+	uliBarcode			: ULINT;
+END_VAR
+VAR
+	pElement			: POINTER TO T_QueueBase;
+	pData				: POINTER TO T_ItrInfo;
+END_VAR
+]]></Declaration>
+      <Implementation>
+        <ST><![CDATA[Lookup := FALSE;
+pElement := m_pFirstElement;
+
+WHILE pElement <> Tc3_MemMan.NULL DO
+	IF pElement^.pData <> Tc3_MemMan.NULL THEN
+		pData := pElement^.pData;
+		
+		IF pData^.uliBarcode = uliBarcode THEN
+			Lookup := TRUE;
+			EXIT;
+		END_IF
+	END_IF
+	
+	pElement := pElement^.pNext;
+END_WHILE
+]]></ST>
+      </Implementation>
+    </Method>
+  </POU>
+</TcPlcObject>
