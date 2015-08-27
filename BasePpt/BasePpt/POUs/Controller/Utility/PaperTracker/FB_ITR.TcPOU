@@ -212,7 +212,7 @@ IF _bolEnabled THEN
 				IF _fbBarcodeFifo.Lookup(uliBarcode) THEN
 					WHILE (_fbBarcodeFifo.ItemCount > 0) AND (pItemData <> NULL) AND (pItemData^.uliBarcode <> uliBarcode) DO
 						_fbBarcodeFifo.Pop();
-						_fbBarcodeFifo.Peek();
+						pItemData := _fbBarcodeFifo.Peek();
 					END_WHILE
 					
 					IF (pItemData <> NULL) AND (pItemData^.uliBarcode = uliBarcode) THEN

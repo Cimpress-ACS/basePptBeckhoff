@@ -311,19 +311,13 @@ METHOD PROTECTED sta_STOPbusy : BOOL]]></Declaration>
 IF (me.StateMachine.intState<>me.StateMachine.intStateLastCycle) THEN
 	me.StateMachine.intStateLastCycle := me.StateMachine.intState;
 
-	_pDeStackerCIf^.Job.intACmd := BASE_PLC.cCMD_STOP;
-	
-	// set alarm
-	IF (NOT SIf.Par.bolAutomaticMode) THEN
-		pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,INT_TO_UINT(E_ALM_PBC.DoNotReleaseItems),0,ADR(SIf.Alm),E_AlmState.SET,CIf.Job.eMe_ActivAlmClass);
-	END_IF
 END_IF
 
 
 //--------------------------------------------------------------------------------------
 // Cyclic action
 IF (me.StateMachine.intState=me.StateMachine.intStateLastCycle) THEN
-	me.StateMachine.intStateNext := BASE_PLC.cSTA_STOP;
+	me.StateMachine.intStateNext := cSTA_STANDBYBusy;
 END_IF
 
 
@@ -434,7 +428,7 @@ METHOD PROTECTED sta_ERRORQuit : BOOL]]></Declaration>
 				CASE me.StateMachine.intStateHistory OF
 					cSTA_STOP:
 						me.StateMachine.intStateNext := cSTA_STOPBusy;
-					BASE_PLC.cSTA_RUN:
+					BASE_PLC.cSTA_RUN, cSTA_STANDBY:
 						me.StateMachine.intStateNext := cSTA_STANDBYbusy;
 				ELSE
 					me.StateMachine.intStateNext := cSTA_OFFBusy;
