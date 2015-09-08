@@ -138,10 +138,10 @@
     <AssemblyName>MyApplication</AssemblyName>-->
   </PropertyGroup>
   <ItemGroup>
-    <LibraryReference Include="Base_Elements,0.0.1.65,Vistaprint">
+    <LibraryReference Include="Base_Elements,0.0.1.66,Vistaprint">
       <Namespace>Base_Elements</Namespace>
     </LibraryReference>
-    <LibraryReference Include="Base_PLC,0.3.6.0,Vistaprint">
+    <LibraryReference Include="Base_PLC,0.3.6.1,Vistaprint">
       <Namespace>Base_PLC</Namespace>
     </LibraryReference>
     <LibraryReference Include="Tc2_EtherCAT,3.3.5.0,Beckhoff Automation GmbH">
