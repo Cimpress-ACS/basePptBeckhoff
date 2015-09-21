@@ -17,7 +17,8 @@
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.106 - [RP-2077] - Fix a library link 
+    <Description>0.0.0.107 - don't use refs from TwinCAT 3.1.4018.13
+0.0.0.106 - [RP-2077] - Fix a library link 
 0.0.0.105 - [RP-1797] - New BaseConcept including SaberLogging
 0.0.0.104 - [RP-2023] 5min item wait time
 0.0.0.103 - [RP-1951] Introduced Standby
@@ -133,7 +134,7 @@
 0.0.0.4 - Bug fixed in FB_PTB
 0.0.0.3 - Update to take the newest libraries 
 0.0.0.2 - Update to Base_PLC 0.3.3.2; Update to Base_Elements 0.0.0.9</Description>
-    <ProjectVersion>0.0.0.106</ProjectVersion>
+    <ProjectVersion>0.0.0.107</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
