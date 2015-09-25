@@ -17,7 +17,8 @@
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.107 - don't use refs from TwinCAT 3.1.4018.13
+    <Description>0.0.0.108 - RP-2097 - Fix for PrintDone DCH
+0.0.0.107 - don't use refs from TwinCAT 3.1.4018.13
 0.0.0.106 - [RP-2077] - Fix a library link 
 0.0.0.105 - [RP-1797] - New BaseConcept including SaberLogging
 0.0.0.104 - [RP-2023] 5min item wait time
@@ -134,7 +135,7 @@
 0.0.0.4 - Bug fixed in FB_PTB
 0.0.0.3 - Update to take the newest libraries 
 0.0.0.2 - Update to Base_PLC 0.3.3.2; Update to Base_Elements 0.0.0.9</Description>
-    <ProjectVersion>0.0.0.107</ProjectVersion>
+    <ProjectVersion>0.0.0.108</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->
@@ -1021,8 +1022,8 @@
   <ProjectExtensions>
     <PlcProjectOptions>
       <XmlArchive>
-        <Data>
-          <o xml:space="preserve" t="OptionKey">
+  <Data>
+    <o xml:space="preserve" t="OptionKey">
       <v n="Name">"&lt;ProjectRoot&gt;"</v>
       <d n="SubKeys" t="Hashtable" ckt="String" cvt="OptionKey">
         <v>{FE9F63D4-9E34-43ce-9322-D46747A00F33}</v>
@@ -1083,7 +1084,7 @@
             <o t="UserList">
               <a n="Users" cet="User">
                 <o>
-                  <v n="Id">{58351bc3-e691-4750-97ec-3bfad9a083f9}</v>
+                  <v n="Id">{dc0c7f10-c29e-4ed1-a288-089953fa5292}</v>
                   <v n="Name">"Owner"</v>
                   <v n="FullName">""</v>
                   <v n="Description">""</v>
@@ -1099,24 +1100,24 @@
             <o t="GroupList">
               <a n="Groups" cet="Group">
                 <o>
-                  <v n="Id">{076919a2-b634-4878-874f-2da5e8e4985f}</v>
+                  <v n="Id">{3d070a0d-972a-46d6-9528-95b7362fb05b}</v>
                   <v n="Name">"Owner"</v>
                   <v n="Description">""</v>
                   <v n="IsEveryoneGroup">false</v>
                   <v n="IsOwnerGroup">true</v>
                   <l n="UserMembers" t="ArrayList" cet="Guid">
-                    <v>58351bc3-e691-4750-97ec-3bfad9a083f9</v>
+                    <v>dc0c7f10-c29e-4ed1-a288-089953fa5292</v>
                   </l>
                   <l n="GroupMembers" t="ArrayList" />
                 </o>
                 <o>
-                  <v n="Id">{cddd00b4-1557-4d63-895d-08ced55f865b}</v>
+                  <v n="Id">{63e72d9b-cee1-40ea-8baa-c22d5a0e5d60}</v>
                   <v n="Name">"Everyone"</v>
                   <v n="Description">""</v>
                   <v n="IsEveryoneGroup">true</v>
                   <v n="IsOwnerGroup">false</v>
                   <l n="UserMembers" t="ArrayList" cet="Guid">
-                    <v>58351bc3-e691-4750-97ec-3bfad9a083f9</v>
+                    <v>dc0c7f10-c29e-4ed1-a288-089953fa5292</v>
                   </l>
                   <l n="GroupMembers" t="ArrayList" />
                 </o>
@@ -1125,7 +1126,7 @@
             <v>UserAuthentication</v>
             <o t="UserAuthentication">
               <d n="UserToPasswordHash" t="Hashtable" ckt="Guid" cvt="String">
-                <v>58351bc3-e691-4750-97ec-3bfad9a083f9</v>
+                <v>dc0c7f10-c29e-4ed1-a288-089953fa5292</v>
                 <v>d41d8cd98f00b204e9800998ecf8427e</v>
               </d>
             </o>
@@ -1142,23 +1143,23 @@
       </d>
       <d n="Values" t="Hashtable" />
     </o>
-        </Data>
-        <TypeList>
-          <Type n="ArrayList">System.Collections.ArrayList</Type>
-          <Type n="Boolean">System.Boolean</Type>
-          <Type n="Group">{daecd4be-1e2b-4335-a125-4a1ac83ea49f}</Type>
-          <Type n="GroupList">{bf4dffda-f055-446d-9d7a-5f126720896b}</Type>
-          <Type n="Guid">System.Guid</Type>
-          <Type n="Guid[]">System.Guid[]</Type>
-          <Type n="Hashtable">System.Collections.Hashtable</Type>
-          <Type n="Int32">System.Int32</Type>
-          <Type n="OptionKey">{54dd0eac-a6d8-46f2-8c27-2f43c7e49861}</Type>
-          <Type n="String">System.String</Type>
-          <Type n="User">{cd83029e-13b0-491e-9e4b-921adda0d86b}</Type>
-          <Type n="UserAuthentication">{3635a671-97f5-41bb-9e29-0ebb9795975c}</Type>
-          <Type n="UserList">{9fe6b547-6bc8-4f11-b589-b517860c5891}</Type>
-        </TypeList>
-      </XmlArchive>
+  </Data>
+  <TypeList>
+    <Type n="ArrayList">System.Collections.ArrayList</Type>
+    <Type n="Boolean">System.Boolean</Type>
+    <Type n="Group">{daecd4be-1e2b-4335-a125-4a1ac83ea49f}</Type>
+    <Type n="GroupList">{bf4dffda-f055-446d-9d7a-5f126720896b}</Type>
+    <Type n="Guid">System.Guid</Type>
+    <Type n="Guid[]">System.Guid[]</Type>
+    <Type n="Hashtable">System.Collections.Hashtable</Type>
+    <Type n="Int32">System.Int32</Type>
+    <Type n="OptionKey">{54dd0eac-a6d8-46f2-8c27-2f43c7e49861}</Type>
+    <Type n="String">System.String</Type>
+    <Type n="User">{cd83029e-13b0-491e-9e4b-921adda0d86b}</Type>
+    <Type n="UserAuthentication">{3635a671-97f5-41bb-9e29-0ebb9795975c}</Type>
+    <Type n="UserList">{9fe6b547-6bc8-4f11-b589-b517860c5891}</Type>
+  </TypeList>
+</XmlArchive>
     </PlcProjectOptions>
   </ProjectExtensions>
   <!-- 
