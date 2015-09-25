@@ -17,7 +17,8 @@
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.107 - don't use refs from TwinCAT 3.1.4018.13
+    <Description>0.0.0.108 - RP-2097 - Fix for PrintDone DCH
+0.0.0.107 - don't use refs from TwinCAT 3.1.4018.13
 0.0.0.106 - [RP-2077] - Fix a library link 
 0.0.0.105 - [RP-1797] - New BaseConcept including SaberLogging
 0.0.0.104 - [RP-2023] 5min item wait time
@@ -1077,15 +1078,13 @@
           <v n="Name">"{C70B7845-2722-4a9b-A0EA-88C877A4B36F}"</v>
           <d n="SubKeys" t="Hashtable" />
           <d n="Values" t="Hashtable" ckt="String">
-            <v>EnableMaxAuthenticationTrials</v>
-            <v>true</v>
             <v>MaxAuthenticationTrials</v>
             <v>3</v>
             <v>UserList</v>
             <o t="UserList">
               <a n="Users" cet="User">
                 <o>
-                  <v n="Id">{9255c66c-5c0c-414b-b752-633a1b22c7bd}</v>
+                  <v n="Id">{dc0c7f10-c29e-4ed1-a288-089953fa5292}</v>
                   <v n="Name">"Owner"</v>
                   <v n="FullName">""</v>
                   <v n="Description">""</v>
@@ -1101,24 +1100,24 @@
             <o t="GroupList">
               <a n="Groups" cet="Group">
                 <o>
-                  <v n="Id">{3a460c51-3c86-4faf-af8e-51b63359f9fe}</v>
+                  <v n="Id">{3d070a0d-972a-46d6-9528-95b7362fb05b}</v>
                   <v n="Name">"Owner"</v>
                   <v n="Description">""</v>
                   <v n="IsEveryoneGroup">false</v>
                   <v n="IsOwnerGroup">true</v>
                   <l n="UserMembers" t="ArrayList" cet="Guid">
-                    <v>9255c66c-5c0c-414b-b752-633a1b22c7bd</v>
+                    <v>dc0c7f10-c29e-4ed1-a288-089953fa5292</v>
                   </l>
                   <l n="GroupMembers" t="ArrayList" />
                 </o>
                 <o>
-                  <v n="Id">{b34c2f3a-342b-401f-a082-0c44f4984304}</v>
+                  <v n="Id">{63e72d9b-cee1-40ea-8baa-c22d5a0e5d60}</v>
                   <v n="Name">"Everyone"</v>
                   <v n="Description">""</v>
                   <v n="IsEveryoneGroup">true</v>
                   <v n="IsOwnerGroup">false</v>
                   <l n="UserMembers" t="ArrayList" cet="Guid">
-                    <v>9255c66c-5c0c-414b-b752-633a1b22c7bd</v>
+                    <v>dc0c7f10-c29e-4ed1-a288-089953fa5292</v>
                   </l>
                   <l n="GroupMembers" t="ArrayList" />
                 </o>
@@ -1127,10 +1126,12 @@
             <v>UserAuthentication</v>
             <o t="UserAuthentication">
               <d n="UserToPasswordHash" t="Hashtable" ckt="Guid" cvt="String">
-                <v>9255c66c-5c0c-414b-b752-633a1b22c7bd</v>
+                <v>dc0c7f10-c29e-4ed1-a288-089953fa5292</v>
                 <v>d41d8cd98f00b204e9800998ecf8427e</v>
               </d>
             </o>
+            <v>EnableMaxAuthenticationTrials</v>
+            <v>true</v>
           </d>
         </o>
         <v>{192FAD59-8248-4824-A8DE-9177C94C195A}</v>
