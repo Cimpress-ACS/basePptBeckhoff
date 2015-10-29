@@ -558,7 +558,7 @@ END_VAR
 			Out_ChangeEvent := Out_ChangeEvent + 1;
 
 			IF (_pDataChannel <> NULL) AND (SIf.Cfg.bolEnableDataChannel) THEN
-				IF UINT_TO_INT(_pDataChannel^.ItemCount) >= _pDataChannel^.MaxFifoSize THEN
+				IF UINT_TO_INT(_pDataChannel^.ItemCount) >= _pDataChannel^.QueueLimit THEN
 					pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_BCH.DataChannelBufferFull,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 				ELSE
 					pItem := __NEW(T_IdBase_DCH);

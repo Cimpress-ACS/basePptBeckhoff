@@ -1578,7 +1578,7 @@ END_VAR
         <ST><![CDATA[IF pMessage <> NULL THEN
 	IF SIf.Cfg.bolEnablePrintDoneDataChannel THEN
 		IF m_pDataChannel <> NULL THEN
-			IF UINT_TO_INT(m_pDataChannel^.ItemCount) >= m_pDataChannel^.MaxFifoSize THEN
+			IF UINT_TO_INT(m_pDataChannel^.ItemCount) >= m_pDataChannel^.QueueLimit THEN
 				pfbAlarmCtrl^.setAlarm(CIf.Info.intCtrlId,E_ALM_JCL.DataChannelFull,0,ADR(SIf.Alm),E_AlmState.RST,CIf.Job.eMe_ActivAlmClass);
 			ELSE
 				pItem := __NEW(T_JCL_DCH);
