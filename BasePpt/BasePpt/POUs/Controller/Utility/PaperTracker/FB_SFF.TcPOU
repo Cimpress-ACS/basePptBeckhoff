@@ -24,7 +24,7 @@ END_VAR
 ]]></Declaration>
       <Implementation>
         <ST><![CDATA[Lookup := FALSE;
-pElement := m_pFirstElement;
+pElement := _pFirstElement;
 
 WHILE pElement <> Tc3_MemMan.NULL DO
 	IF pElement^.pData <> Tc3_MemMan.NULL THEN
