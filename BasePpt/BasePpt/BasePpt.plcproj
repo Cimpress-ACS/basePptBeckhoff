@@ -17,7 +17,8 @@
     <Author>pcipriano</Author>
     <Released>True</Released>
     <Company>Vistaprint</Company>
-    <Description>0.0.0.108 - [RP-2116] - Newest Libraries
+    <Description>0.0.0.110 - RP-2218 debounce low powder
+0.0.0.108 - [RP-2116] - Newest Libraries
 0.0.0.108 - RP-2097 - Fix for PrintDone DCH
 0.0.0.107 - don't use refs from TwinCAT 3.1.4018.13
 0.0.0.106 - [RP-2077] - Fix a library link 
@@ -136,7 +137,7 @@
 0.0.0.4 - Bug fixed in FB_PTB
 0.0.0.3 - Update to take the newest libraries 
 0.0.0.2 - Update to Base_PLC 0.3.3.2; Update to Base_Elements 0.0.0.9</Description>
-    <ProjectVersion>0.0.0.109</ProjectVersion>
+    <ProjectVersion>0.0.0.110</ProjectVersion>
     <!--    <OutputType>Exe</OutputType>
     <RootNamespace>MyApplication</RootNamespace>
     <AssemblyName>MyApplication</AssemblyName>-->

@@ -8,6 +8,8 @@ STRUCT
 	rConveyorVibrator_Hz: REAL;
 	rAirKnife_p: REAL;
 	uinFilterClearingCycleTime_min: UINT;
+	// decounce time for low powder warning message in ms. Default is 2 seconds because there are many vibrations.
+	udiLowPowderDebounceTime_ms : UDINT;
 END_STRUCT
 END_TYPE]]></Declaration>
   </DUT>
