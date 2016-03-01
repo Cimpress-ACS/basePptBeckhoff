@@ -46,6 +46,7 @@ Version		Date			Author		Comment
 ---------------------------------------------------------------------------------------------------
 0.00.1		05.11.2014		BB			Start history
 0.00.2		06.02.2015		BB			changed name from GRN to GRR
+0.0.0.110	29.02.2016		RE			RP-2218 debounce low powder
 ___________________________________________________________________________________________________*)
 
 SUPER^();]]></ST>
@@ -307,7 +308,7 @@ IF (CIf.SwCfg.bolSimulation = FALSE) THEN
 	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolSystemOk));
 	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolMainPressureError));
 	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolEoffOrFuseOk));
-	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolPowderLowWarning));
+	BASE_PLC.getInBolDebounced(CIf.Job.bolIoForce, me.FUBInfo.udiSample_ms, SIf.Par.udiLowPowderDebounceTime_ms, ADR(SIf.In.bolPowderLowWarning));
 	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolAutoMode));
 	BASE_PLC.getInInt(CIf.Job.bolIoForce,ADR(SIf.In.intState));
 	BASE_PLC.getInBol(CIf.Job.bolIoForce,ADR(SIf.In.bolToggleBitGrn));
@@ -614,7 +615,8 @@ SIf.Par.rConveyorBelt_Hz		:= SIf.Cfg.rMaxFreq_Hz/2;
 SIf.Par.rConveyorVibrator_Hz	:= SIf.Cfg.rMaxFreq_Hz/2;
 SIf.Par.rPowderVibrator_Hz		:= SIf.Cfg.rMaxFreq_Hz/2;
 SIf.Par.rAirKnife_p				:= 50;
-SIf.Par.uinFilterClearingCycleTime_min	:= 4*60;]]></ST>
+SIf.Par.uinFilterClearingCycleTime_min	:= 4*60;
+SIf.Par.udiLowPowderDebounceTime_ms := 2000;]]></ST>
       </Implementation>
     </Method>
     <Method Name="sta_MANUAL" Id="{da63053a-8d2b-4867-9661-ae51602c0a56}">
